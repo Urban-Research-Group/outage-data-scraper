@@ -68,7 +68,7 @@ def job_2():
 
 
 if __name__ == '__main__':
-    planTime = int(input('请输入定时时间（分钟）:'))
+    planTime = int(input('set minute:'))
     schedule.every(planTime).minutes.do(job_1)
     schedule.every(planTime).minutes.do(job_2)
     while True:
