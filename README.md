@@ -1,2 +1,2 @@
 # outage-data-scraper
-GA power outage web scraper
+GA power outage data scraper
