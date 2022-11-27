@@ -14,20 +14,23 @@ class ScraperL1(BaseScraper):
         self.url = url
 
     def parse(self):
-        response = self.fetch()
-        response_df = pd.DataFrame(response[0]['boundaries'])
-        return response_df
+        body, status = self.fetch(self.url)
+        data = json.loads(body)
+        df = pd.DataFrame(data[0]['boundaries'])
+        return df
 
-    def fetch(self):
-        response = urlopen(self.url)
-        data_json = json.loads(response.read())
-        return data_json
+    # def fetch(self):
+    #     response = urlopen(self.url)
+    #     # print(response.read())
+    #     data_json = json.loads(response.read())
+    #     return data_json
+
 
 if __name__ == '__main__':
     scrapper = ScraperL1('http://74.121.99.238:8081/data/boundaries.json')
     print(scrapper.parse())
 
-    scrapper = ScraperL1('http://outage.gradyemc.com:7576/data/boundaries.json')
-    print(scrapper.parse())
+    # scrapper = ScraperL1('http://outage.gradyemc.com:7576/data/boundaries.json')
+    # print(scrapper.parse())
 
 
