@@ -1,6 +1,6 @@
 import requests
 import logging
-from base import BaseScraper
+from app.scraper.base import BaseScraper
 
 import pandas as pd
 from urllib.request import urlopen

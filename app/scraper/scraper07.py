@@ -1,6 +1,5 @@
-import requests
 import logging
-from scraper.base import BaseScraper
+from app.scraper.base import BaseScraper
 
 class ScraperL7(BaseScraper):
     logger = logging.getLogger("ScraperL7")

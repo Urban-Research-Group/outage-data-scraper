@@ -10,9 +10,6 @@ class BaseScraper:
     def __int__(self):
         self.driver = ''
 
-    # def parse(self, response):
-    #     pass
-
     def fetch(self, url):
         """
         make a GET request to the url
@@ -20,7 +17,7 @@ class BaseScraper:
         :return: body, status
         """
         try:
-            with urlopen(url, timeout=10) as response:
+            with urlopen(url) as response:
                 print(response.status)
                 return response.read(), response.status
         except HTTPError as error:
