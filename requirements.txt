@@ -1,6 +1,13 @@
-requests==2.25.0
-selenium==3.14.0
-# beautifulsoup4==4.9.3
-Pillow==8.0.1
-boto3
-botocore
+# requests==2.25.0
+# selenium==3.14.0
+# # beautifulsoup4==4.9.3
+# Pillow==8.0.1
+# boto3
+# botocore
+# pandas
+
+certifi==2020.12.5
+chardet==4.0.0
+idna==2.10
+requests==2.25.1
+urllib3==1.26.4
