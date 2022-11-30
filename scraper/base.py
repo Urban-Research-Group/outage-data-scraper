@@ -9,7 +9,9 @@ class BaseScraper:
 
     def parse(self, response):
         pass
-
+    
+    def fetch(self):
+        pass
 
 
 
