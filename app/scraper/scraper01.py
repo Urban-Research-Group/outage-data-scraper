@@ -1,6 +1,6 @@
 import requests
 import logging
-from app.scraper.base import BaseScraper
+from base import BaseScraper
 
 import pandas as pd
 from urllib.request import urlopen
@@ -9,28 +9,25 @@ import json
 class ScraperL1(BaseScraper):
     logger = logging.getLogger("ScraperL1")
 
-    def __init__(self, urls):
+    def __init__(self, url):
         super().__init__()
-        self.urls = urls
+        self.url = url
 
     def parse(self):
-        """
-        parse all urls to dataframe
-        :return: dataframe
-        """
-        for url in self.urls:
-            body, status = self.fetch(url)
-            data = json.loads(body)
+        response = self.fetch()
+        response_df = pd.DataFrame(response[0]['boundaries'])
+        return response_df
 
-            # TODO: aggregate how?
-            if 'boundaries' in url:
-                print('boundaries', data)
-            elif 'outageSummary' in url:
-                print('summary', data)
-            elif 'outage' in url:
-                print('outage', data)
+    def fetch(self):
+        response = urlopen(self.url)
+        data_json = json.loads(response.read())
+        return data_json
 
-        #     df = pd.DataFrame(data[0]['boundaries'])
-        # return df
+if __name__ == '__main__':
+    scrapper = ScraperL1('http://74.121.99.238:8081/data/boundaries.json')
+    print(scrapper.parse())
+
+    scrapper = ScraperL1('http://outage.gradyemc.com:7576/data/boundaries.json')
+    print(scrapper.parse())
 
 
