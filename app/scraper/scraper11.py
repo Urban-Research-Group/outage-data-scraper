@@ -11,7 +11,7 @@ import pandas as pd
 import geopy
 
 
-class ScraperL7(BaseScraper):
+class ScraperL11(BaseScraper):
     logger = logging.getLogger("ScraperL7")
 
     def __init__(self, url):
@@ -57,23 +57,33 @@ class ScraperL7(BaseScraper):
 
     def parse(self):
         data = (self.fetch())
-        df =  pd.DataFrame(data['0']['markers'])
-        df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis = 1 )
-        return df[['zip_code', 'consumers_affected', 'lat', 'lon']]
-
+        # print(data)
+        df =  pd.DataFrame(data['rows']['subs'])
+        return df
 
     def fetch(self):
         datas = []
+        index = 0
+        i = 0
         for request in self.driver.requests:
             if "ShellOut" in request.url:
                 data = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
                 data = data.decode("utf8")
                 datas.append(data)
 
-        data_response = datas[-1]
+                if 'SubName' in data:
+                    index = i
+                
+                i += 1
+        
+        print(index)
+        data_response = datas[index]
         return json.loads(data_response)
 
 if __name__ == '__main__':
-    scrapper = ScraperL7('https://www.outageentry.com/Outages/outage.php?Client=GREYS')
+    scrapper = ScraperL11('https://www.outageentry.com/Outages/outage.php?Client=tsemc&serviceIndex=1&openingPage=')
+    print(scrapper.parse())
+
+    scrapper = ScraperL11('https://www.outageentry.com/Outages/outage.php?Client=walton')
     print(scrapper.parse())
 
