@@ -5,7 +5,7 @@ https://docs.google.com/spreadsheets/d/1sknQle2RQAFSRId9O5JyoNozgHtig1Rx6u2pnipp
 
 ## Source code
 The src code for this project is located in the [app](./app) directory; [main.py](./app/main.py)
-contains the lambda function handler and modules [scraper](./app/scraper).
+contains the lambda function handler and modules [scraper](./app/scrapers).
 
 ## Docker build
 The [Dockerfile](./Dockerfile) contains the instructions to build this image. Run the command to create the image outage-data-scraper tagged latest.
