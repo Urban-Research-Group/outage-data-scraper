@@ -1,7 +1,10 @@
-# beautifulsoup4==4.9.3
+# --extra-index-url https://alpine-wheels.github.io/index
+
 boto3
 botocore
+geopy
+numpy
 pandas
-Pillow==8.0.1
-requests==2.25.0
-selenium==3.14.0
+selenium
+selenium-wire
+xmltodict
