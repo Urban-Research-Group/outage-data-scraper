@@ -18,7 +18,7 @@ ARG FUNCTION_DIR
 # Create function directory
 RUN mkdir -p ${FUNCTION_DIR}
 # Copy handler function
-COPY app/* ${FUNCTION_DIR}
+COPY app/ ${FUNCTION_DIR}
 
 # Optional – Install the function's dependencies
 WORKDIR ${FUNCTION_DIR}
