@@ -13,7 +13,7 @@ def handler(event, context=""):
         try:
             print(f"Scraping current outages under {emc} from {url}")
 
-            sc = scrapers.Scraper1(url=url, emc=emc)
+            sc = ga_scraper.Scraper1(url=url, emc=emc)
             data = sc.parse()
             filename = f"{emc}_{data['timestamp'][0]}"
             filepath = f"{folder}/{filename}.csv"
