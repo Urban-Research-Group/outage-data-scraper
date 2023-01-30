@@ -1,3 +1,0 @@
-,outageRecID,outageName,outagePoint,outageStartTime,estimatedTimeOfRestoral,outageEndTime,verified,cause,crewAssigned,customersOutInitially,customersOutNow,customersRestored,streetsAffected,outageModifiedTime,outageWorkStatus
-0,2023-01-02-0001,,"{'lat': 32.241690801468714, 'lng': -82.6061529652525}",2023-01-02T08:31:40-05:00,,,True,Temporary Outage,False,2,2,0,,2023-01-02T08:54:44-05:00,
-1,2023-01-03-0009,,"{'lat': 32.19782405175612, 'lng': -82.34089768247014}",2023-01-03T08:23:41-05:00,,,True,Temporary Outage,False,1,1,0,,2023-01-03T08:33:31-05:00,

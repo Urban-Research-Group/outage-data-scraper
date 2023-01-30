@@ -28,15 +28,7 @@ curl -XPOST "http://localhost:9000/2015-03-31/functions/function/invocations" -d
 ```
 
 ## Lambda deployment
-AWS Lambda can now take an image to run as a serverless function. At the time of
-writing this feature is limited to certain regions so you will need to carefully select
-the region. For extra help, AWS have published a guide to working with containers in 
-Lambda https://docs.aws.amazon.com/lambda/latest/dg/lambda-images.html.
-
-You will also need to create an Elastic Container Registry within AWS - a place to 
-store your Docker images so they can be used by Lambda. For extra help, AWS have published
-a guide to working with ECR https://docs.aws.amazon.com/AmazonECR/latest/userguide/getting-started-cli.html.
-        
+Push the above built image to the AWS Elastic Container Registry (ECR) and create the Lambda function based on the image. Refer to [official doc](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html) 
 
 
 

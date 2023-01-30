@@ -2,9 +2,9 @@ import logging
 import json
 import pandas as pd
 import geopy
-import time
 import xmltodict
 import io
+import os
 import boto3
 
 from urllib.request import urlopen
@@ -14,21 +14,12 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
 
 
-class BaseScraper:
-    def __init__(self, url, emc):
-        self.driver = ''
-        self.url = url
-        self.emc = emc
-        self.geo_locator = geopy.Nominatim(user_agent='1234')
-        # self.init_webdriver()
+def is_aws_env():
+    return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('AWS_EXECUTION_ENV')
 
-    def fetch(self):
-        pass
 
-    def parse(self):
-        pass
-
-    def df_to_s3(self, df, bucket_name, file_path):
+def save(df, bucket_name=None, file_path=None):
+    if is_aws_env():
         s3_client = boto3.client("s3")
         with io.StringIO() as csv_buffer:
             df.to_csv(csv_buffer, index=False)
@@ -43,10 +34,30 @@ class BaseScraper:
                 print(f"Successful S3 put_object response. Status - {status}")
             else:
                 print(f"Unsuccessful S3 put_object response. Status - {status}")
+    else:
+        df.to_csv(file_path, index=False)
+        print(f"outages data saved to {file_path}")
 
-    def extract_zipcode(self, lat, lon):
-        addr = self.geo_locator.reverse((lat, lon)).raw['address']
-        return addr.get('postcode', 'unknown')
+
+def extract_zipcode(lat, lon):
+    geo_locator = geopy.Nominatim(user_agent='1234')
+    addr = geo_locator.reverse((lat, lon)).raw['address']
+    return addr.get('postcode', 'unknown')
+
+
+class BaseScraper:
+    def __init__(self, url, emc):
+        self.url = url
+        self.emc = emc
+
+        # self.driver = ''
+        # self.init_webdriver()
+
+    def fetch(self):
+        pass
+
+    def parse(self):
+        pass
 
     # def init_webdriver(self):
     #     chrome_driver_path = 'chromedriver.exe'
@@ -78,37 +89,42 @@ class BaseScraper:
 
 
 class Scraper1(BaseScraper):
-    def __init__(self, url, emc=''):
+    def __init__(self, url, emc):
         super().__init__(url, emc)
 
     def parse(self):
+
         outages, boundaries = self.fetch()
+        output = []
         if boundaries:
-            df = pd.DataFrame(boundaries[0]['boundaries'])
-            df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
-            return df
+            per_loc_df = pd.DataFrame(boundaries[0]['boundaries'])
+            per_loc_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
+            output.append(per_loc_df)
         if outages:
-            df = pd.DataFrame(outages)
-            df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
-            zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in outages]
-            df['zip'] = zips
-            df['EMC'] = self.emc
-            return df
+            per_outage_df = pd.DataFrame(outages)
+            per_outage_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
+            zips = [extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in outages]
+            per_outage_df['zip'] = zips
+            per_outage_df['EMC'] = self.emc
+            output.append(per_outage_df)
         else:
-            print("no outage update found at", datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
-            return pd.DataFrame()
+            print(f"no outage of {self.emc} update found at", datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+
+        return output
 
     def fetch(self):
-        boundaries = urlopen(self.url + 'data/boundaries.json')
-        outages = urlopen(self.url + 'data/outages.json')
-        outages_data = json.loads(outages.read())
-        boundaries_data = json.loads(boundaries.read())
+        print(f"fetching {self.emc} outages from {self.url}")
+        with urlopen(self.url + 'data/boundaries.json') as response:
+            boundaries_data = json.loads(response.read())
+
+        with urlopen(self.url + 'data/outages.json') as response:
+            outages_data = json.loads(response.read())
 
         return outages_data, boundaries_data
 
 
 class Scraper2(BaseScraper):
-    def __init__(self, url, emc=''):
+    def __init__(self, url, emc):
         super().__init__(url, emc)
 
     def parse(self):
@@ -119,7 +135,7 @@ class Scraper2(BaseScraper):
         response_df.columns = ['customersAffected', 'customersRestored', 'customersServed', 'OutageLocation_lon',
                                'OutageLocation_lat', 'MapLocation', 'District', 'name']
         response_df['zip_code'] = response_df.apply(
-            lambda row: self.extract_zipcode(row['OutageLocation_lat'], row['OutageLocation_lon']), axis=1)
+            lambda row: extract_zipcode(row['OutageLocation_lat'], row['OutageLocation_lon']), axis=1)
 
         return response_df[['name', 'zip_code', 'customersAffected', 'customersRestored', 'customersServed']]
 
@@ -136,8 +152,18 @@ class Scraper2(BaseScraper):
         return data
 
 
+class Scraper3(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+
+class Scraper4(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+
 class Scraper5(BaseScraper):
-    def __init__(self, url, emc=''):
+    def __init__(self, url, emc):
         super().__init__(url, emc)
 
     def parse(self):
@@ -156,9 +182,7 @@ class Scraper5(BaseScraper):
 
 
 class Scraper6(BaseScraper):
-    logger = logging.getLogger("ScraperL3")
-
-    def __init__(self, url, emc=''):
+    def __init__(self, url, emc):
         super().__init__(url, emc)
 
     def parse(self):
@@ -170,7 +194,7 @@ class Scraper6(BaseScraper):
             rows.append([row['e'][0], row['e'][1], row['e'][2], float(position[0]), float(position[1])])
 
         df = pd.DataFrame(rows, columns=['name', 'customersServed', 'customersAffected', 'latitutde', 'longitude'])
-        df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['latitutde'], row['longitude']), axis=1)
+        df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitutde'], row['longitude']), axis=1)
         return df[['name', 'zip_code', 'customersAffected', 'customersServed']]
 
     def fetch(self):
@@ -192,7 +216,6 @@ class Scraper6(BaseScraper):
 
 
 class Scraper7(BaseScraper):
-    logger = logging.getLogger("ScraperL7")
 
     def __init__(self, url):
         super().__init__()
@@ -208,6 +231,16 @@ class Scraper7(BaseScraper):
 
         data_response = datas[-1]
         return json.loads(data_response)
+
+
+class Scraper8(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+
+class Scraper9(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
 
 
 class Scraper10(BaseScraper):
@@ -255,4 +288,36 @@ class Scraper11(BaseScraper):
         print(index)
         data_response = datas[index]
         return json.loads(data_response)
+
+
+class Scraper():
+    def __new__(cls, layout_id, url, emc):
+        if layout_id == 1:
+            obj = super().__new__(Scraper1)
+        elif layout_id == 2:
+            obj = super().__new__(Scraper2)
+        elif layout_id == 3:
+            obj = super().__new__(Scraper3)
+        elif layout_id == 4:
+            obj = super().__new__(Scraper4)
+        elif layout_id == 5:
+            obj = super().__new__(Scraper5)
+        elif layout_id == 6:
+            obj = super().__new__(Scraper6)
+        elif layout_id == 7:
+            obj = super().__new__(Scraper7)
+        elif layout_id == 8:
+            obj = super().__new__(Scraper8)
+        elif layout_id == 9:
+            obj = super().__new__(Scraper9)
+        elif layout_id == 10:
+            obj = super().__new__(Scraper10)
+        elif layout_id == 11:
+            obj = super().__new__(Scraper11)
+        else:
+            raise "Invalid layout ID: Enter layout ID range from 1 to 11"
+
+        obj.__init__(url, emc)
+        return obj
+
 
