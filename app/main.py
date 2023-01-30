@@ -3,21 +3,21 @@ from scrapers import ga_scraper
 
 
 def handler(event, context=""):
-    layout = event['layout']
+    layout_id = event['layout']
     EMCs = event['emc']
     bucket = event['bucket']
-    folder = event['folder']
+    state = event['folder']
     success_cnt = 0
 
     for emc, url in EMCs.items():
         try:
-            sc = ga_scraper.Scraper(layout, url, emc)
+            sc = ga_scraper.Scraper(layout_id, url, emc)
             data = sc.parse()
             for idx, df in enumerate(data):
                 timestamp = df['timestamp'][0]
-                path = f"{folder}/{idx}_{emc}_{timestamp}.csv"
+                path = f"{state}/layout_{layout_id}/{idx}_{emc}_{timestamp}.csv"
                 ga_scraper.save(df, bucket, path)
-                print(f"outages of {emc} as of {timestamp} saved to {bucket} under {folder}")
+                print(f"outages of {emc} as of {timestamp} saved to {bucket} under {state}/layout_{layout_id}/")
             success_cnt += 1
         except Exception as e:
             print(f'{e}: unable to access {emc} at {url}')
