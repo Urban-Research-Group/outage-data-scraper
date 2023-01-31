@@ -6,6 +6,7 @@ import xmltodict
 import io
 import os
 import boto3
+import time
 
 from urllib.request import urlopen
 from datetime import datetime
@@ -35,7 +36,8 @@ def save(df, bucket_name=None, file_path=None):
             else:
                 print(f"Unsuccessful S3 put_object response. Status - {status}")
     else:
-        df.to_csv(file_path, index=False)
+        local_path = f"{os.getcwd()}/../{bucket_name}/{file_path}"
+        df.to_csv(local_path, index=False)
         print(f"outages data saved to {file_path}")
 
 
@@ -50,42 +52,34 @@ class BaseScraper:
         self.url = url
         self.emc = emc
 
-        # self.driver = ''
-        # self.init_webdriver()
-
     def fetch(self):
         pass
 
     def parse(self):
         pass
 
-    # def init_webdriver(self):
-    #     chrome_driver_path = 'chromedriver.exe'
-    #
-    #     desired_capabilities = DesiredCapabilities.CHROME
-    #     desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-    #
-    #     # Create the webdriver object and pass the arguments
-    #     options = webdriver.ChromeOptions()
-    #
-    #     # Chrome will start in Headless mode
-    #     options.add_argument('headless')
-    #
-    #     # Ignores any certificate errors if there is any
-    #     options.add_argument("--ignore-certificate-errors")
-    #
-    #     # Startup the chrome webdriver with executable path and
-    #     # pass the chrome options and desired capabilities as
-    #     # parameters.
-    #     self.driver = webdriver.Chrome(executable_path=chrome_driver_path,
-    #                                    chrome_options=options,
-    #                                    desired_capabilities=desired_capabilities)
-    #
-    #     # Send a request to the website and let it load
-    #     self.driver.get(self.url)
-    #
-    #     # Sleeps for 5 seconds
-    #     time.sleep(5)
+    def init_webdriver(self):
+        # make sure chromedriver under home dir
+        chrome_driver_path = 'chromedriver'
+
+        desired_capabilities = DesiredCapabilities.CHROME
+        desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+
+        # Create the webdriver object and pass the arguments
+        options = webdriver.ChromeOptions()
+
+        # Chrome will start in Headless mode
+        options.add_argument('headless')
+
+        # Ignores any certificate errors if there is any
+        options.add_argument("--ignore-certificate-errors")
+
+        # Startup the chrome webdriver with executable path and
+        # pass the chrome options and desired capabilities as
+        # parameters.
+        return webdriver.Chrome(executable_path=chrome_driver_path,
+                                chrome_options=options,
+                                desired_capabilities=desired_capabilities)
 
 
 class Scraper1(BaseScraper):
@@ -93,34 +87,36 @@ class Scraper1(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
+        data = self.fetch()
 
-        outages, boundaries = self.fetch()
-        output = []
-        if boundaries:
-            per_loc_df = pd.DataFrame(boundaries[0]['boundaries'])
-            per_loc_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
-            output.append(per_loc_df)
-        if outages:
-            per_outage_df = pd.DataFrame(outages)
-            per_outage_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
-            zips = [extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in outages]
-            per_outage_df['zip'] = zips
-            per_outage_df['EMC'] = self.emc
-            output.append(per_outage_df)
-        else:
-            print(f"no outage of {self.emc} update found at", datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+        for key, val in data.items():
+            if key == 'per_county' and data[key]:
+                per_loc_df = pd.DataFrame(val[0]['boundaries'])
+                per_loc_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
+                data.update({key: per_loc_df})
+            elif key == 'per_outage' and data[key]:
+                per_outage_df = pd.DataFrame(val)
+                per_outage_df['timestamp'] = datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
+                zips = [extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
+                per_outage_df['zip'] = zips
+                per_outage_df['EMC'] = self.emc
+                data.update({key: per_outage_df})
+            else:
+                print(f"no outage of {self.emc} update found at",
+                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
 
-        return output
+        return data
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
+        raw_data = {}
         with urlopen(self.url + 'data/boundaries.json') as response:
-            boundaries_data = json.loads(response.read())
+            raw_data['per_county'] = json.loads(response.read())
 
         with urlopen(self.url + 'data/outages.json') as response:
-            outages_data = json.loads(response.read())
+            raw_data['per_outage'] = json.loads(response.read())
 
-        return outages_data, boundaries_data
+        return raw_data
 
 
 class Scraper2(BaseScraper):
@@ -261,36 +257,51 @@ class Scraper10(BaseScraper):
 
 
 class Scraper11(BaseScraper):
-    def __init__(self, url='', emc=''):
+    def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
-        data = (self.fetch())
-        # print(data)
-        df = pd.DataFrame(data['rows']['subs'])
-        return df
+        data = self.fetch()
+
+        for key, val in data.items():
+            # TODO: add timestamp, emc,
+            if key == 'per_substation':
+                data.update({key: pd.DataFrame(val['rows']['subs'])})
+            elif key == 'per_county':
+                data.update({key: pd.DataFrame(val['rows'])})
+            elif key == 'per_outage':
+                # TODO: save format?
+                pass
+
+        print(data)
+        return data
 
     def fetch(self):
-        datas = []
-        index = 0
-        i = 0
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        raw_data = {}
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                data = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
-                data = data.decode("utf8")
-                datas.append(data)
+                response = sw_decode(request.response.body,
+                                     request.response.headers.get('Content-Encoding', 'identity'))
+                data = response.decode("utf8")
+                if 'sub_outages' in data:
+                    raw_data['per_substation'] = json.loads(data)
+                elif 'cfa_county_data' in data:
+                    raw_data['per_county'] = json.loads(data)
+                elif 'isHighTraffic' in data:
+                    raw_data['per_outage'] = json.loads(data)
 
-                if 'SubName' in data:
-                    index = i
-
-                i += 1
-
-        print(index)
-        data_response = datas[index]
-        return json.loads(data_response)
+        return raw_data
 
 
-class Scraper():
+class Scraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
             obj = super().__new__(Scraper1)
@@ -319,5 +330,3 @@ class Scraper():
 
         obj.__init__(url, emc)
         return obj
-
-

@@ -3,4 +3,4 @@ venv/
 .idea/
 .ipynb_checkpoints
 *.ipynb
-ga_data
+data
