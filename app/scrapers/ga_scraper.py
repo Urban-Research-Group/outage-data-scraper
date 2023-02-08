@@ -11,8 +11,8 @@ import time
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
 from datetime import datetime
-# from seleniumwire import webdriver
-from selenium import webdriver
+from seleniumwire import webdriver
+# from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
 # from pyvirtualdisplay import Display
