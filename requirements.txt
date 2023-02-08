@@ -5,6 +5,7 @@ botocore
 geopy
 numpy
 pandas
+pyvirtualdisplay
 selenium
 selenium-wire
 xmltodict
