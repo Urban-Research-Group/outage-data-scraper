@@ -10,7 +10,7 @@ def handler(event, context=""):
     success_cnt = 0
 
     for emc, url in EMCs.items():
-        # try:
+        try:
             sc = ga_scraper.Scraper(layout_id, url, emc)
             data = sc.parse()
             for key, df in data.items():
@@ -20,9 +20,9 @@ def handler(event, context=""):
                     ga_scraper.save(df, bucket, path)
                     print(f"outages of {emc} as of {timestamp} saved to {bucket} under {state}/layout_{layout_id}/")
             success_cnt += 1
-        # except Exception as e:
-        #     print(e)
-        #     continue
+        except Exception as e:
+            print(e)
+            continue
 
     return {
         'statusCode': 200,

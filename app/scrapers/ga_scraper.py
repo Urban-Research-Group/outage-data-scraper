@@ -12,10 +12,8 @@ from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
 from datetime import datetime
 from seleniumwire import webdriver
-# from selenium import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-# from pyvirtualdisplay import Display
 
 
 # TODO: update for security
@@ -92,87 +90,105 @@ class BaseScraper:
         pass
 
     def init_webdriver(self):
-        # make sure chromedriver under home dir
-        chrome_driver_path = '/usr/bin/chromedriver' if is_aws_env() else 'chromedriver'
+        # TODO: make sure chromedriver path
+        chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'chromedriver'
 
         desired_capabilities = DesiredCapabilities.CHROME
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
 
-        # # Create the webdriver object and pass the arguments
-        # options = webdriver.ChromeOptions()
-        #
-        # # Chrome will start in Headless mode
-        # options.add_argument('headless')
-        #
-        # # Ignores any certificate errors if there is any
-        # options.add_argument("--ignore-certificate-errors")
-
-        # Startup the chrome webdriver with executable path and
-        # pass the chrome options and desired capabilities as
-        # parameters.
-        return webdriver.Chrome(executable_path=chrome_driver_path,
-                                chrome_options=self.__get_default_chrome_options(),
-                                desired_capabilities=desired_capabilities)
-
-    def __get_default_chrome_options(self):
+        # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
-
-        lambda_options = [
-            '--autoplay-policy=user-gesture-required',
-            '--disable-background-networking',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-breakpad',
-            '--disable-client-side-phishing-detection',
-            '--disable-component-update',
-            '--disable-default-apps',
-            '--disable-dev-shm-usage',
-            '--disable-domain-reliability',
-            '--disable-extensions',
-            '--disable-features=AudioServiceOutOfProcess',
-            '--disable-hang-monitor',
-            '--disable-ipc-flooding-protection',
-            '--disable-notifications',
-            '--disable-offer-store-unmasked-wallet-cards',
-            '--disable-popup-blocking',
-            '--disable-print-preview',
-            '--disable-prompt-on-repost',
-            '--disable-renderer-backgrounding',
-            '--disable-setuid-sandbox',
-            '--disable-speech-api',
-            '--disable-sync',
-            '--disable-gpu',
-            '--disk-cache-size=33554432',
-            '--hide-scrollbars',
-            '--ignore-gpu-blacklist',
-            '--ignore-certificate-errors',
-            '--metrics-recording-only',
-            '--mute-audio',
-            '--no-default-browser-check',
-            '--no-first-run',
-            '--no-pings',
-            '--no-sandbox',
-            '--no-zygote',
-            '--password-store=basic',
-            '--use-gl=swiftshader',
-            '--use-mock-keychain',
-            '--single-process',
-            '--headless',
-            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
-            '--v=99',
-            '--window-size=1280x1696']
-
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-extensions')
+        chrome_options.add_argument('--no-sandbox')
+        chrome_options.add_argument('--no-cache')
         chrome_options.add_argument('--disable-gpu')
-        for argument in lambda_options:
-            chrome_options.add_argument(argument)
-        chrome_options.add_argument('--user-data-dir={}'.format(self._tmp_folder + '/user-data'))
-        chrome_options.add_argument('--data-path={}'.format(self._tmp_folder + '/data-path'))
-        chrome_options.add_argument('--homedir={}'.format(self._tmp_folder))
-        chrome_options.add_argument('--disk-cache-dir={}'.format(self._tmp_folder + '/cache-dir'))
+        chrome_options.add_argument('--window-size=1024x768')
+        chrome_options.add_argument('--user-data-dir=/tmp/user-data')
+        chrome_options.add_argument('--hide-scrollbars')
+        chrome_options.add_argument('--enable-logging')
+        chrome_options.add_argument('--log-level=0')
+        chrome_options.add_argument('--v=99')
+        chrome_options.add_argument('--single-process')
+        chrome_options.add_argument('--data-path=/tmp/data-path')
+        chrome_options.add_argument('--ignore-certificate-errors')
+        chrome_options.add_argument('--homedir=/tmp')
+        chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
+        chrome_options.add_argument(
+            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36')
+        chrome_options.headless = True
+        selenium_options = {
+            'request_storage_base_dir': '/tmp',  # Use /tmp to store captured data
+            'exclude_hosts': ''
+        }
+        # TODO: check binary locations
+        chrome_options.binary_location = '/opt/chrome/chrome'
+        driver = webdriver.Chrome(executable_path=chrome_driver_path,
+                                  chrome_options=chrome_options,
+                                  seleniumwire_options=selenium_options)
+        return driver
 
-        # chrome_options.binary_location = os.getcwd() + "/bin/headless-chromium"
+    # def __get_default_chrome_options(self):
+    #     chrome_options = webdriver.ChromeOptions()
+    #
+    #     lambda_options = [
+    #         '--autoplay-policy=user-gesture-required',
+    #         '--disable-background-networking',
+    #         '--disable-background-timer-throttling',
+    #         '--disable-backgrounding-occluded-windows',
+    #         '--disable-breakpad',
+    #         '--disable-client-side-phishing-detection',
+    #         '--disable-component-update',
+    #         '--disable-default-apps',
+    #         '--disable-dev-shm-usage',
+    #         '--disable-domain-reliability',
+    #         '--disable-extensions',
+    #         '--disable-features=AudioServiceOutOfProcess',
+    #         '--disable-hang-monitor',
+    #         '--disable-ipc-flooding-protection',
+    #         '--disable-notifications',
+    #         '--disable-offer-store-unmasked-wallet-cards',
+    #         '--disable-popup-blocking',
+    #         '--disable-print-preview',
+    #         '--disable-prompt-on-repost',
+    #         '--disable-renderer-backgrounding',
+    #         '--disable-setuid-sandbox',
+    #         '--disable-speech-api',
+    #         '--disable-sync',
+    #         '--disable-gpu',
+    #         '--disk-cache-size=33554432',
+    #         '--hide-scrollbars',
+    #         '--ignore-gpu-blacklist',
+    #         '--ignore-certificate-errors',
+    #         '--metrics-recording-only',
+    #         '--mute-audio',
+    #         '--no-default-browser-check',
+    #         '--no-first-run',
+    #         '--no-pings',
+    #         '--no-sandbox',
+    #         '--no-zygote',
+    #         '--password-store=basic',
+    #         '--use-gl=swiftshader',
+    #         '--use-mock-keychain',
+    #         '--single-process',
+    #         '--headless',
+    #         'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
+    #         '--v=99',
+    #         '--window-size=1280x1696']
+    #
+    #     chrome_options.add_argument('--disable-gpu')
+    #     for argument in lambda_options:
+    #         chrome_options.add_argument(argument)
+    #     chrome_options.add_argument('--user-data-dir={}'.format(self._tmp_folder + '/user-data'))
+    #     chrome_options.add_argument('--data-path={}'.format(self._tmp_folder + '/data-path'))
+    #     chrome_options.add_argument('--homedir={}'.format(self._tmp_folder))
+    #     chrome_options.add_argument('--disk-cache-dir={}'.format(self._tmp_folder + '/cache-dir'))
+    #
+    #     chrome_options.binary_location = os.getcwd() + "/bin/headless-chromium"
+    #
+    #     return chrome_options
 
-        return chrome_options
 
 class Scraper1(BaseScraper):
     def __init__(self, url, emc):
