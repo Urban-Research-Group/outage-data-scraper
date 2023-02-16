@@ -35,9 +35,9 @@ if __name__ == "__main__":
         test_event = json.loads(f.read())
     handler(test_event)
 
-    # sc = ga_scraper.Scraper(layout_id=3,
-    #                         url='http://oms.coastalemc.com/OMSWebMap/',
-    #                         emc='Coastal Electric Cooperation')
+    # sc = ga_scraper.Scraper(layout_id=9,
+    #                         url='https://ebill.sawnee.com/maps/OutageWebMap/',
+    #                         emc='Sawnee EMC')
     #
     # print(sc.parse())
 

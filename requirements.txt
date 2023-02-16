@@ -1,7 +1,10 @@
+beautifulsoup4
 boto3
 geopy
+lxml
 numpy
 pandas
+requests-html
 selenium
 selenium-wire
 xmltodict

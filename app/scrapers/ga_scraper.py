@@ -8,18 +8,21 @@ import os
 import boto3
 import time
 
+from bs4 import BeautifulSoup
+from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
-from datetime import datetime
+from requests_html import HTMLSession
 from seleniumwire import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 
 # TODO: update for security
 import ssl
-
-# TODO: update ssl security
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -49,8 +52,12 @@ def save(df, bucket_name=None, file_path=None):
         print(f"outages data saved to {file_path}")
 
 
-def make_request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36'}):
+def make_request(url, headers=None):
     # TODO: refactor all 'urlopen'
+    if headers is None:
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) '
+                          'Chrome/109.0.0.0 Safari/537.36'}
     request = Request(url, headers=headers or {})
     try:
         with urlopen(request, timeout=10) as response:
@@ -81,7 +88,6 @@ class BaseScraper:
     def __init__(self, url, emc):
         self.url = url
         self.emc = emc
-        self._tmp_folder = '/tmp/img-scrpr-chrm/'
 
     def fetch(self):
         pass
@@ -90,11 +96,11 @@ class BaseScraper:
         pass
 
     def init_webdriver(self):
-        # TODO: make sure chromedriver path
         chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'chromedriver'
 
-        desired_capabilities = DesiredCapabilities.CHROME
+        desired_capabilities = DesiredCapabilities.CHROME.copy()
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
+        desired_capabilities['acceptInsecureCerts'] = True
 
         # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
@@ -116,78 +122,21 @@ class BaseScraper:
         chrome_options.add_argument('--homedir=/tmp')
         chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
         chrome_options.add_argument(
-            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36')
+            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 '
+            'Safari/537.36')
         chrome_options.headless = True
         selenium_options = {
             'request_storage_base_dir': '/tmp',  # Use /tmp to store captured data
             'exclude_hosts': ''
         }
-        # TODO: check binary locations
-        chrome_options.binary_location = '/opt/chrome/chrome'
+        if is_aws_env():
+            chrome_options.binary_location = '/opt/chrome/chrome'
+
         driver = webdriver.Chrome(executable_path=chrome_driver_path,
                                   chrome_options=chrome_options,
-                                  seleniumwire_options=selenium_options)
+                                  seleniumwire_options=selenium_options,
+                                  desired_capabilities=desired_capabilities)
         return driver
-
-    # def __get_default_chrome_options(self):
-    #     chrome_options = webdriver.ChromeOptions()
-    #
-    #     lambda_options = [
-    #         '--autoplay-policy=user-gesture-required',
-    #         '--disable-background-networking',
-    #         '--disable-background-timer-throttling',
-    #         '--disable-backgrounding-occluded-windows',
-    #         '--disable-breakpad',
-    #         '--disable-client-side-phishing-detection',
-    #         '--disable-component-update',
-    #         '--disable-default-apps',
-    #         '--disable-dev-shm-usage',
-    #         '--disable-domain-reliability',
-    #         '--disable-extensions',
-    #         '--disable-features=AudioServiceOutOfProcess',
-    #         '--disable-hang-monitor',
-    #         '--disable-ipc-flooding-protection',
-    #         '--disable-notifications',
-    #         '--disable-offer-store-unmasked-wallet-cards',
-    #         '--disable-popup-blocking',
-    #         '--disable-print-preview',
-    #         '--disable-prompt-on-repost',
-    #         '--disable-renderer-backgrounding',
-    #         '--disable-setuid-sandbox',
-    #         '--disable-speech-api',
-    #         '--disable-sync',
-    #         '--disable-gpu',
-    #         '--disk-cache-size=33554432',
-    #         '--hide-scrollbars',
-    #         '--ignore-gpu-blacklist',
-    #         '--ignore-certificate-errors',
-    #         '--metrics-recording-only',
-    #         '--mute-audio',
-    #         '--no-default-browser-check',
-    #         '--no-first-run',
-    #         '--no-pings',
-    #         '--no-sandbox',
-    #         '--no-zygote',
-    #         '--password-store=basic',
-    #         '--use-gl=swiftshader',
-    #         '--use-mock-keychain',
-    #         '--single-process',
-    #         '--headless',
-    #         'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36',
-    #         '--v=99',
-    #         '--window-size=1280x1696']
-    #
-    #     chrome_options.add_argument('--disable-gpu')
-    #     for argument in lambda_options:
-    #         chrome_options.add_argument(argument)
-    #     chrome_options.add_argument('--user-data-dir={}'.format(self._tmp_folder + '/user-data'))
-    #     chrome_options.add_argument('--data-path={}'.format(self._tmp_folder + '/data-path'))
-    #     chrome_options.add_argument('--homedir={}'.format(self._tmp_folder))
-    #     chrome_options.add_argument('--disk-cache-dir={}'.format(self._tmp_folder + '/cache-dir'))
-    #
-    #     chrome_options.binary_location = os.getcwd() + "/bin/headless-chromium"
-    #
-    #     return chrome_options
 
 
 class Scraper1(BaseScraper):
@@ -234,27 +183,23 @@ class Scraper2(BaseScraper):
 
     def parse(self):
         data = self.fetch()
-        response_df = pd.DataFrame(data)[
-            ['CustomersOutNow', 'CustomersRestored', 'CustomersServed', 'OutageLocation_lon',
-             'OutageLocation_lat', 'MapLocation', 'District', 'OutageName']]
-        response_df.columns = ['customersAffected', 'customersRestored', 'customersServed', 'OutageLocation_lon',
-                               'OutageLocation_lat', 'MapLocation', 'District', 'name']
-        response_df['zip_code'] = response_df.apply(
-            lambda row: extract_zipcode(row['OutageLocation_lat'], row['OutageLocation_lon']), axis=1)
-
-        return response_df[['name', 'zip_code', 'customersAffected', 'customersRestored', 'customersServed']]
-
-    def fetch(self):
-        response = urlopen(self.url)
-        data = response.read()
-        response.close()
-
-        data = json.loads(data.decode())['Outages']
-        for outage in data:
-            outage['OutageLocation_lon'] = outage['OutageLocation']['X']
-            outage['OutageLocation_lat'] = outage['OutageLocation']['Y']
-
+        for key, val in data.items():
+            if val:
+                per_outage_df = pd.DataFrame(val['Outages'])
+                per_outage_df['timestamp'] = timenow()
+                zips = [extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
+                per_outage_df['zip'] = zips
+                per_outage_df['EMC'] = self.emc
+                data.update({key: per_outage_df})
         return data
+    def fetch(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        raw_data = {}
+
+        body, response = make_request(self.url+'api/weboutageviewer/get_live_data')
+        raw_data['per_outage'] = json.loads(body.decode('utf8'))
+
+        return raw_data
 
 
 class Scraper3(BaseScraper):
@@ -303,16 +248,57 @@ class Scraper3(BaseScraper):
 class Scraper4(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
-        pass
+        data = self.fetch()
+
+        for key, val in data.items():
+            if val:
+                df = pd.DataFrame(val['areas'])
+                df[['cust_a', 'percent_cust_a']] = df[['cust_a', 'percent_cust_a']].applymap(lambda x : x['val'])
+                df['timestamp'] = timenow()
+                df['EMC'] = self.emc
+                df.drop(columns=['gotoMap'], inplace=True)
+                data.update({key: df})
+            else:
+                print(f"no outage of {self.emc} update found at",
+                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+        return data
+
 
     def fetch(self):
-        # get county/zipcode report link from html
+        print(f"fetching {self.emc} outages from {self.url}")
+        # get javascript rendered source page
+        self.driver.get(self.url)
+        # Sleeps for 5 seconds
+        time.sleep(3)
+        page_source = self.driver.page_source
 
-        # get response from the requests
+        # parse reports link
+        soup = BeautifulSoup(page_source, "html.parser")
+        containers = soup.find_all(class_="row report-link hyperlink-primary")
+        links = {}
+        for c in containers:
+            links.update({c.get("data-metrics-label"): c.get("href")})
 
-        pass
+        # get json reports
+        raw_data = {}
+        for k, v in links.items():
+            self.driver.get(self.url+v[1:])
+            time.sleep(3)
+            requests = self.driver.requests
+            for r in requests:
+                if v in r.url:
+                    print(r)
+                    response = sw_decode(r.response.body,
+                                         r.response.headers.get('Content-Encoding', 'identity'))
+                    data = response.decode("utf8", 'ignore')
+                    if any([x in data for x in ['zip', 'Zip', 'City']]):
+                        raw_data['per_zipcode'] = json.loads(data)['file_data']
+                    elif 'county' in data:
+                        raw_data['per_county'] = json.loads(data)['file_data']
+        return raw_data
 
 
 class Scraper5(BaseScraper):
@@ -324,73 +310,115 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if key == 'per_outage' and val:
                 df = pd.DataFrame(val)
-                # [['county', 'numPeople', 'latitude', 'longitude', 'title']]
-                # df.columns = ['name', 'customersAffected', 'latitude', 'longitude', 'type']
                 df['timestamp'] = timenow()
                 df['EMC'] = self.emc
                 df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitude'], row['longitude']), axis=1)
                 data.update({key: df})
+            else:
+                print(f"no outage of {self.emc} update found at",
+                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+
 
         return data
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         body, response = make_request(self.url)
-        raw_data = {}
-        raw_data['per_outage'] = json.loads(body)
+        raw_data = {'per_outage': json.loads(body)}
         return raw_data
 
 
 class Scraper6(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
         data = self.fetch()
 
-        rows = []
-        for row in data['data']['reports']['report']['dataset']['t']:
-            position = row['e'][5].split(',')
-            rows.append([row['e'][0], row['e'][1], row['e'][2], float(position[0]), float(position[1])])
-
-        df = pd.DataFrame(rows, columns=['name', 'customersServed', 'customersAffected', 'latitutde', 'longitude'])
-        df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitutde'], row['longitude']), axis=1)
-        return df[['name', 'zip_code', 'customersAffected', 'customersServed']]
+        # rows = []
+        # for row in data['data']['reports']['report']['dataset']['t']:
+        #     position = row['e'][5].split(',')
+        #     rows.append([row['e'][0], row['e'][1], row['e'][2], float(position[0]), float(position[1])])
+        #
+        # df = pd.DataFrame(rows, columns=['name', 'customersServed', 'customersAffected', 'latitutde', 'longitude'])
+        # df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitutde'], row['longitude']), axis=1)
+        # return df[['name', 'zip_code', 'customersAffected', 'customersServed']]
+        return data
 
     def fetch(self):
-        datas = []
+        print(f"fetching {self.emc} outages from {self.url}")
+        # TODO: configure seleniumwire options to log requets
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+
+        # Sleeps for 5 seconds
+        time.sleep(10)
+
+        raw_datas = {}
+
         for request in self.driver.requests:
-            if "data?_" in request.url:
+            if "outages/data" in request.url:
                 data = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
                 data = data.decode("utf8")
-                datas.append(data)
+                if "County" in data:
+                    raw_datas.update({'per_county': xmltodict.parse(data)})
 
-        data_response = ""
-        for data in datas:
-            if "County" in data:
-                data_response = data
-                break
-
-        data_response = xmltodict.parse(data_response)
-        return data_response
+        return raw_datas
 
 
 class Scraper7(BaseScraper):
 
-    def __init__(self, url):
-        super().__init__()
-        self.url = url
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+
+        for key, val in data.items():
+            if val:
+                isHighTraffic = val['isHighTraffic']
+                updateTime = val['timestamp']
+                per_outage_df = pd.DataFrame()
+                for k, v in val.items():
+                    if isinstance(v, dict):
+                        if v['markers']:
+                            df = pd.DataFrame(v['markers'])
+                            df['service_index_name'] = v['service_index_name']
+                            df['outages'] = v['outages']
+                            df['NumConsumers'] = v['stats']['NumConsumers']
+                            df['zip_code'] = df.apply(lambda row: extract_zipcode(row['lat'], row['lon']), axis=1)
+                            per_outage_df = df
+
+                per_outage_df['isHighTraffic'] = isHighTraffic
+                per_outage_df['updateTime'] = updateTime
+                per_outage_df['timestamp'] = timenow()
+                per_outage_df['EMC'] = self.emc
+                data.update({key: per_outage_df})
+            else:
+                print(f"no outage of {self.emc} update found at",
+                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+
+        return data
 
     def fetch(self):
-        datas = []
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        raw_data = {}
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                data = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
-                data = data.decode("utf8")
-                datas.append(data)
+                response = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
+                data = response.decode("utf8")
+                if 'isHighTraffic' in data:
+                    raw_data['per_outage'] = json.loads(data)
 
-        data_response = datas[-1]
-        return json.loads(data_response)
+        return raw_data
 
 
 class Scraper8(BaseScraper):
@@ -401,12 +429,48 @@ class Scraper8(BaseScraper):
 class Scraper9(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
-        pass
+        self.fetch()
+        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        tables = soup.find_all("table")
+
+        # Find the table rows using their tag name
+        rows = tables[1].find_all('tr')
+
+        # Extract the table header row
+        header_row = rows[0]
+
+        # Extract the table data rows
+        data_rows = rows[1:]
+
+        # Extract the table header cells
+        header_cells = header_row.find_all('th')
+        header = [cell.get_text().strip() for cell in header_cells]
+
+        # Extract the table data cells
+        data = []
+        for row in data_rows:
+            cells = row.find_all('td')
+            data.append([cell.get_text().strip() for cell in cells])
+
+        # Print the table data as a list of dictionaries
+        table_data = [dict(zip(header, row)) for row in data]
+        df = pd.DataFrame(table_data)[:-1][['County', '# Out', '# Served', '% Out']]
+        df['timestamp'] = timenow()
+        df['EMC'] = self.emc
+        data = {'per_county': df}
+        return data
 
     def fetch(self):
-        pass
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+        time.sleep(10)
+        # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ptifrmtgtframe")))
+        # WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div[5]/div[2]/div/div/div[3]/div/div[2]/div/div/div/div[1]/table")))
+        print(self.driver.page_source)
 
 
 class Scraper10(BaseScraper):
@@ -414,16 +478,39 @@ class Scraper10(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        response = self.fetch()
-        attributes = [x['attributes'] for x in response['features']]
-        response_df = pd.DataFrame(attributes)[['NAME', 'o_ConT', 'o_TotalCustomers']]
-        response_df.columns = ['name', 'customersAffected', 'customersServed']
-        return response_df
+        source_page = self.fetch()
+        soup = BeautifulSoup(source_page, "html.parser")
+        table = soup.find("table")
+        # Find the table rows using their tag name
+        rows = table.find_all('tr')
+
+        # Extract the table header row
+        header_row = rows[0]
+
+        # Extract the table data rows
+        data_rows = rows[1:]
+
+        # Extract the table header cells
+        header_cells = header_row.find_all('th')
+        header = [cell.get_text().strip() for cell in header_cells]
+
+        # Extract the table data cells
+        data = []
+        for row in data_rows:
+            cells = row.find_all('td')
+            data.append([cell.get_text().strip() for cell in cells])
+
+        # Print the table data as a list of dictionaries
+        table_data = [dict(zip(header, row)) for row in data]
+        df = pd.DataFrame(table_data)[:-1]
+        df['timestamp'] = timenow()
+        df['EMC'] = self.emc
+        data = {'per_county': df}
+        return data
 
     def fetch(self):
-        response = urlopen(self.url)
-        data_json = json.loads(response.read())
-        return data_json
+        body, response = make_request(self.url)
+        return body
 
 
 class Scraper11(BaseScraper):
@@ -446,11 +533,30 @@ class Scraper11(BaseScraper):
                 per_county_df['EMC'] = self.emc
                 data.update({key: per_county_df})
             elif key == 'per_outage':
-                per_outage_df = pd.DataFrame(data['per_outage']['0']['markers'])
-                per_outage_df['timestamp'] = timenow()
-                per_outage_df['EMC'] = self.emc
-                data.update({key: per_outage_df})
+                if val:
+                    isHighTraffic = val['isHighTraffic']
+                    updateTime = val['timestamp']
+                    per_outage_df = pd.DataFrame()
+                    for k, v in val.items():
+                        if isinstance(v, dict):
+                            if v['markers']:
+                                df = pd.DataFrame(v['markers'])
+                                df['service_index_name'] = v['service_index_name']
+                                df['outages'] = v['outages']
+                                df['NumConsumers'] = v['stats']['NumConsumers']
+                                df['zip_code'] = df.apply(lambda row: extract_zipcode(row['lat'], row['lon']), axis=1)
+                                per_outage_df = df
 
+                    per_outage_df['isHighTraffic'] = isHighTraffic
+                    per_outage_df['updateTime'] = updateTime
+                    per_outage_df['timestamp'] = timenow()
+                    per_outage_df['EMC'] = self.emc
+                    data.update({key: per_outage_df})
+
+                # per_outage_df = pd.DataFrame(data['per_outage']['0']['markers'])
+                # per_outage_df['timestamp'] = timenow()
+                # per_outage_df['EMC'] = self.emc
+                # data.update({key: per_outage_df})
         return data
 
     def fetch(self):

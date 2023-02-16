@@ -1,5 +1,5 @@
 # Outage Data Scraper & AWS Lambda Deployment 
-Web scraper to gather 36 EMCs (Electric Membership Corporation) raw power outage data and parse into .csv format. Then save to S3 buckets for further data pipeline and analysis.
+Web scraper to gather 36 GA EMCs (Electric Membership Corporation) raw power outage data and parse into .csv format. Then save to S3 buckets for further data pipeline and analysis. (Coveraged state expanding)
 https://docs.google.com/spreadsheets/d/1sknQle2RQAFSRId9O5JyoNozgHtig1Rx6u2pnippaMQ/edit#gid=0
 
 
@@ -13,7 +13,7 @@ The [Dockerfile](./Dockerfile) contains the instructions to build this image. Ru
 docker build -t outage-data-scraper:latest .
 ```
 ## Local test
-he image can be run locally before you deploy to deploy to AWS Lambda. Providing
+he image can be run locally before you deploy to AWS Lambda. Providing
 AWS credentials is set up in `~/.aws/credentials`. Simply run the
 command.
 ```
