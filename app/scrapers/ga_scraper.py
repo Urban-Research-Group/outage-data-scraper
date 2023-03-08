@@ -3,23 +3,15 @@ import json
 import pandas as pd
 import geopy
 import xmltodict
-import io
-import os
-import boto3
 import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
 from seleniumwire import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-
 from scrapers.util import is_aws_env, make_request, extract_zipcode, timenow
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 
 
 # TODO: update for security
