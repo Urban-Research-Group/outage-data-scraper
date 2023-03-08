@@ -34,7 +34,7 @@ def handler(event, context=""):
 if __name__ == "__main__":
     start = time.time()
 
-    with open("../data/ca/state.json") as f:
+    with open("../data/ga/layout_4.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 

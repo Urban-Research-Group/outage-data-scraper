@@ -11,7 +11,7 @@ from urllib.request import urlopen, Request
 from seleniumwire import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-from scrapers.util import is_aws_env, make_request, extract_zipcode, timenow
+from scrapers.util import is_aws_env, make_request, timenow
 
 
 # TODO: update for security
@@ -30,6 +30,13 @@ class BaseScraper:
 
     def parse(self):
         pass
+
+    def extract_zipcode(self, lat, lon):
+        addr = self.geo_locator.reverse((lat, lon))
+        if addr:
+            return addr.raw['address'].get('postcode', 'unknown')
+        else:
+            return 'unknown'
 
     def init_webdriver(self):
         chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'chromedriver'
@@ -92,7 +99,7 @@ class Scraper1(BaseScraper):
             elif key == 'per_outage' and data[key]:
                 per_outage_df = pd.DataFrame(val)
                 per_outage_df['timestamp'] = timenow()
-                zips = [extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng'], self.geo_locator) for x in val]
+                zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -124,7 +131,7 @@ class Scraper2(BaseScraper):
             if val:
                 per_outage_df = pd.DataFrame(val['Outages'])
                 per_outage_df['timestamp'] = timenow()
-                zips = [extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
+                zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -156,7 +163,7 @@ class Scraper3(BaseScraper):
             elif key == 'per_outage' and val:
                 per_outage_df = pd.DataFrame(val['MobileOutage'])
                 per_outage_df['timestamp'] = timenow()
-                zips = [extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
+                zips = [self.extract_zipcode(x['X'], x['Y'], self.geo_locator) for x in [val['MobileOutage']]]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -249,7 +256,7 @@ class Scraper5(BaseScraper):
                 df = pd.DataFrame(val)
                 df['timestamp'] = timenow()
                 df['EMC'] = self.emc
-                df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitude'], row['longitude']), axis=1)
+                df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['latitude'], row['longitude']), axis=1)
                 data.update({key: df})
             else:
                 print(f"no outage of {self.emc} update found at",
@@ -325,7 +332,7 @@ class Scraper7(BaseScraper):
                             df['service_index_name'] = v['service_index_name']
                             df['outages'] = v['outages']
                             df['NumConsumers'] = v['stats']['NumConsumers']
-                            df['zip_code'] = df.apply(lambda row: extract_zipcode(row['lat'], row['lon']), axis=1)
+                            df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis=1)
                             per_outage_df = df
 
                 per_outage_df['isHighTraffic'] = isHighTraffic
@@ -481,7 +488,7 @@ class Scraper11(BaseScraper):
                                 df['service_index_name'] = v['service_index_name']
                                 df['outages'] = v['outages']
                                 df['NumConsumers'] = v['stats']['NumConsumers']
-                                df['zip_code'] = df.apply(lambda row: extract_zipcode(row['lat'], row['lon']), axis=1)
+                                df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis=1)
                                 per_outage_df = df
 
                     per_outage_df['isHighTraffic'] = isHighTraffic

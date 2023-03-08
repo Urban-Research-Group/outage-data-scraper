@@ -1,7 +1,6 @@
 import os
 import boto3
 import io
-import geopy
 
 from datetime import datetime
 from urllib.error import HTTPError, URLError
@@ -53,15 +52,6 @@ def make_request(url, headers=None):
         print(error.reason)
     except TimeoutError:
         print("Request timed out")
-
-
-def extract_zipcode(lat, lon, geo_locator):
-    addr = geo_locator.reverse((lat, lon))
-    if addr:
-        return addr.raw['address'].get('postcode', 'unknown')
-    else:
-        return 'unknown'
-
 
 def timenow():
     return datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
