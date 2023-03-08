@@ -179,7 +179,7 @@ class Scraper8(BaseScraper):
 
 
 
-class Scraper:
+class TXScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 8:
             obj = super().__new__(Scraper8)
@@ -192,7 +192,7 @@ class Scraper:
 
 if __name__ == "__main__":
 
-    sc = Scraper(layout_id=8,
+    sc = TXScraper(layout_id=8,
                 url='http://outage.bluebonnetelectric.coop:82/',
                 emc='Blue Bonnet')
     print(sc.parse())
