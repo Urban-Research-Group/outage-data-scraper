@@ -1,5 +1,5 @@
 # Outage Data Scraper & AWS Lambda Deployment 
-Web scraper to gather 36 GA EMCs (Electric Membership Corporation) raw power outage data and parse into .csv format. Then save to S3 buckets for further data pipeline and analysis. (Coveraged state expanding)
+Web scraper to gather GA, CA, TX raw power outage data and parse into .csv format. Then save to S3 buckets for further data pipeline and analysis. (Coveraged state expanding)
 https://docs.google.com/spreadsheets/d/1sknQle2RQAFSRId9O5JyoNozgHtig1Rx6u2pnippaMQ/edit#gid=0
 
 
