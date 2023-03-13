@@ -1,5 +1,5 @@
 # Outage Data Scraper & AWS Lambda Deployment 
-Web scraper to gather GA, CA, TX raw power outage data and parse into .csv format. Then save to S3 buckets for further data pipeline and analysis.
+Web scraper gathering GA, CA, TX raw power outage data and unifying schemas for research and analysis.
 
 
 ## Source code
