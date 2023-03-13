@@ -1,5 +1,5 @@
 # Outage Data Scraper & AWS Lambda Deployment 
-Web scraper gathering GA, CA, TX raw power outage data and unifying schemas for research and analysis.
+Web scraper gathering GA, CA, TX [WIP] raw power outage data and unifying schemas for research and analysis. 
 
 
 ## Source code
