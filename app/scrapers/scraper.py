@@ -11,4 +11,4 @@ class Scraper:
         elif state == 'tx':
             return TXScraper(layout_id, url, emc)
         else:
-            raise "Invalid state input"
+            raise "Invalid input state"

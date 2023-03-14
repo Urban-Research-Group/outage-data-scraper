@@ -11,7 +11,7 @@ def handler(event, context=""):
     success_cnt = 0
 
     for emc, url in EMCs.items():
-        # try:
+        try:
             sc = Scraper(state, layout_id, url, emc)
             data = sc.parse()
             for key, df in data.items():
@@ -21,9 +21,9 @@ def handler(event, context=""):
                     save(df, bucket, path)
                     print(f"outages of {emc} as of {timestamp} saved to {bucket} under {state}/layout_{layout_id}/")
             success_cnt += 1
-        # except Exception as e:
-        #     print(e)
-        #     continue
+        except Exception as e:
+            print(e)
+            continue
 
     return {
         'statusCode': 200,
@@ -34,17 +34,19 @@ def handler(event, context=""):
 if __name__ == "__main__":
     start = time.time()
 
-    with open("../data/ga/layout_4.json") as f:
+    # handler test here
+    with open("../data/tx/layout_5.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 
+    # single test here
+    # sc = Scraper(state='tx',
+    #              layout_id=5,
+    #              url='https://stormcenter.oncor.com/default.html',
+    #              emc='Storm Center')
+    # print(sc.parse())
+
     end = time.time()
     print(end - start)
-
-    # sc = ga_scraper.Scraper(layout_id=9,
-    #                         url='https://ebill.sawnee.com/maps/OutageWebMap/',
-    #                         emc='Sawnee EMC')
-    #
-    # print(sc.parse())
 
 

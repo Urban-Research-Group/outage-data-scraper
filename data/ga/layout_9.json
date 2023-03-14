@@ -1,0 +1,9 @@
+{
+        "layout": 9,
+        "emc": {
+            "Jackon EMC": "https://webapps.jacksonemc.com/nisc/maps/MemberOutageMap/",
+            "Sawnee EMC": "https://ebill.sawnee.com/maps/OutageWebMap/"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

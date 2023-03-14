@@ -3,86 +3,20 @@ import json
 import pandas as pd
 import geopy
 import xmltodict
-import io
-import os
-import boto3
 import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-from urllib.error import HTTPError, URLError
-from urllib.request import urlopen, Request
-from requests_html import HTMLSession
+from urllib.request import urlopen
 from seleniumwire import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
+from scrapers.util import is_aws_env, make_request, timenow
 
 
 # TODO: update for security
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
-
-
-def is_aws_env():
-    return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('AWS_EXECUTION_ENV')
-
-
-def save(df, bucket_name=None, file_path=None):
-    if is_aws_env():
-        s3_client = boto3.client("s3")
-        with io.StringIO() as csv_buffer:
-            df.to_csv(csv_buffer, index=False)
-
-            response = s3_client.put_object(
-                Bucket=bucket_name, Key=file_path, Body=csv_buffer.getvalue()
-            )
-
-            status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-
-            if status == 200:
-                print(f"Successful S3 put_object response. Status - {status}")
-            else:
-                print(f"Unsuccessful S3 put_object response. Status - {status}")
-    else:
-        local_path = f"{os.getcwd()}/../{bucket_name}/{file_path}"
-        df.to_csv(local_path, index=False)
-        print(f"outages data saved to {file_path}")
-
-
-def make_request(url, headers=None):
-    # TODO: refactor all 'urlopen'
-    if headers is None:
-        headers = {
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) '
-                          'Chrome/109.0.0.0 Safari/537.36'}
-    request = Request(url, headers=headers or {})
-    try:
-        with urlopen(request, timeout=10) as response:
-            print(response.status)
-            return response.read(), response
-    except HTTPError as error:
-        print(error.status, error.reason)
-    except URLError as error:
-        print(error.reason)
-    except TimeoutError:
-        print("Request timed out")
-
-
-def extract_zipcode(lat, lon):
-    geo_locator = geopy.Nominatim(user_agent='1234')
-    addr = geo_locator.reverse((lat, lon))
-    if addr:
-        return addr.raw['address'].get('postcode', 'unknown')
-    else:
-        return 'unknown'
-
-
-def timenow():
-    return datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
-
 
 class BaseScraper:
     def __init__(self, url, emc):
@@ -160,7 +94,6 @@ class Scraper5(BaseScraper):
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
         return data
 
-
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
@@ -194,6 +127,7 @@ class Scraper5(BaseScraper):
                         raw_data['per_county'] = json.loads(data)['file_data']
         return raw_data
 
+
 class Scraper8(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
@@ -209,7 +143,7 @@ class Scraper8(BaseScraper):
             elif key == 'per_outage' and data[key]:
                 per_outage_df = pd.DataFrame(val)
                 per_outage_df['timestamp'] = timenow()
-                zips = [extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
+                zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -229,6 +163,7 @@ class Scraper8(BaseScraper):
             raw_data['per_outage'] = json.loads(response.read())
 
         return raw_data
+
 
 class Scraper11(BaseScraper):
     def __init__(self, url, emc):
@@ -275,11 +210,6 @@ class Scraper11(BaseScraper):
         # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ptifrmtgtframe")))
         # WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div[5]/div[2]/div/div/div[3]/div/div[2]/div/div/div/div[1]/table")))
         print(self.driver.page_source)
-
-
-
-
-
 
 
 class TXScraper:
