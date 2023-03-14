@@ -225,11 +225,3 @@ class TXScraper:
 
         obj.__init__(url, emc)
         return obj
-
-
-if __name__ == "__main__":
-
-    sc = TXScraper(layout_id=5,
-                url='https://stormcenter.oncor.com/default.html',
-                emc='Storm Center')
-    print(sc.parse())
