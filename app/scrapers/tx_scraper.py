@@ -18,6 +18,7 @@ from .util import is_aws_env, make_request, timenow
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
+
 class BaseScraper:
     def __init__(self, url, emc):
         self.url = url

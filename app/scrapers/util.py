@@ -12,6 +12,12 @@ def is_aws_env():
     return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('AWS_EXECUTION_ENV')
 
 
+def is_duplicate(df, file):
+    # TODO: per_outage
+    # read .csv -> append non-duplicate entries
+    pass
+
+
 def save(df, bucket_name=None, file_path=None):
     """save df without duplication entries"""
     if is_aws_env():
@@ -53,9 +59,6 @@ def save(df, bucket_name=None, file_path=None):
         print(f"outages data saved to {file_path}")
 
 
-def check_duplicate():
-    pass
-
 def make_request(url, headers=None):
     # TODO: refactor all 'urlopen'
     if headers is None:
@@ -73,6 +76,7 @@ def make_request(url, headers=None):
         print(error.reason)
     except TimeoutError:
         print("Request timed out")
+
 
 def timenow():
     return datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")

@@ -1,5 +1,6 @@
 import json
 import time
+
 from scrapers import Scraper
 from scrapers.util import save, timenow
 

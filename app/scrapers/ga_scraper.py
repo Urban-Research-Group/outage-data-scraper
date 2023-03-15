@@ -470,11 +470,14 @@ class Scraper11(BaseScraper):
                 per_substation_df = pd.DataFrame(val['rows']['subs'])
                 per_substation_df['timestamp'] = timenow()
                 per_substation_df['EMC'] = self.emc
+                per_substation_df = per_substation_df[(per_substation_df.SubTotalConsumersOut != 0) |
+                                                      (per_substation_df.SubTotalMetersAffectedByDeviceOutages != 0)]
                 data.update({key: per_substation_df})
             elif key == 'per_county':
                 per_county_df = pd.DataFrame(val['rows'])
                 per_county_df['timestamp'] = timenow()
                 per_county_df['EMC'] = self.emc
+                per_county_df = per_county_df[per_county_df.out != 0]
                 data.update({key: per_county_df})
             elif key == 'per_outage':
                 if val:
@@ -493,7 +496,7 @@ class Scraper11(BaseScraper):
 
                     per_outage_df['isHighTraffic'] = isHighTraffic
                     per_outage_df['updateTime'] = updateTime
-                    per_outage_df['timestamp'] = timenow()
+                    # per_outage_df['timestamp'] = timenow()
                     per_outage_df['EMC'] = self.emc
                     data.update({key: per_outage_df})
 
