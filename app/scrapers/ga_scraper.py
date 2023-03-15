@@ -475,7 +475,7 @@ class Scraper11(BaseScraper):
                 data.update({key: per_substation_df})
             elif key == 'per_county':
                 per_county_df = pd.DataFrame(val['rows'])
-                per_county_df['timestamp'] = timenow()
+                per_county_df['t imestamp'] = timenow()
                 per_county_df['EMC'] = self.emc
                 per_county_df = per_county_df[per_county_df.out != 0]
                 data.update({key: per_county_df})
@@ -500,10 +500,6 @@ class Scraper11(BaseScraper):
                     per_outage_df['EMC'] = self.emc
                     data.update({key: per_outage_df})
 
-                # per_outage_df = pd.DataFrame(data['per_outage']['0']['markers'])
-                # per_outage_df['timestamp'] = timenow()
-                # per_outage_df['EMC'] = self.emc
-                # data.update({key: per_outage_df})
         return data
 
     def fetch(self):
