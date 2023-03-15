@@ -12,13 +12,8 @@ def is_aws_env():
     return os.environ.get('AWS_LAMBDA_FUNCTION_NAME') or os.environ.get('AWS_EXECUTION_ENV')
 
 
-def is_duplicate(df, file):
-    # TODO: per_outage
-    # read .csv -> append non-duplicate entries
-    pass
-
-
 def save(df, bucket_name=None, file_path=None):
+    '''save df without duplication entries'''
     if is_aws_env():
         # Check if the file exists in the bucket
         s3_client = boto3.client('s3')

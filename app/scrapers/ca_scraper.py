@@ -20,7 +20,8 @@ class CAScraper(BaseScraper):
             df = pd.concat([df.drop(["geometry"], axis=1), df["geometry"].apply(lambda x: pd.Series(x))], axis=1)
 
             df['timestamp'] = timenow()
-            df['zip'] = df.apply(lambda x: self.extract_zipcode(x.y, x.x), axis=1)
+            # disabled b/c takes too long
+            # df['zip'] = df.apply(lambda x: self.extract_zipcode(x.y, x.x), axis=1)
             df[['StartDate', 'EstimatedRestoreDate']] = df[['StartDate', 'EstimatedRestoreDate']].apply(pd.to_datetime,
                                                                                                         unit='ms')
             data.update({key: df})
