@@ -93,12 +93,13 @@ class Scraper1(BaseScraper):
         for key, val in data.items():
             if key == 'per_county' and data[key]:
                 per_loc_df = pd.DataFrame(val[0]['boundaries'])
+                per_loc_df = per_loc_df[(per_loc_df['customersAffected'] != 0) | (per_loc_df['customersOutNow'] != 0)]
                 per_loc_df['timestamp'] = timenow()
                 per_loc_df['EMC'] = self.emc
                 data.update({key: per_loc_df})
             elif key == 'per_outage' and data[key]:
                 per_outage_df = pd.DataFrame(val)
-                per_outage_df['timestamp'] = timenow()
+                # per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
@@ -130,12 +131,13 @@ class Scraper2(BaseScraper):
         for key, val in data.items():
             if val:
                 per_outage_df = pd.DataFrame(val['Outages'])
-                per_outage_df['timestamp'] = timenow()
+                # per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
         return data
+
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
@@ -156,13 +158,14 @@ class Scraper3(BaseScraper):
         for key, val in data.items():
             if key == 'per_county' and val:
                 per_loc_df = pd.DataFrame(val)
+                per_loc_df = per_loc_df[per_loc_df['CustomersAffected'] != '0']
                 per_loc_df['timestamp'] = timenow()
                 per_loc_df['EMC'] = self.emc
                 per_loc_df.drop(columns=['Shape'], inplace=True)
                 data.update({key: per_loc_df})
             elif key == 'per_outage' and val:
                 per_outage_df = pd.DataFrame(val['MobileOutage'])
-                per_outage_df['timestamp'] = timenow()
+                # per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['X'], x['Y'], self.geo_locator) for x in [val['MobileOutage']]]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
@@ -201,6 +204,7 @@ class Scraper4(BaseScraper):
             if val:
                 df = pd.DataFrame(val['areas'])
                 df[['cust_a', 'percent_cust_a']] = df[['cust_a', 'percent_cust_a']].applymap(lambda x : x['val'])
+                df = df[(df['cust_a'] != 0) | (df['n_out'] != 0)]
                 df['timestamp'] = timenow()
                 df['EMC'] = self.emc
                 df.drop(columns=['gotoMap'], inplace=True)
@@ -254,9 +258,13 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if key == 'per_outage' and val:
                 df = pd.DataFrame(val)
+<<<<<<< HEAD
                 df['timestamp'] = timenow()
                 df[['startTime', 'lastUpdatedTime', 'etrTime']] = df[['startTime', 'lastUpdatedTime', 'etrTime']].apply(
                     pd.to_datetime, unit='ms')
+=======
+                # df['timestamp'] = timenow()
+>>>>>>> 5b3a556 (save without duplication)
                 df['EMC'] = self.emc
                 df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['latitude'], row['longitude']), axis=1)
                 data.update({key: df})
@@ -339,7 +347,7 @@ class Scraper7(BaseScraper):
 
                 per_outage_df['isHighTraffic'] = isHighTraffic
                 per_outage_df['updateTime'] = updateTime
-                per_outage_df['timestamp'] = timenow()
+                # per_outage_df['timestamp'] = timenow()
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
             else:
@@ -406,6 +414,7 @@ class Scraper9(BaseScraper):
         df = pd.DataFrame(table_data)[:-1][['County', '# Out', '# Served', '% Out']]
         df['timestamp'] = timenow()
         df['EMC'] = self.emc
+        df = df[df['# Out'] != '0']
         data = {'per_county': df}
         return data
 
@@ -449,6 +458,7 @@ class Scraper10(BaseScraper):
         df = pd.DataFrame(table_data)[:-1]
         df['timestamp'] = timenow()
         df['EMC'] = self.emc
+        df = df[df['Customers Affected'] != '0']
         data = {'per_county': df}
         return data
 
@@ -475,7 +485,7 @@ class Scraper11(BaseScraper):
                 data.update({key: per_substation_df})
             elif key == 'per_county':
                 per_county_df = pd.DataFrame(val['rows'])
-                per_county_df['t imestamp'] = timenow()
+                per_county_df['timestamp'] = timenow()
                 per_county_df['EMC'] = self.emc
                 per_county_df = per_county_df[per_county_df.out != 0]
                 data.update({key: per_county_df})

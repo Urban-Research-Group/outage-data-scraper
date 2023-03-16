@@ -23,7 +23,7 @@ class ScraperINV(BaseScraper):
             df = pd.concat([df.drop(["attributes"], axis=1), df["attributes"].apply(lambda x: pd.Series(x))], axis=1)
             df = pd.concat([df.drop(["geometry"], axis=1), df["geometry"].apply(lambda x: pd.Series(x))], axis=1)
 
-            df['timestamp'] = timenow()
+            # df['timestamp'] = timenow()
             # disabled b/c takes too long
             # df['zip'] = df.apply(lambda x: self.extract_zipcode(x.y, x.x), axis=1)
             df[['StartDate', 'EstimatedRestoreDate']] = df[['StartDate', 'EstimatedRestoreDate']].apply(pd.to_datetime,
