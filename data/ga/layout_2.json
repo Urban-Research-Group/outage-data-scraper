@@ -1,0 +1,9 @@
+{
+        "layout": 2,
+        "emc": {
+            "Blueridge Mountain EMC": "http://outage.brmemc.com:8008/",
+            "Tri-Countt EMC": "http://151.213.202.201:89/"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

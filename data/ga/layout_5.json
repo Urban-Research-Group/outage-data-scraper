@@ -1,0 +1,8 @@
+{
+        "layout": 5,
+        "emc": {
+            "Colquitt EMC": "https://utilisocial.io/datacapable/v2/p/colquitt/map/events?types=OUTAGE&polygons=&sortBy=CUSTOMERS_AFFECTED&orderBy=DESCENDING"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

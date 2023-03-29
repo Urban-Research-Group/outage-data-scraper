@@ -1,0 +1,8 @@
+{
+        "layout": 6,
+        "emc": {
+            "Coweta-Fayette": "https://outage.utility.org/"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

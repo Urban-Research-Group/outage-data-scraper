@@ -1,0 +1,21 @@
+{
+        "layout": 8,
+        "emc": {
+            "Bryan Texas Utilities": "http://outages.btutilities.com/",
+            "College Station Utilities": "http://outages.cstx.gov/",
+            "Bluebonnet Electric Coop, Inc.": "http://outage.bluebonnetelectric.coop:82/",
+            "New Braunfels Utilities":"https://oms.nbutexas.com/",
+            "Bowie-Cass Electric Coop, Inc.": "http://outages.bcec.com:89/",
+            "Farmers Electric Coop, Inc.": "https://outageviewer.fecelectric.com/",
+            "Guadalupe Valley Electric Coop, Inc.": "http://outages.gvec.org/",
+            "Mid-South Electric Coop Association": "https://outage.midsouthelectric.com/",
+            "North Plains Electric Coop, Inc.": "http://outagemap.npec.org:89/",
+            "Nueces Electric Coop, Inc.": "http://outage.nueceselectric.org/",
+            "San Bernard Electric Coop, Inc.": "http://outages.sbec.org:7576/",
+            "Taylor Electric Coop, Inc.": "http://64.40.223.66:7576/",
+            "Trinity Valley Electric Coop, Inc.": "http://outages.tvec.net/#viewer-menu-parent",
+            "Wood County Electric Coop, Inc.": "http://outagemap.wcec.org/"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

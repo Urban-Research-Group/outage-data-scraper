@@ -234,7 +234,7 @@ class Scraper4(BaseScraper):
             requests = self.driver.requests
             for r in requests:
                 if v in r.url:
-                    print(r)
+                    # print(r)
                     response = sw_decode(r.response.body,
                                          r.response.headers.get('Content-Encoding', 'identity'))
                     data = response.decode("utf8", 'ignore')
@@ -414,7 +414,7 @@ class Scraper9(BaseScraper):
         time.sleep(10)
         # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ptifrmtgtframe")))
         # WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div[5]/div[2]/div/div/div[3]/div/div[2]/div/div/div/div[1]/table")))
-        print(self.driver.page_source)
+        # print(self.driver.page_source)
 
 
 class Scraper10(BaseScraper):

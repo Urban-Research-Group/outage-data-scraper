@@ -1,0 +1,11 @@
+{
+        "layout": 11,
+        "emc": {
+            "Tri-State EMC": "https://www.outageentry.com/Outages/outage.php?Client=tsemc",
+            "Walton EMC": "https://www.outageentry.com/Outages/outage.php?Client=walton",
+            "Oconee EMC": "https://www.outageentry.com/Outages/outage.php?Client=OEMC",
+            "Mitchell EMC": "https://www.outageentry.com/Outages/outage.php?Client=MITCHELL"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

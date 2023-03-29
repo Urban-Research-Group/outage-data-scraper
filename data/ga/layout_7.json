@@ -1,0 +1,8 @@
+{
+        "layout": 7,
+        "emc": {
+            "GreyStone": "https://www.outageentry.com/Outages/outage.php?Client=GREYS"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

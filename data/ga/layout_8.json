@@ -1,0 +1,8 @@
+{
+        "layout": 8,
+        "emc": {
+            "Hart EMC": "https://hartemc.maps.arcgis.com/apps/webappviewer/index.html?id=08cbe90d90914a719bc0a6a813bd70f3"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

@@ -1,0 +1,9 @@
+{
+        "layout": 4,
+        "emc": {
+            "Cobb EMC": "https://outagemap.cobbemc.com/",
+            "Georgia Power": "https://outagemap.georgiapower.com/"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

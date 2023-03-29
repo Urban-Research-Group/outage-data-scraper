@@ -1,0 +1,10 @@
+{
+        "layout": 5,
+        "emc": {
+            "Oncor Electric Delivery Co.": "https://stormcenter.oncor.com/default.html",
+            "Austin Energy": "https://outagemap.austinenergy.com/external/default.html",
+            "CPS Energy": "https://outagemap.cpsenergy.com/CPSStaticMapsEXT/CPSStaticMapV2_EXT.html"
+        },
+        "bucket": "data",
+        "folder": "ga"
+    }

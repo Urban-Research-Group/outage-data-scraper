@@ -3,4 +3,5 @@ venv/
 .idea/
 .ipynb_checkpoints
 *.ipynb
-data
+*.csv
+*.DS_Store
