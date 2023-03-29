@@ -1,6 +1,6 @@
 import json
 import time
-from scrapers.scraper import Scraper
+from scrapers import Scraper
 from scrapers.util import save
 
 def handler(event, context=""):
@@ -34,9 +34,8 @@ def handler(event, context=""):
 if __name__ == "__main__":
     start = time.time()
 
-
-    # handler test here
-    with open("../data/tx/layout_5.json") as f:
+    # test here
+    with open("../data/ca/paloalto.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 

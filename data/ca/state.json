@@ -1,8 +1,0 @@
-{
-        "layout": 1,
-        "emc": {
-            "CA_STATE": "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer/0/query"
-        },
-        "bucket": "data",
-        "folder": "ca"
-    }

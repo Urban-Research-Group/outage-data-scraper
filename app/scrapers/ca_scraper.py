@@ -1,9 +1,12 @@
 import pandas as pd
 import requests
+import time
 
-from scrapers.ga_scraper import BaseScraper
-from scrapers.ga_scraper import Scraper9
-from scrapers.util import timenow
+from .ga_scraper import BaseScraper, Scraper9
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from .util import timenow
 
 URL = "https://services.arcgis.com/BLN4oKB0N1YSgvY8/arcgis/rest/services/Power_Outages_(View)/FeatureServer/0/query"
 
@@ -51,31 +54,45 @@ class ScraperINV(BaseScraper):
             return raw_data
         else:
             print("Request failed. Status code:", response.status_code)
-            
-            
+
+
 class ScraperCPA(Scraper9):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+
+    def fetch(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+        # time.sleep(10)
+
+        wait = WebDriverWait(self.driver, 10)
+        label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
+        label.click()
+
+        # Wait for the page to fully load
+        time.sleep(10)
 
 
 class ScraperCC(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
-    
+
     def parse(self):
         pass
 
     def fetch(self):
+        # need to observe outage first?
         pass
 
-            
-class CAScrapers:
+
+class CAScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 'investor':
             obj = super().__new__(ScraperINV)
-        elif layout_id == 'cpa':
+        elif layout_id == 'paloalto':
             obj = super().__new__(ScraperCPA)
-        elif layout_id == 'cc':
+        elif layout_id == 'colton':
             obj = super().__new__(ScraperCC)
         else:
             raise "Invalid layout ID: Enter layout ID in ['investor', 'cpa', 'cc']"

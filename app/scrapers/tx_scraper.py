@@ -11,7 +11,7 @@ from urllib.request import urlopen
 from seleniumwire import webdriver
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-from scrapers.util import is_aws_env, make_request, timenow
+from .util import is_aws_env, make_request, timenow
 
 
 # TODO: update for security

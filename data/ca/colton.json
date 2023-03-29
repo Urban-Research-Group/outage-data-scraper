@@ -1,0 +1,8 @@
+{
+        "layout": "colton",
+        "emc": {
+            "City of Colton": "https://www.ci.colton.ca.us/1018/Electric-Outage"
+        },
+        "bucket": "data",
+        "folder": "ca"
+    }
