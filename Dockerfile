@@ -3,7 +3,7 @@
 FROM umihico/aws-lambda-selenium-python:latest
 
 # copy scraper code
-COPY app/ ${LAMBDA_TASK_ROOT}/app
+COPY app/ ${LAMBDA_TASK_ROOT}
 
 # install dependencies
 COPY requirements.txt ${LAMBDA_TASK_ROOT}/requirements.txt
@@ -12,4 +12,4 @@ RUN --mount=type=cache,target=/root/.cache \
 
 ENV APP_VERSION=1.0.0
 
-CMD ["app/main.handler"]
+CMD ["main.handler"]

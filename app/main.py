@@ -1,7 +1,7 @@
 import json
 import time
 from scrapers import Scraper
-from scrapers.util import save
+from scrapers.util import save, timenow
 
 def handler(event, context=""):
     layout_id = event['layout']
@@ -15,11 +15,11 @@ def handler(event, context=""):
             sc = Scraper(state, layout_id, url, emc)
             data = sc.parse()
             for key, df in data.items():
-                if len(df):
-                    timestamp = df['timestamp'][0]
-                    path = f"{state}/layout_{layout_id}/{key}_{emc}_{timestamp}.csv"
+                if df.empty:
+                    print(f"no {key} outages for {emc} as of {timenow()}")
+                else:
+                    path = f"{state}/layout_{layout_id}/{key}_{emc}.csv"
                     save(df, bucket, path)
-                    print(f"outages of {emc} as of {timestamp} saved to {bucket} under {state}/layout_{layout_id}/")
             success_cnt += 1
         except Exception as e:
             print(e)
@@ -35,7 +35,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # test here
-    with open("../data/ca/paloalto.json") as f:
+    with open("../data/ga/layout_5.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 
