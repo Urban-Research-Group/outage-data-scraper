@@ -99,7 +99,7 @@ class Scraper1(BaseScraper):
                 data.update({key: per_loc_df})
             elif key == 'per_outage' and data[key]:
                 per_outage_df = pd.DataFrame(val)
-                # per_outage_df['timestamp'] = timenow()
+                per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
@@ -131,7 +131,7 @@ class Scraper2(BaseScraper):
         for key, val in data.items():
             if val:
                 per_outage_df = pd.DataFrame(val['Outages'])
-                # per_outage_df['timestamp'] = timenow()
+                per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
@@ -165,7 +165,7 @@ class Scraper3(BaseScraper):
                 data.update({key: per_loc_df})
             elif key == 'per_outage' and val:
                 per_outage_df = pd.DataFrame(val['MobileOutage'])
-                # per_outage_df['timestamp'] = timenow()
+                per_outage_df['timestamp'] = timenow()
                 zips = [self.extract_zipcode(x['X'], x['Y'], self.geo_locator) for x in [val['MobileOutage']]]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
@@ -341,7 +341,7 @@ class Scraper7(BaseScraper):
 
                 per_outage_df['isHighTraffic'] = isHighTraffic
                 per_outage_df['updateTime'] = updateTime
-                # per_outage_df['timestamp'] = timenow()
+                per_outage_df['timestamp'] = timenow()
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
             else:
@@ -500,7 +500,7 @@ class Scraper11(BaseScraper):
 
                     per_outage_df['isHighTraffic'] = isHighTraffic
                     per_outage_df['updateTime'] = updateTime
-                    # per_outage_df['timestamp'] = timenow()
+                    per_outage_df['timestamp'] = timenow()
                     per_outage_df['EMC'] = self.emc
                     data.update({key: per_outage_df})
 
