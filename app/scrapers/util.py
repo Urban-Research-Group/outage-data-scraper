@@ -53,9 +53,6 @@ def save(df, bucket_name=None, file_path=None):
         print(f"outages data saved to {file_path}")
 
 
-def check_duplicate():
-    pass
-
 def make_request(url, headers=None):
     # TODO: refactor all 'urlopen'
     if headers is None:
@@ -73,6 +70,7 @@ def make_request(url, headers=None):
         print(error.reason)
     except TimeoutError:
         print("Request timed out")
+
 
 def timenow():
     return datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")
