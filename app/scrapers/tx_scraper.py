@@ -55,6 +55,18 @@ class Scraper1(BaseScraper):
         return data
 
 
+class Scraper3(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        pass
+
+    def fetch(self):
+        pass
+
+
 class Scraper5(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
@@ -74,14 +86,15 @@ class Scraper5(BaseScraper):
             else:
                 print(f"no outage of {self.emc} update found at",
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+        print(data)
         return data
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
         self.driver.get(self.url)
-        # Sleeps for 5 seconds
-        time.sleep(3)
+        # let the page load
+        time.sleep(10)
         page_source = self.driver.page_source
 
         # parse reports link
@@ -95,18 +108,22 @@ class Scraper5(BaseScraper):
         raw_data = {}
         for k, v in links.items():
             self.driver.get(self.url+v[1:])
-            time.sleep(3)
+            time.sleep(5)
             requests = self.driver.requests
-            for r in requests:
-                if v in r.url:
+            json_requests = [r for r in requests if r.response and r.response.headers.get('Content-Type') == 'application/json']
+            hash = v.split('/')[-1]
+            for r in json_requests:
+                if hash in r.url:
                     print(r)
                     response = sw_decode(r.response.body,
                                          r.response.headers.get('Content-Encoding', 'identity'))
                     data = response.decode("utf8", 'ignore')
-                    if any([x in data for x in ['zip', 'Zip', 'City']]):
+                    if any([x in data for x in ['zip', 'Zip']]):
                         raw_data['per_zipcode'] = json.loads(data)['file_data']
                     elif 'county' in data:
                         raw_data['per_county'] = json.loads(data)['file_data']
+                    elif any([x in data for x in ['city', 'Cities']]):
+                        raw_data['per_city'] = json.loads(data)['file_data']
         return raw_data
 
 

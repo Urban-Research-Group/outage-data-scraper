@@ -5,3 +5,4 @@ venv/
 *.ipynb
 *.csv
 *.DS_Store
+*.pyc

@@ -1,0 +1,8 @@
+{
+        "layout": 3,
+        "emc": {
+            "El Paso Electric Co.": "https://www.epelectric.com/outage-center"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }
