@@ -1,0 +1,9 @@
+{
+        "layout": 1,
+        "emc": {
+            "AEP Texas, Inc.": "http://outagemap.aeptexas.com.s3.amazonaws.com/external/report.html",
+            "Southwestern Electric Power Co.": "http://outagemap.swepco.com.s3.amazonaws.com/external/report.html"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

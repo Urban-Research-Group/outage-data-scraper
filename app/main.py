@@ -12,7 +12,7 @@ def handler(event, context=""):
     success_cnt = 0
 
     for emc, url in EMCs.items():
-        try:
+        # try:
             sc = Scraper(state, layout_id, url, emc)
             data = sc.parse()
             for key, df in data.items():
@@ -22,9 +22,9 @@ def handler(event, context=""):
                     path = f"{state}/layout_{layout_id}/{key}_{emc}.csv"
                     save(df, bucket, path)
             success_cnt += 1
-        except Exception as e:
-            print(e)
-            continue
+        # except Exception as e:
+        #     print(e)
+        #     continue
 
     return {
         'statusCode': 200,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    with open("../data/ga/layout_10.json") as f:
+    with open("../events/tx/layout_2.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 

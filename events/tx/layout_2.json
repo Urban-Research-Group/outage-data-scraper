@@ -1,0 +1,8 @@
+{
+        "layout": 2,
+        "emc": {
+            "CenterPoint Energy Houston Electric, LLC": "https://gis.centerpointenergy.com/outagetracker/"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

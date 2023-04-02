@@ -8,11 +8,10 @@ import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.request import urlopen, Request
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-from .util import is_aws_env, make_request, timenow
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire import webdriver
-
+from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
 import ssl
@@ -23,6 +22,7 @@ class BaseScraper:
     def __init__(self, url, emc):
         self.url = url
         self.emc = emc
+        # self.driver = self.init_webdriver()
         self.geo_locator = geopy.Nominatim(user_agent='1234')
 
     def fetch(self):
@@ -30,6 +30,15 @@ class BaseScraper:
 
     def parse(self):
         pass
+
+    def get_page_source(self, url=None, timeout=5):
+        url= url if url else self.url
+        self.driver.get(url)
+        # let the page load
+        time.sleep(timeout)
+        page_source = self.driver.page_source
+
+        return page_source
 
     def extract_zipcode(self, lat, lon):
         addr = self.geo_locator.reverse((lat, lon))
@@ -219,7 +228,7 @@ class Scraper4(BaseScraper):
         # get javascript rendered source page
         self.driver.get(self.url)
         # Sleeps for 5 seconds
-        time.sleep(3)
+        time.sleep(5)
         page_source = self.driver.page_source
 
         # parse reports link
@@ -233,7 +242,7 @@ class Scraper4(BaseScraper):
         raw_data = {}
         for k, v in links.items():
             self.driver.get(self.url+v[1:])
-            time.sleep(3)
+            time.sleep(5)
             requests = self.driver.requests
             for r in requests:
                 if v in r.url:
@@ -417,7 +426,6 @@ class Scraper9(BaseScraper):
         # Send a request to the website and let it load
         self.driver.get(self.url)
         time.sleep(10)
-
 
 
 class Scraper10(BaseScraper):

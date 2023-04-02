@@ -8,70 +8,51 @@ import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 from urllib.request import urlopen
-from seleniumwire import webdriver
-from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from seleniumwire.utils import decode as sw_decode
-from .util import is_aws_env, make_request, timenow
-
+from .util import make_request, timenow
+from .ga_scraper import BaseScraper
 
 # TODO: update for security
 import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 
-
-class BaseScraper:
+class Scraper1(BaseScraper):
     def __init__(self, url, emc):
-        self.url = url
-        self.emc = emc
-
-    def fetch(self):
-        pass
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
-        pass
+        suffix = ['?report=report-panel-county', '?report=report-panel-zip']
 
-    def init_webdriver(self):
-        chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'chromedriver'
+        data = {}
+        for s in suffix:
+            url = self.url + s
+            print(f"fetching {self.emc} outages from {url}")
+            html = self.get_page_source(url)
+            # print(html)
 
-        desired_capabilities = DesiredCapabilities.CHROME.copy()
-        desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-        desired_capabilities['acceptInsecureCerts'] = True
+            # parse table
+            soup = BeautifulSoup(html, 'html.parser')
+            table = soup.find('table', attrs={'class': 'report-table tree'})
+            rows = table.find_all('tr')
 
-        # Create the webdriver object and pass the arguments
-        chrome_options = webdriver.ChromeOptions()
-        chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--no-cache')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--window-size=1024x768')
-        chrome_options.add_argument('--user-data-dir=/tmp/user-data')
-        chrome_options.add_argument('--hide-scrollbars')
-        chrome_options.add_argument('--enable-logging')
-        chrome_options.add_argument('--log-level=0')
-        chrome_options.add_argument('--v=99')
-        chrome_options.add_argument('--single-process')
-        chrome_options.add_argument('--data-path=/tmp/data-path')
-        chrome_options.add_argument('--ignore-certificate-errors')
-        chrome_options.add_argument('--homedir=/tmp')
-        chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
-        chrome_options.add_argument(
-            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 '
-            'Safari/537.36')
-        chrome_options.headless = True
-        selenium_options = {
-            'request_storage_base_dir': '/tmp',  # Use /tmp to store captured data
-            'exclude_hosts': ''
-        }
-        if is_aws_env():
-            chrome_options.binary_location = '/opt/chrome/chrome'
+            data_rows = rows[2:]
+            raw_data = []
+            for row in data_rows:
+                cells = row.find_all('td')
+                raw_data.append([cell.text.strip() for cell in cells])
 
-        driver = webdriver.Chrome(executable_path=chrome_driver_path,
-                                  chrome_options=chrome_options,
-                                  seleniumwire_options=selenium_options,
-                                  desired_capabilities=desired_capabilities)
-        return driver
+            loc = 'COUNTY' if s == '?report=report-panel-county' else 'ZIP'
+            header = ['VIEW', loc, 'CUSTOMER OUTAGES', 'CUSTOMERS SERVED', '% AFFECTED']
+            table_data = [dict(zip(header, row)) for row in raw_data]
+            df = pd.DataFrame(table_data)[[loc, 'CUSTOMER OUTAGES', 'CUSTOMERS SERVED', '% AFFECTED']]
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            df = df[df['CUSTOMER OUTAGES'] != '0']
+            key = 'per_county' if loc == 'COUNTY' else 'per_zipcode'
+            data.update({key:df})
+
+        return data
 
 
 class Scraper5(BaseScraper):
@@ -215,14 +196,42 @@ class Scraper11(BaseScraper):
 
 class TXScraper:
     def __new__(cls, layout_id, url, emc):
-        if layout_id == 5:
-            obj = super().__new__(Scraper5)        
+        if layout_id == 1:
+            obj = super().__new__(Scraper1)
+        # elif layout_id == 2:
+        #     obj = super().__new__(Scraper2)
+        # elif layout_id == 3:
+        #     obj = super().__new__(Scraper3)
+        # elif layout_id == 4:
+        #     obj = super().__new__(Scraper4)
+        elif layout_id == 5:
+            obj = super().__new__(Scraper5)
+        # elif layout_id == 6:
+        #     obj = super().__new__(Scraper6)
+        # elif layout_id == 7:
+        #     obj = super().__new__(Scraper7)
         elif layout_id == 8:
             obj = super().__new__(Scraper8)
+        # elif layout_id == 9:
+        #     obj = super().__new__(Scraper9)
+        # elif layout_id == 10:
+        #     obj = super().__new__(Scraper10)
         elif layout_id == 11:
             obj = super().__new__(Scraper11)
+        # elif layout_id == 12:
+        #     obj = super().__new__(Scraper12)
+        # elif layout_id == 13:
+        #     obj = super().__new__(Scraper13)
+        # elif layout_id == 14:
+        #     obj = super().__new__(Scraper14)
+        # elif layout_id == 15:
+        #     obj = super().__new__(Scraper15)
+        # elif layout_id == 16:
+        #     obj = super().__new__(Scraper16)
+        # elif layout_id == 17:
+        #     obj = super().__new__(Scraper17)
         else:
-            raise "Invalid layout ID: Enter layout ID range from 1 to 11"
+            raise "Invalid layout ID: Enter layout ID range from 1 to 17"
 
         obj.__init__(url, emc)
         return obj
