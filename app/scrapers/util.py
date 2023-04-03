@@ -1,11 +1,14 @@
 import os
 import boto3
 import io
+import json
+import requests
 import pandas as pd
 
 from datetime import datetime
 from urllib.error import HTTPError, URLError
 from urllib.request import urlopen, Request
+from urllib.parse import urlencode
 
 
 def is_aws_env():
@@ -53,23 +56,32 @@ def save(df, bucket_name=None, file_path=None):
         print(f"outages data saved to {file_path}")
 
 
-def make_request(url, headers=None):
+def make_request(url, headers=None, data=None, method="GET"):
     # TODO: refactor all 'urlopen'
     if headers is None:
         headers = {
             'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 13_2) AppleWebKit/537.36 (KHTML, like Gecko) '
                           'Chrome/109.0.0.0 Safari/537.36'}
-    request = Request(url, headers=headers or {})
-    try:
-        with urlopen(request, timeout=10) as response:
-            print(response.status)
-            return response.read(), response
-    except HTTPError as error:
-        print(error.status, error.reason)
-    except URLError as error:
-        print(error.reason)
-    except TimeoutError:
-        print("Request timed out")
+
+    if method == "GET":
+        request = Request(url, headers=headers or {})
+        try:
+            with urlopen(request, timeout=10) as response:
+                print(response.status)
+                return response.read(), response
+        except HTTPError as error:
+            print(error.status, error.reason)
+        except URLError as error:
+            print(error.reason)
+        except TimeoutError:
+            print("Request timed out")
+
+    elif method == "POST":
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+        return response.text, response
+
+    else:
+        print("Invalid method")
 
 def timenow():
     return datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S")

@@ -28,8 +28,20 @@ class BaseScraper:
         # self.driver = self.init_webdriver()
         self.geo_locator = geopy.Nominatim(user_agent='1234')
 
-    def fetch(self):
-        pass
+    def fetch(self, url=None, header=None, data=None, method='GET', key='per_outage'):
+        """Fetches data from url and returns a dict of dataframes"""
+        print(f"fetching {self.emc} outages from {self.url}")
+        raw_data = {}
+
+        url = url if url else self.url
+        body, response = make_request(url, header, data, method)
+
+        if isinstance(body, bytes):
+            raw_data[key] = json.loads(body.decode('utf8'))
+        else:
+            raw_data[key] = json.loads(body)
+
+        return raw_data
 
     def parse(self):
         pass
@@ -140,7 +152,7 @@ class Scraper2(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
         for key, val in data.items():
             if val:
                 per_outage_df = pd.DataFrame(val['Outages'])
@@ -151,7 +163,7 @@ class Scraper2(BaseScraper):
                 data.update({key: per_outage_df})
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
 
@@ -166,7 +178,7 @@ class Scraper3(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
 
         for key, val in data.items():
             if key == 'per_county' and val:
@@ -179,7 +191,7 @@ class Scraper3(BaseScraper):
             elif key == 'per_outage' and val:
                 per_outage_df = pd.DataFrame(val['MobileOutage'])
                 per_outage_df['timestamp'] = timenow()
-                zips = [self.extract_zipcode(x['X'], x['Y'], self.geo_locator) for x in [val['MobileOutage']]]
+                zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
                 per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -189,7 +201,7 @@ class Scraper3(BaseScraper):
 
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
 
@@ -211,7 +223,7 @@ class Scraper4(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
 
         for key, val in data.items():
             if val:
@@ -227,7 +239,7 @@ class Scraper4(BaseScraper):
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
         self.driver.get(self.url)
@@ -266,7 +278,7 @@ class Scraper5(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
         for key, val in data.items():
             if key == 'per_outage' and val:
                 df = pd.DataFrame(val)
@@ -282,7 +294,7 @@ class Scraper5(BaseScraper):
 
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         body, response = make_request(self.url)
         raw_data = {'per_outage': json.loads(body)}
@@ -295,7 +307,7 @@ class Scraper6(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
 
         # rows = []
         # for row in data['data']['reports']['report']['dataset']['t']:
@@ -307,7 +319,7 @@ class Scraper6(BaseScraper):
         # return df[['name', 'zip_code', 'customersAffected', 'customersServed']]
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         # TODO: configure seleniumwire options to log requets
         # Send a request to the website and let it load
@@ -335,7 +347,7 @@ class Scraper7(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
 
         for key, val in data.items():
             if val:
@@ -363,7 +375,7 @@ class Scraper7(BaseScraper):
 
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
@@ -393,7 +405,7 @@ class Scraper9(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        self.fetch()
+        self.fetch(key='per_outage')
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         tables = soup.find_all("table")
 
@@ -433,7 +445,7 @@ class Scraper9(BaseScraper):
         data = {f'per_{level.lower()}': df}
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
@@ -454,7 +466,7 @@ class Scraper10(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        source_page = self.fetch()
+        source_page = self.fetch(key='per_outage')
         soup = BeautifulSoup(source_page, "html.parser")
         table = soup.find("table")
         # Find the table rows using their tag name
@@ -485,7 +497,7 @@ class Scraper10(BaseScraper):
         data = {'per_county': df}
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         body, response = make_request(self.url)
         return body
 
@@ -496,7 +508,7 @@ class Scraper11(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
 
         for key, val in data.items():
             if key == 'per_substation':
@@ -535,7 +547,7 @@ class Scraper11(BaseScraper):
 
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)

@@ -16,7 +16,7 @@ class ScraperINV(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch()
+        data = self.fetch(key='per_outage')
         # parsing
         for key, val in data.items():
             df = pd.DataFrame(val['features'])
@@ -32,7 +32,7 @@ class ScraperINV(BaseScraper):
 
         return data
 
-    def fetch(self):
+    def fetch(self=None):
         raw_data = {}
         # Query parameters
         params = {
@@ -62,7 +62,7 @@ class ScraperCC(BaseScraper):
     def parse(self):
         pass
 
-    def fetch(self):
+    def fetch(self=None):
         # need to observe outage first?
         pass
 

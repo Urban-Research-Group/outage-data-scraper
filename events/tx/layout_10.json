@@ -1,0 +1,8 @@
+{
+        "layout": 10,
+        "emc": {
+            "Lubbock Power & Light": "https://electricoutage.ci.lubbock.tx.us/GridVuServer/Public/getAllOutages"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

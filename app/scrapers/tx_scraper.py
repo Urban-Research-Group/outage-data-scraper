@@ -8,7 +8,7 @@ import time
 from bs4 import BeautifulSoup
 from datetime import datetime
 from seleniumwire.utils import decode as sw_decode
-from .util import timenow
+from .util import make_request, timenow
 from .ga_scraper import BaseScraper, \
     Scraper1 as GA_Scraper1, \
     Scraper9 as GA_Scraper9, \
@@ -16,7 +16,9 @@ from .ga_scraper import BaseScraper, \
 
 # TODO: update for security
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
+
 
 class Scraper1(BaseScraper):
     def __init__(self, url, emc):
@@ -52,7 +54,7 @@ class Scraper1(BaseScraper):
             df['EMC'] = self.emc
             df = df[df['CUSTOMER OUTAGES'] != '0']
             key = 'per_county' if loc == 'COUNTY' else 'per_zipcode'
-            data.update({key:df})
+            data.update({key: df})
 
         return data
 
@@ -65,8 +67,24 @@ class Scraper3(BaseScraper):
     def parse(self):
         pass
 
-    def fetch(self):
+    def fetch(self=None):
         pass
+
+
+class Scraper4(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+    def parse(self):
+        data = self.fetch()
+
+        for key, val in data.items():
+            df = pd.DataFrame(val)
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            data.update({key: df})
+
+        return data
 
 
 class Scraper5(BaseScraper):
@@ -110,10 +128,11 @@ class Scraper5(BaseScraper):
         # get json reports
         raw_data = {}
         for k, v in links.items():
-            self.driver.get(self.url+v[1:])
+            self.driver.get(self.url + v[1:])
             time.sleep(5)
             requests = self.driver.requests
-            json_requests = [r for r in requests if r.response and r.response.headers.get('Content-Type') == 'application/json']
+            json_requests = [r for r in requests if
+                             r.response and r.response.headers.get('Content-Type') == 'application/json']
             hash = v.split('/')[-1]
             for r in json_requests:
                 if hash in r.url:
@@ -130,6 +149,67 @@ class Scraper5(BaseScraper):
         return raw_data
 
 
+class Scraper7(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.header = {
+            'authority': 'bastrop.smartcmobile.com',
+            'method': 'POST',
+            'path': '/portal/OuterOutage.aspx/loadLatLongOuterOutage',
+            'scheme': 'https',
+            'accept': 'application/json, text/javascript, */*; q=0.01',
+            'accept-encoding': 'gzip, deflate, br',
+            'accept-language': 'en-US,en;q=0.9',
+            'content-length': '61',
+            'content-type': 'application/json; charset=UTF-8',
+            'cookie': 'IsModernStyle=False; ASP.NET_SessionId=dgreo4rocr0asjbvkx1xmyig; Language_code=EN',
+            'csrftoken': 'brCKaOnnlsT9lFFJedt0b3f7fdPCCxTgAiJFWDLvX7GiHj5LeqfM8CoXA7nWiDVb',
+            'origin': 'https://bastrop.smartcmobile.com',
+            'referer': 'https://bastrop.smartcmobile.com/portal/outeroutage.aspx',
+            'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
+            'sec-ch-ua-mobile': '?0',
+            'sec-ch-ua-platform': '"macOS"',
+            'sec-fetch-dest': 'empty',
+            'sec-fetch-mode': 'cors',
+            'sec-fetch-site': 'same-origin',
+            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
+            'x-requested-with': 'XMLHttpRequest'
+        }
+
+    def parse(self):
+        data = self.fetch(header=self.header,
+                          data={"Zipcode": "", "IsPlannedOutage": "C", "timeOffsetMinutes": -240},
+                          method='POST')
+
+        for key, val in data.items():
+            # TODO: test when have outage
+            df = pd.DataFrame(pd.DataFrame(json.loads(val['d'])['Table']))
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            df = df.dropna()
+            data.update({key: df})
+
+        return data
+
+
+class Scraper10(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+    def parse(self):
+        data = self.fetch()
+
+        for key, val in data.items():
+            df = pd.DataFrame(val['outageLst'])
+            df['zip'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis=1)
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            # df = df[df['status'] != 'Restored']
+            data.update({key: df})
+
+        return data
+
+
 class TXScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -138,20 +218,20 @@ class TXScraper:
         #     obj = super().__new__(Scraper2)
         # elif layout_id == 3:
         #     obj = super().__new__(Scraper3)
-        # elif layout_id == 4:
-        #     obj = super().__new__(Scraper4)
+        elif layout_id == 4:
+            obj = super().__new__(Scraper4)
         elif layout_id == 5:
             obj = super().__new__(Scraper5)
         # elif layout_id == 6:
         #     obj = super().__new__(Scraper6)
-        # elif layout_id == 7:
-        #     obj = super().__new__(Scraper7)
+        elif layout_id == 7:
+            obj = super().__new__(Scraper7)
         elif layout_id == 8:
             obj = super().__new__(GA_Scraper1)
         # elif layout_id == 9:
         #     obj = super().__new__(Scraper9)
-        # elif layout_id == 10:
-        #     obj = super().__new__(Scraper10)
+        elif layout_id == 10:
+            obj = super().__new__(Scraper10)
         elif layout_id == 11:
             obj = super().__new__(GA_Scraper9)
         elif layout_id == 12:
