@@ -1,7 +1,7 @@
 {
         "layout": 6,
         "emc": {
-            "Coweta-Fayette": "https://outage.utility.org/"
+            "Coweta-Fayette": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/CFEMC/all/OUTAGES_DATA_TYPE=CUSTOMER,CREWS_DATA_TYPE"
         },
         "bucket": "data",
         "folder": "ga"

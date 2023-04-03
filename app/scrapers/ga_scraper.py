@@ -157,8 +157,10 @@ class Scraper2(BaseScraper):
             if val:
                 per_outage_df = pd.DataFrame(val['Outages'])
                 per_outage_df['timestamp'] = timenow()
-                zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
-                per_outage_df['zip'] = zips
+                # TODO: sometimes error? mapping later
+                # zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
+                # zips = [self.extract_zipcode(x['OutageLocation']['Y'],x['OutageLocation']['X']) for x in val['Outages']]
+                # per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
         return data
@@ -193,6 +195,7 @@ class Scraper3(BaseScraper):
                 per_outage_df['timestamp'] = timenow()
                 # TODO: sometimes error? mapping later
                 # zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
+                # zips = [self.extract_zipcode(x['Y'], x['X']) for x in [val['MobileOutage']]]
                 # per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
@@ -306,40 +309,15 @@ class Scraper5(BaseScraper):
 class Scraper6(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
-        self.driver = self.init_webdriver()
 
     def parse(self):
         data = self.fetch()
 
-        # rows = []
-        # for row in data['data']['reports']['report']['dataset']['t']:
-        #     position = row['e'][5].split(',')
-        #     rows.append([row['e'][0], row['e'][1], row['e'][2], float(position[0]), float(position[1])])
-        #
-        # df = pd.DataFrame(rows, columns=['name', 'customersServed', 'customersAffected', 'latitutde', 'longitude'])
-        # df['zip_code'] = df.apply(lambda row: extract_zipcode(row['latitutde'], row['longitude']), axis=1)
-        # return df[['name', 'zip_code', 'customersAffected', 'customersServed']]
+        for key, val in data.items():
+            # TODO: parse per_county and per_zipcode
+            pass
+
         return data
-
-    def fetch(self):
-        print(f"fetching {self.emc} outages from {self.url}")
-        # TODO: configure seleniumwire options to log requets
-        # Send a request to the website and let it load
-        self.driver.get(self.url)
-
-        # Sleeps for 5 seconds
-        time.sleep(10)
-
-        raw_datas = {}
-
-        for request in self.driver.requests:
-            if "outages/data" in request.url:
-                data = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
-                data = data.decode("utf8")
-                if "County" in data:
-                    raw_datas.update({'per_county': xmltodict.parse(data)})
-
-        return raw_datas
 
 
 class Scraper7(BaseScraper):

@@ -11,7 +11,9 @@ from seleniumwire.utils import decode as sw_decode
 from .util import make_request, timenow
 from .ga_scraper import BaseScraper, \
     Scraper1 as GA_Scraper1, \
+    Scraper2 as GA_Scraper2, \
     Scraper3 as GA_Scraper3, \
+    Scraper6 as GA_Scraper6, \
     Scraper9 as GA_Scraper9, \
     Scraper11 as GA_Scraper11
 
@@ -237,16 +239,16 @@ class TXScraper:
             obj = super().__new__(GA_Scraper9)
         elif layout_id == 12:
             obj = super().__new__(GA_Scraper11)
-        # elif layout_id == 13:
-        #     obj = super().__new__(Scraper13)
+        elif layout_id == 13:
+            obj = super().__new__(GA_Scraper6)
         # elif layout_id == 14:
         #     obj = super().__new__(Scraper14)
         # elif layout_id == 15:
         #     obj = super().__new__(Scraper15)
         elif layout_id == 16:
             obj = super().__new__(GA_Scraper3)
-        # elif layout_id == 17:
-        #     obj = super().__new__(Scraper17)
+        elif layout_id == 17:
+            obj = super().__new__(GA_Scraper2)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 17"
 
