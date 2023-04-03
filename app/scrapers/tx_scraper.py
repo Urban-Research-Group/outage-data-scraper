@@ -7,10 +7,12 @@ import time
 
 from bs4 import BeautifulSoup
 from datetime import datetime
-from urllib.request import urlopen
 from seleniumwire.utils import decode as sw_decode
-from .util import make_request, timenow
-from .ga_scraper import BaseScraper
+from .util import timenow
+from .ga_scraper import BaseScraper, \
+    Scraper1 as GA_Scraper1, \
+    Scraper9 as GA_Scraper9, \
+    Scraper11 as GA_Scraper11
 
 # TODO: update for security
 import ssl
@@ -78,7 +80,8 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if val:
                 df = pd.DataFrame(val['areas'])
-                df[['cust_a', 'percent_cust_a']] = df[['cust_a', 'percent_cust_a']].applymap(lambda x : x['val'])
+                df[['cust_a', 'percent_cust_a']] = df[['cust_a', 'percent_cust_a']].applymap(lambda x: x['val'])
+                df = df[(df['cust_a'] != 0) | (df['n_out'] != 0)]
                 df['timestamp'] = timenow()
                 df['EMC'] = self.emc
                 df.drop(columns=['gotoMap'], inplace=True)
@@ -127,90 +130,6 @@ class Scraper5(BaseScraper):
         return raw_data
 
 
-class Scraper8(BaseScraper):
-    def __init__(self, url, emc):
-        super().__init__(url, emc)
-
-    def parse(self):
-        data = self.fetch()
-        for key, val in data.items():
-            if key == 'per_county' and data[key]:
-                per_loc_df = pd.DataFrame(val[0]['boundaries'])
-                per_loc_df['timestamp'] = timenow()
-                per_loc_df['EMC'] = self.emc
-                data.update({key: per_loc_df})
-            elif key == 'per_outage' and data[key]:
-                per_outage_df = pd.DataFrame(val)
-                per_outage_df['timestamp'] = timenow()
-                zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
-                per_outage_df['zip'] = zips
-                per_outage_df['EMC'] = self.emc
-                data.update({key: per_outage_df})
-            else:
-                print(f"no outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
-
-        return data
-
-    def fetch(self):
-        print(f"fetching {self.emc} outages from {self.url}")
-        raw_data = {}
-        with urlopen(self.url + 'data/boundaries.json') as response:
-            raw_data['per_county'] = json.loads(response.read())
-
-        with urlopen(self.url + 'data/outages.json') as response:
-            raw_data['per_outage'] = json.loads(response.read())
-
-        return raw_data
-
-
-class Scraper11(BaseScraper):
-    def __init__(self, url, emc):
-        super().__init__(url, emc)
-        self.driver = self.init_webdriver()
-
-    def parse(self):
-        self.fetch()
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
-        tables = soup.find_all("table")
-
-        # Find the table rows using their tag name
-        rows = tables[1].find_all('tr')
-
-        # Extract the table header row
-        header_row = rows[0]
-
-        # Extract the table data rows
-        data_rows = rows[1:]
-
-        # Extract the table header cells
-        header_cells = header_row.find_all('th')
-        header = [cell.get_text().strip() for cell in header_cells]
-
-        # Extract the table data cells
-        data = []
-        for row in data_rows:
-            cells = row.find_all('td')
-            data.append([cell.get_text().strip() for cell in cells])
-
-        # Print the table data as a list of dictionaries
-        table_data = [dict(zip(header, row)) for row in data]
-        df = pd.DataFrame(table_data)[:-1][['County', '# Out', '# Served', '% Out']]
-        df['timestamp'] = timenow()
-        df['EMC'] = self.emc
-        data = {'per_county': df}
-        return data
-
-    def fetch(self):
-        print(f"fetching {self.emc} outages from {self.url}")
-        # Send a request to the website and let it load
-        self.driver.get(self.url)
-        time.sleep(10)
-        # WebDriverWait(self.driver, 10).until(EC.frame_to_be_available_and_switch_to_it((By.ID, "ptifrmtgtframe")))
-        # WebDriverWait(self.driver, 20).until(EC.visibility_of_element_located((By.XPATH, "/html/body/div[5]/div[2]/div/div/div[3]/div/div[2]/div/div/div/div[1]/table")))
-        print(self.driver.page_source)
-
-
 class TXScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -228,15 +147,15 @@ class TXScraper:
         # elif layout_id == 7:
         #     obj = super().__new__(Scraper7)
         elif layout_id == 8:
-            obj = super().__new__(Scraper8)
+            obj = super().__new__(GA_Scraper1)
         # elif layout_id == 9:
         #     obj = super().__new__(Scraper9)
         # elif layout_id == 10:
         #     obj = super().__new__(Scraper10)
         elif layout_id == 11:
-            obj = super().__new__(Scraper11)
-        # elif layout_id == 12:
-        #     obj = super().__new__(Scraper12)
+            obj = super().__new__(GA_Scraper9)
+        elif layout_id == 12:
+            obj = super().__new__(GA_Scraper11)
         # elif layout_id == 13:
         #     obj = super().__new__(Scraper13)
         # elif layout_id == 14:

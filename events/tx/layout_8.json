@@ -10,10 +10,10 @@
             "Guadalupe Valley Electric Coop, Inc.": "http://outages.gvec.org/",
             "Mid-South Electric Coop Association": "https://outage.midsouthelectric.com/",
             "North Plains Electric Coop, Inc.": "http://outagemap.npec.org:89/",
-            "Nueces Electric Coop, Inc.": "http://outage.nueceselectric.org/",
-            "San Bernard Electric Coop, Inc.": "http://outages.sbec.org:7576/",
+
+
             "Taylor Electric Coop, Inc.": "http://64.40.223.66:7576/",
-            "Trinity Valley Electric Coop, Inc.": "http://outages.tvec.net/#viewer-menu-parent",
+            "Trinity Valley Electric Coop, Inc.": "http://outages.tvec.net/",
             "Wood County Electric Coop, Inc.": "http://outagemap.wcec.org/"
         },
         "bucket": "data",

@@ -2,7 +2,7 @@ import pandas as pd
 import requests
 import time
 
-from .ga_scraper import BaseScraper, Scraper9
+from .ga_scraper import BaseScraper, Scraper9 as GA_Scraper9
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -55,24 +55,6 @@ class ScraperINV(BaseScraper):
             print("Request failed. Status code:", response.status_code)
 
 
-class ScraperCPA(Scraper9):
-    def __init__(self, url, emc):
-        super().__init__(url, emc)
-
-    def fetch(self):
-        print(f"fetching {self.emc} outages from {self.url}")
-        # Send a request to the website and let it load
-        self.driver.get(self.url)
-        # time.sleep(10)
-
-        wait = WebDriverWait(self.driver, 10)
-        label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
-        label.click()
-
-        # Wait for the page to fully load
-        time.sleep(10)
-
-
 class ScraperCC(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
@@ -90,7 +72,7 @@ class CAScraper:
         if layout_id == 'investor':
             obj = super().__new__(ScraperINV)
         elif layout_id == 'paloalto':
-            obj = super().__new__(ScraperCPA)
+            obj = super().__new__(GA_Scraper9)
         elif layout_id == 'colton':
             obj = super().__new__(ScraperCC)
         else:

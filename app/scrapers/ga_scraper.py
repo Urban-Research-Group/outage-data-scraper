@@ -10,6 +10,9 @@ from datetime import datetime
 from urllib.request import urlopen, Request
 from seleniumwire.utils import decode as sw_decode
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
 from .util import is_aws_env, make_request, timenow
 
@@ -114,6 +117,7 @@ class Scraper1(BaseScraper):
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
             else:
+                data.update({key: pd.DataFrame()})
                 print(f"no outage of {self.emc} update found at",
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
 
@@ -393,6 +397,7 @@ class Scraper9(BaseScraper):
         soup = BeautifulSoup(self.driver.page_source, "html.parser")
         tables = soup.find_all("table")
 
+        # TODO: handler level dropdown menu
         # Find the table rows using their tag name
         rows = tables[1].find_all('tr')
 
@@ -405,7 +410,8 @@ class Scraper9(BaseScraper):
         # Extract the table header cells
         header_cells = header_row.find_all('th')
         header = [cell.get_text().strip() for cell in header_cells]
-
+        cols = [h for h in header if h != '']
+        level = cols[0]
         # Extract the table data cells
         data = []
         for row in data_rows:
@@ -413,18 +419,33 @@ class Scraper9(BaseScraper):
             data.append([cell.get_text().strip() for cell in cells])
 
         # Print the table data as a list of dictionaries
-        table_data = [dict(zip(header, row)) for row in data]
-        df = pd.DataFrame(table_data)[:-1][['County', '# Out', '# Served', '% Out']]
-        df['timestamp'] = timenow()
-        df['EMC'] = self.emc
-        df = df[df['# Out'] != '0']
-        data = {'per_county': df}
+        table = [dict(zip(header, row)) for row in data]
+        df = pd.DataFrame(table)
+        if len(df.columns) > 1:
+            df = df[cols]
+            df = df.dropna(axis=0)
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            df = df[df['# Out'] != '0']
+        else:
+            df = pd.DataFrame()
+
+        data = {f'per_{level.lower()}': df}
         return data
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
+        time.sleep(10)
+
+        button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
+        if button:
+            wait = WebDriverWait(self.driver, 10)
+            label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
+            label.click()
+
+        # Wait for the page to fully load
         time.sleep(10)
 
 
