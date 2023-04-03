@@ -1,0 +1,9 @@
+{
+        "layout": 13,
+        "emc": {
+            "Tri-County Electric Coop, Inc.": "https://oms.tcectexas.com/",
+            "Magic Valley Electric Coop, Inc.": "https://oms.magicvalley.coop/"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

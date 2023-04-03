@@ -11,6 +11,7 @@ from seleniumwire.utils import decode as sw_decode
 from .util import make_request, timenow
 from .ga_scraper import BaseScraper, \
     Scraper1 as GA_Scraper1, \
+    Scraper3 as GA_Scraper3, \
     Scraper9 as GA_Scraper9, \
     Scraper11 as GA_Scraper11
 
@@ -242,8 +243,8 @@ class TXScraper:
         #     obj = super().__new__(Scraper14)
         # elif layout_id == 15:
         #     obj = super().__new__(Scraper15)
-        # elif layout_id == 16:
-        #     obj = super().__new__(Scraper16)
+        elif layout_id == 16:
+            obj = super().__new__(GA_Scraper3)
         # elif layout_id == 17:
         #     obj = super().__new__(Scraper17)
         else:

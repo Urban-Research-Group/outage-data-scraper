@@ -1,0 +1,10 @@
+{
+        "layout": 12,
+        "emc": {
+            "Cherokee County Electric Coop Association": "https://outageentry.com/Outages/outage.php?Client=CHEROKEE",
+            "Houston County Electric Coop, Inc.": "https://outageentry.com/Outages/outage.php?Client=HCEC",
+            "Wise Electric Coop, Inc.": "https://outageentry.com/Outages/outage.php?Client=WISE"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

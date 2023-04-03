@@ -1,0 +1,9 @@
+{
+        "layout": 16,
+        "emc": {
+            "Southwestern Electric Coop, Inc.": "http://outagemap.sweci.com/omswebmap/",
+            "Comanche Electric Coop": "http://outageviewer.ceca.coop/OMSWebMap/"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

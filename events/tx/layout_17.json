@@ -1,0 +1,8 @@
+{
+        "layout": 17,
+        "emc": {
+            "United Coop Services, Inc.": "http://outage.united-cs.com:7576/"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }
