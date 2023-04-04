@@ -36,7 +36,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    with open("../events/tx/layout_13.json") as f:
+    with open("../events/ga/layout_6.json") as f:
         test_event = json.loads(f.read())
     handler(test_event)
 

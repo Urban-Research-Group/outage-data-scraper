@@ -31,6 +31,7 @@ class BaseScraper:
     def fetch(self, url=None, header=None, data=None, method='GET', key='per_outage'):
         """Fetches data from url and returns a dict of dataframes"""
         print(f"fetching {self.emc} outages from {self.url}")
+        # TODO: should only return raw data
         raw_data = {}
 
         url = url if url else self.url
@@ -311,11 +312,28 @@ class Scraper6(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch()
+        raw_data = self.fetch()
+        data = {}
 
-        for key, val in data.items():
-            # TODO: parse per_county and per_zipcode
-            pass
+        for key, val in raw_data.items():
+            for r in val['reportData']['reports']:
+                if r['id'] == 'County':
+                    per_county_df = pd.DataFrame(r['polygons'])
+                    per_county_df['EMC'] = self.emc
+                    per_county_df['timestamp'] = timenow()
+                    per_county_df = per_county_df[per_county_df['affected'] > 0]
+                    data.update({'per_county': per_county_df})
+                elif r['id'] == 'Zip':
+                    per_zipcode_df = pd.DataFrame(r['polygons'])
+                    per_zipcode_df['EMC'] = self.emc
+                    per_zipcode_df['timestamp'] = timenow()
+                    per_zipcode_df = per_zipcode_df[per_zipcode_df['affected'] > 0]
+                    data.update({'per_zipcode': per_zipcode_df})
+
+            per_outage_df = pd.DataFrame(val['outageData']['outages'])
+            per_outage_df['EMC'] = self.emc
+            per_outage_df['timestamp'] = timenow()
+            data.update({'per_outage': per_outage_df})
 
         return data
 
