@@ -456,7 +456,7 @@ class Scraper9(BaseScraper):
             label.click()
 
         # Wait for the page to fully load
-        time.sleep(10)
+        time.sleep(5)
 
 
 class Scraper10(BaseScraper):

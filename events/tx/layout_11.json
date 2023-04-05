@@ -21,7 +21,7 @@
 
                 "Southwest Rural Electric Association, Inc.": "https://swre.ebill.coop/maps/ExternalOutageMap/",
                 "Swisher Electric Coop, Inc.": "https://ebill.swisherelectric.org/maps/OutageWebMap/",
-                "Upshur Rural Electric Coop Corp.": "https://www.urecc.coop/outage-map",
+                "Upshur Rural Electric Coop Corp.": "https://ebill.urecc.coop/maps/OutageWebMap/",
                 "Wharton County Electric Coop, Inc.": "https://ebill.wcecnet.net/woViewer/mapviewer.html?config=Outage+Web+Map"
         },
         "bucket": "data",

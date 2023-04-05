@@ -1,8 +1,6 @@
 import logging
 import json
 import pandas as pd
-import geopy
-import xmltodict
 import time
 
 from bs4 import BeautifulSoup
@@ -83,6 +81,7 @@ class Scraper4(BaseScraper):
 
         for key, val in data.items():
             df = pd.DataFrame(val)
+            df['lastUpdatedTime'] = df['lastUpdatedTime'].apply(pd.to_datetime, unit='ms')
             df['timestamp'] = timenow()
             df['EMC'] = self.emc
             data.update({key: df})
@@ -110,7 +109,7 @@ class Scraper5(BaseScraper):
             else:
                 print(f"no outage of {self.emc} update found at",
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
-        print(data)
+        # print(data)
         return data
 
     def fetch(self):

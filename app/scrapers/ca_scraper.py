@@ -16,7 +16,7 @@ class ScraperINV(BaseScraper):
         super().__init__(url, emc)
 
     def parse(self):
-        data = self.fetch(key='per_outage')
+        data = self.fetch()
         # parsing
         for key, val in data.items():
             df = pd.DataFrame(val['features'])
@@ -32,7 +32,7 @@ class ScraperINV(BaseScraper):
 
         return data
 
-    def fetch(self=None):
+    def fetch(self):
         raw_data = {}
         # Query parameters
         params = {

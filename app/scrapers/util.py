@@ -2,6 +2,7 @@ import os
 import boto3
 import io
 import json
+import csv
 import requests
 import pandas as pd
 
@@ -16,7 +17,6 @@ def is_aws_env():
 
 
 def save(df, bucket_name=None, file_path=None):
-    """save df without duplication entries"""
     if is_aws_env():
         # Check if the file exists in the bucket
         s3_client = boto3.client('s3')
@@ -34,8 +34,7 @@ def save(df, bucket_name=None, file_path=None):
             # combine and drop duplicate
             s3_object = s3_client.get_object(Bucket=bucket_name, Key=file_path)
             df_og = pd.read_csv(io.BytesIO(s3_object['Body'].read()))
-            df = df_og.append(df, ignore_index=True)
-            # TODO: maybe delete?
+            df = pd.concat([df_og, df], ignore_index=True)
             df.drop_duplicates(inplace=True)
 
             # update to s3
@@ -50,9 +49,9 @@ def save(df, bucket_name=None, file_path=None):
             return f"{bucket_name} outages updated to {file_path}. Status - {status}"
 
     else:
-        # TODO: drop duplicate save
         local_path = f"{os.getcwd()}/../{bucket_name}/local/{file_path}"
-        df.to_csv(local_path, index=False)
+        header = False if os.path.exists(local_path) else True
+        df.to_csv(local_path, mode='a', header=header, index=False)
         print(f"outages data saved to {file_path}")
 
 
