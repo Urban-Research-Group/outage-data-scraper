@@ -149,42 +149,69 @@ class Scraper5(BaseScraper):
                     elif any([x in data for x in ['city', 'Cities']]):
                         raw_data['per_city'] = json.loads(data)['file_data']
         return raw_data
+    
+class Scraper6(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+    
+    def parse(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
 
+        # Sleeps for 5 seconds
+        time.sleep(5)
+        
+        data = {}
+        for request in self.driver.requests:
+            if "geometryType=esriGeometryEnvelope" in request.url:
+                response = sw_decode(request.response.body,
+                                     request.response.headers.get('Content-Encoding', 'identity'))
+                data_str = response.decode()
+                if data_str[0] == '{':
+                    data['per_outage'] = json.loads(data_str)
+                else:
+                    start = data_str.index('(') + 1
+                    end = data_str.rindex(')')
+                    data['per_outage'] = json.loads(data_str[start:end])
+                
+        for key, val in data.items():
+            attributes = [x['attributes'] for x in val['features']]
+            geometry = [x['geometry'] for x in val['features']]
+            df = pd.DataFrame(attributes)
+            df[['BEGINTIME', 'ESTIMATEDTIMERESTORATION']] = df[['BEGINTIME', 'ESTIMATEDTIMERESTORATION']].apply(pd.to_datetime, unit='ms')
+            df[['x', 'y']] = pd.DataFrame(geometry)
+            # df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['y'], row['x']), axis=1)
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            # df = df.dropna()
+            data.update({key: df})
+
+        return data
+        
 
 class Scraper7(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
-        self.header = {
-            'authority': 'bastrop.smartcmobile.com',
-            'method': 'POST',
-            'path': '/portal/OuterOutage.aspx/loadLatLongOuterOutage',
-            'scheme': 'https',
-            'accept': 'application/json, text/javascript, */*; q=0.01',
-            'accept-encoding': 'gzip, deflate, br',
-            'accept-language': 'en-US,en;q=0.9',
-            'content-length': '61',
-            'content-type': 'application/json; charset=UTF-8',
-            'cookie': 'IsModernStyle=False; ASP.NET_SessionId=dgreo4rocr0asjbvkx1xmyig; Language_code=EN',
-            'csrftoken': 'brCKaOnnlsT9lFFJedt0b3f7fdPCCxTgAiJFWDLvX7GiHj5LeqfM8CoXA7nWiDVb',
-            'origin': 'https://bastrop.smartcmobile.com',
-            'referer': 'https://bastrop.smartcmobile.com/portal/outeroutage.aspx',
-            'sec-ch-ua': '"Google Chrome";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"macOS"',
-            'sec-fetch-dest': 'empty',
-            'sec-fetch-mode': 'cors',
-            'sec-fetch-site': 'same-origin',
-            'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36',
-            'x-requested-with': 'XMLHttpRequest'
-        }
-
+        self.driver = self.init_webdriver()
+        
     def parse(self):
-        data = self.fetch(header=self.header,
-                          data={"Zipcode": "", "IsPlannedOutage": "C", "timeOffsetMinutes": -240},
-                          method='POST')
+        print(f"fetching {self.emc} outages from {self.url}")
+        # Send a request to the website and let it load
+        self.driver.get(self.url)
+
+        # Sleeps for 5 seconds
+        time.sleep(5)
+        
+        data = {}
+        for request in self.driver.requests:
+            if "loadLatLongOuterOutage" in request.url:
+                response = sw_decode(request.response.body,
+                                     request.response.headers.get('Content-Encoding', 'identity'))
+                data['per_outage'] = json.loads(response.decode("utf8", 'ignore'))
 
         for key, val in data.items():
-            # TODO: test when have outage
             df = pd.DataFrame(pd.DataFrame(json.loads(val['d'])['Table']))
             df['timestamp'] = timenow()
             df['EMC'] = self.emc
@@ -224,8 +251,8 @@ class TXScraper:
             obj = super().__new__(Scraper4)
         elif layout_id == 5:
             obj = super().__new__(Scraper5)
-        # elif layout_id == 6:
-        #     obj = super().__new__(Scraper6)
+        elif layout_id == 6:
+            obj = super().__new__(Scraper6)
         elif layout_id == 7:
             obj = super().__new__(Scraper7)
         elif layout_id == 8:

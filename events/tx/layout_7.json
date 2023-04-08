@@ -1,7 +1,7 @@
 {
         "layout": 7,
         "emc": {
-            "Bastrop Electric Dept.": "https://bastrop.smartcmobile.com/portal/OuterOutage.aspx/loadLatLongOuterOutage"
+            "Bastrop Electric Dept.": "https://bastrop.smartcmobile.com/portal/outeroutage.aspx"
         },
         "bucket": "data",
         "folder": "tx"
