@@ -24,8 +24,8 @@ def handler(event, context=""):
                     save(df, bucket, path)
             success_cnt += 1
         # except Exception as e:
-            # print(e)
-            # continue
+        #     print(e)
+        #     continue
 
     return {
         'statusCode': 200,
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "events/tx/layout_6.json")
+    event_path = os.path.join(os.getcwd(), "../events/ga/layout_9.json")
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)
@@ -45,8 +45,8 @@ if __name__ == "__main__":
     # single test here
     # sc = Scraper(state='tx',
     #              layout_id=11,
-    #              url="https://ebill.lcec.coop/maps/external/OutageWebMap/",
-    #              emc="Lamb County Electric Coop, Inc.")
+    #              url="https://ebill.karnesec.org/maps/ExternalOutageMap/",
+    #              emc="Karnes Electric Coop, Inc.")
     # print(sc.parse())
 
     end = time.time()

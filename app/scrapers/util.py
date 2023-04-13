@@ -28,14 +28,14 @@ def save(df, bucket_name=None, file_path=None):
             s3_object = s3_resource.Object(bucket_name, file_path)
             response = s3_object.put(Body=df.to_csv(index=False), ContentType='text/csv')
             status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
-            return f"new outages table initialized at {file_path}. Status - {status}"
+            print(f"new outages table initialized at {file_path}. Status - {status}")
 
         else:
             # combine and drop duplicate
             s3_object = s3_client.get_object(Bucket=bucket_name, Key=file_path)
             df_og = pd.read_csv(io.BytesIO(s3_object['Body'].read()))
             df = pd.concat([df_og, df], ignore_index=True)
-            df.drop_duplicates(inplace=True)
+            # df.drop_duplicates(inplace=True)
 
             # update to s3
             with io.StringIO() as csv_buffer:
@@ -46,7 +46,7 @@ def save(df, bucket_name=None, file_path=None):
                 )
                 status = response.get("ResponseMetadata", {}).get("HTTPStatusCode")
 
-            return f"{bucket_name} outages updated to {file_path}. Status - {status}"
+            print(f"{bucket_name} outages updated to {file_path}. Status - {status}")
 
     else:
         local_path = f"{os.getcwd()}/../{bucket_name}/local/{file_path}"

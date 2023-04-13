@@ -64,7 +64,7 @@ class BaseScraper:
             return 'unknown'
 
     def init_webdriver(self):
-        chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'chromedriver'
+        chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'app/scrapers/chromedriver'
 
         desired_capabilities = DesiredCapabilities.CHROME.copy()
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
@@ -116,23 +116,22 @@ class Scraper1(BaseScraper):
         data = self.fetch()
 
         for key, val in data.items():
-            if key == 'per_county' and data[key]:
-                per_loc_df = pd.DataFrame(val[0]['boundaries'])
-                per_loc_df = per_loc_df[(per_loc_df['customersAffected'] != 0) | (per_loc_df['customersOutNow'] != 0)]
-                per_loc_df['timestamp'] = timenow()
-                per_loc_df['EMC'] = self.emc
-                data.update({key: per_loc_df})
-            elif key == 'per_outage' and data[key]:
-                per_outage_df = pd.DataFrame(val)
-                per_outage_df['timestamp'] = timenow()
-                zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
-                per_outage_df['zip'] = zips
-                per_outage_df['EMC'] = self.emc
-                data.update({key: per_outage_df})
-            else:
+            if not val:
                 data.update({key: pd.DataFrame()})
-                print(f"no outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+            else:
+                if key == 'per_county':
+                    per_loc_df = pd.DataFrame(val[0]['boundaries'])
+                    per_loc_df = per_loc_df[(per_loc_df['customersAffected'] != 0) | (per_loc_df['customersOutNow'] != 0)]
+                    per_loc_df['timestamp'] = timenow()
+                    per_loc_df['EMC'] = self.emc
+                    data.update({key: per_loc_df})
+                if key == 'per_outage':
+                    per_outage_df = pd.DataFrame(val)
+                    per_outage_df['timestamp'] = timenow()
+                    zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
+                    per_outage_df['zip'] = zips
+                    per_outage_df['EMC'] = self.emc
+                    data.update({key: per_outage_df})
 
         return data
 
@@ -164,6 +163,9 @@ class Scraper2(BaseScraper):
                 # per_outage_df['zip'] = zips
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
+            else:
+                data.update({key: pd.DataFrame()})
+
         return data
 
     def fetch(self):
@@ -184,25 +186,25 @@ class Scraper3(BaseScraper):
         data = self.fetch()
 
         for key, val in data.items():
-            if key == 'per_county' and val:
-                per_loc_df = pd.DataFrame(val)
-                per_loc_df = per_loc_df[per_loc_df['CustomersAffected'] != '0']
-                per_loc_df['timestamp'] = timenow()
-                per_loc_df['EMC'] = self.emc
-                per_loc_df.drop(columns=['Shape'], inplace=True)
-                data.update({key: per_loc_df})
-            elif key == 'per_outage' and val:
-                per_outage_df = pd.DataFrame(val['MobileOutage'])
-                per_outage_df['timestamp'] = timenow()
-                # TODO: sometimes error? mapping later
-                # zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
-                # zips = [self.extract_zipcode(x['Y'], x['X']) for x in [val['MobileOutage']]]
-                # per_outage_df['zip'] = zips
-                per_outage_df['EMC'] = self.emc
-                data.update({key: per_outage_df})
+            if not val:
+                data.update({key: pd.DataFrame()})
             else:
-                print(f"no outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+                if key == 'per_county':
+                    per_loc_df = pd.DataFrame(val)
+                    per_loc_df = per_loc_df[per_loc_df['CustomersAffected'] != '0']
+                    per_loc_df['timestamp'] = timenow()
+                    per_loc_df['EMC'] = self.emc
+                    per_loc_df.drop(columns=['Shape'], inplace=True)
+                    data.update({key: per_loc_df})
+                if key == 'per_outage':
+                    per_outage_df = pd.DataFrame(val['MobileOutage'])
+                    per_outage_df['timestamp'] = timenow()
+                    # TODO: sometimes error? mapping later
+                    # zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
+                    # zips = [self.extract_zipcode(x['Y'], x['X']) for x in [val['MobileOutage']]]
+                    # per_outage_df['zip'] = zips
+                    per_outage_df['EMC'] = self.emc
+                    data.update({key: per_outage_df})
 
         return data
 
@@ -241,7 +243,7 @@ class Scraper4(BaseScraper):
                 df.drop(columns=['gotoMap'], inplace=True)
                 data.update({key: df})
             else:
-                print(f"no outage of {self.emc} update found at",
+                print(f"no '{key}' outage of {self.emc} update found at",
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
         return data
 
@@ -368,7 +370,7 @@ class Scraper7(BaseScraper):
                 per_outage_df['EMC'] = self.emc
                 data.update({key: per_outage_df})
             else:
-                print(f"no outage of {self.emc} update found at",
+                print(f"no '{key}' outage of {self.emc} update found at",
                       datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
 
         return data
@@ -449,10 +451,15 @@ class Scraper9(BaseScraper):
         self.driver.get(self.url)
         time.sleep(10)
 
+        # TODO: temp sol. for label not clickable
+        if self.emc == 'Karnes Electric Coop, Inc.':
+            return
+
         button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
         if button:
             wait = WebDriverWait(self.driver, 10)
             label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
+            self.driver.execute_script("arguments[0].scrollIntoView();", label)
             label.click()
 
         # Wait for the page to fully load
