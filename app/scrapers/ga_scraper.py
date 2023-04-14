@@ -270,7 +270,7 @@ class Scraper4(BaseScraper):
             requests = self.driver.requests
             for r in requests:
                 if v in r.url:
-                    # print(r)
+                    print(r)
                     response = sw_decode(r.response.body,
                                          r.response.headers.get('Content-Encoding', 'identity'))
                     data = response.decode("utf8", 'ignore')

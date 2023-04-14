@@ -13,7 +13,7 @@ def handler(event, context=""):
     success_cnt = 0
 
     for emc, url in EMCs.items():
-        # try:
+        try:
             sc = Scraper(state, layout_id, url, emc)
             data = sc.parse()
             for key, df in data.items():
@@ -23,9 +23,11 @@ def handler(event, context=""):
                     path = f"{state}/layout_{layout_id}/{key}_{emc}.csv"
                     save(df, bucket, path)
             success_cnt += 1
-        # except Exception as e:
-        #     print(e)
-        #     continue
+        except Exception as e:
+            print(e)
+            continue
+
+    print(f'Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages')
 
     return {
         'statusCode': 200,
@@ -33,21 +35,21 @@ def handler(event, context=""):
     }
 
 
-if __name__ == "__main__":
-    start = time.time()
-
-    # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/ga/layout_9.json")
-    with open(event_path) as f:
-        test_event = json.loads(f.read())
-    handler(test_event)
-
-    # single test here
-    # sc = Scraper(state='tx',
-    #              layout_id=11,
-    #              url="https://ebill.karnesec.org/maps/ExternalOutageMap/",
-    #              emc="Karnes Electric Coop, Inc.")
-    # print(sc.parse())
-
-    end = time.time()
-    print(end - start)
+# if __name__ == "__main__":
+#     start = time.time()
+#
+#     # handler test here
+#     # event_path = os.path.join(os.getcwd(), "../events/ga/layout_9.json")
+#     # with open(event_path) as f:
+#     #     test_event = json.loads(f.read())
+#     # handler(test_event)
+#
+#     # single test here
+#     sc = Scraper(state='tx',
+#                  layout_id=11,
+#                  url="https://ebill.urecc.coop/maps/OutageWebMap/",
+#                  emc="Upshur Rural Electric Coop Corp.")
+#     print(sc.parse())
+#
+#     end = time.time()
+#     print(end - start)
