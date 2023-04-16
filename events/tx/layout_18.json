@@ -1,0 +1,8 @@
+{
+        "layout": 18,
+        "emc": {
+          "Pedernales Electric Coop, Inc.": "https://outages.pec.coop/POP/model/PopOutageSummary?ServiceType=Electric"
+        },
+        "bucket": "data",
+        "folder": "tx"
+    }

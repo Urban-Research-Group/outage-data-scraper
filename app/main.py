@@ -35,21 +35,21 @@ def handler(event, context=""):
     }
 
 
-# if __name__ == "__main__":
-#     start = time.time()
-#
-#     # handler test here
-#     # event_path = os.path.join(os.getcwd(), "../events/ga/layout_9.json")
-#     # with open(event_path) as f:
-#     #     test_event = json.loads(f.read())
-#     # handler(test_event)
-#
-#     # single test here
-#     sc = Scraper(state='tx',
-#                  layout_id=11,
-#                  url="https://ebill.urecc.coop/maps/OutageWebMap/",
-#                  emc="Upshur Rural Electric Coop Corp.")
-#     print(sc.parse())
-#
-#     end = time.time()
-#     print(end - start)
+if __name__ == "__main__":
+    start = time.time()
+
+    # handler test here
+    event_path = os.path.join(os.getcwd(), "../events/tx/layout_18.json")
+    with open(event_path) as f:
+        test_event = json.loads(f.read())
+    handler(test_event)
+
+    # single test here
+    # sc = Scraper(state='tx',
+    #              layout_id=11,
+    #              url="https://ebill.karnesec.org/maps/ExternalOutageMap/",
+    #              emc="dev")
+    # print(sc.parse())
+
+    end = time.time()
+    print(end - start)

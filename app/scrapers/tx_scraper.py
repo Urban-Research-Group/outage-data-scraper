@@ -239,6 +239,22 @@ class Scraper10(BaseScraper):
         return data
 
 
+class Scraper18(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+
+    def parse(self):
+        # TODO: to be implemented
+        data = self.fetch()
+        for key, val in data.items():
+            df = pd.DataFrame(val)
+            df['timestamp'] = timenow()
+            df['EMC'] = self.emc
+            df = df[df['affectedCount'] != 0]
+            data.update({key: df})
+        return data
+
+
 class TXScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -275,8 +291,11 @@ class TXScraper:
             obj = super().__new__(GA_Scraper3)
         elif layout_id == 17:
             obj = super().__new__(GA_Scraper2)
+        elif layout_id == 18:
+            obj = super().__new__(Scraper18)
         else:
-            raise "Invalid layout ID: Enter layout ID range from 1 to 17"
+            raise "Invalid layout ID: Enter layout ID range from 1 to 18"
 
         obj.__init__(url, emc)
         return obj
+

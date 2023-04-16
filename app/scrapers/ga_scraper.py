@@ -11,6 +11,7 @@ from urllib.request import urlopen, Request
 from seleniumwire.utils import decode as sw_decode
 from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
@@ -405,25 +406,28 @@ class Scraper9(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        self.fetch()
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
+        data = self.fetch()
+
+        for level, pg in data.items():
+            df = self._parse(pg)
+            data.update({level: df})
+
+        return data
+
+    def _parse(self, page_source):
+        soup = BeautifulSoup(page_source, "html.parser")
         tables = soup.find_all("table")
 
-        # TODO: handler level dropdown menu
-        # Find the table rows using their tag name
+        # separate rows
         rows = tables[1].find_all('tr')
-
-        # Extract the table header row
         header_row = rows[0]
-
-        # Extract the table data rows
         data_rows = rows[1:]
 
         # Extract the table header cells
         header_cells = header_row.find_all('th')
         header = [cell.get_text().strip() for cell in header_cells]
         cols = [h for h in header if h != '']
-        level = cols[0]
+
         # Extract the table data cells
         data = []
         for row in data_rows:
@@ -442,18 +446,12 @@ class Scraper9(BaseScraper):
         else:
             df = pd.DataFrame()
 
-        data = {f'per_{level.lower()}': df}
-        return data
+        return df
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
-        # Send a request to the website and let it load
         self.driver.get(self.url)
         time.sleep(10)
-
-        # TODO: temp sol. for label not clickable
-        if self.emc == 'Karnes Electric Coop, Inc.':
-            return
 
         button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
         if button:
@@ -462,8 +460,17 @@ class Scraper9(BaseScraper):
             self.driver.execute_script("arguments[0].scrollIntoView();", label)
             label.click()
 
-        # Wait for the page to fully load
         time.sleep(5)
+        page_source = {}
+        select_elements = self.driver.find_elements(By.CLASS_NAME, 'gwt-ListBox')
+        menu = Select(select_elements[0])
+        for idx, option in enumerate(menu.options):
+            level = option.text
+            menu.select_by_index(idx)
+            time.sleep(3)
+            page_source.update({f'per_{level}':  self.driver.page_source})
+
+        return page_source
 
 
 class Scraper10(BaseScraper):
