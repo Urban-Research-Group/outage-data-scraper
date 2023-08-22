@@ -453,12 +453,13 @@ class Scraper9(BaseScraper):
         self.driver.get(self.url)
         time.sleep(10)
 
-        button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
-        if button:
-            wait = WebDriverWait(self.driver, 10)
-            label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
-            self.driver.execute_script("arguments[0].scrollIntoView();", label)
-            label.click()
+        if self.emc != "Karnes Electric Coop, Inc.":
+            button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
+            if button:
+                wait = WebDriverWait(self.driver, 10)
+                label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
+                self.driver.execute_script("arguments[0].scrollIntoView();", label)
+                label.click()
 
         time.sleep(5)
         page_source = {}

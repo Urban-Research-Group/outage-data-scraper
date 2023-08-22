@@ -39,7 +39,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/tx/layout_18.json")
+    event_path = os.path.join(os.getcwd(), "../events/ca/investor.json")
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)
