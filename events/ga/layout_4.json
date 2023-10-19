@@ -1,9 +1,9 @@
 {
-        "layout": 4,
-        "emc": {
-            "Cobb EMC": "https://outagemap.cobbemc.com/",
-            "Georgia Power": "https://outagemap.georgiapower.com/"
-        },
-        "bucket": "data",
-        "folder": "ga"
-    }
+    "layout": 4,
+    "emc": {
+        "Cobb EMC": "https://kubra.io/stormcenter/views/27d19b00-dc59-445d-acac-480c1d674258",
+        "Georgia Power": "https://outagemap.georgiapower.com/"
+    },
+    "bucket": "data",
+    "folder": "ga"
+}

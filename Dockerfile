@@ -1,6 +1,6 @@
 
 # Use pre-built selenium-python base image
-FROM umihico/aws-lambda-selenium-python:latest
+FROM umihico/aws-lambda-selenium-python:3.10.12-selenium4.9.1
 
 # copy scraper code
 COPY app/ ${LAMBDA_TASK_ROOT}

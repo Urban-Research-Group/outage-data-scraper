@@ -15,10 +15,13 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
+
+# from webdriver_manager.chrome import ChromeDriverManager  # need to remove
 from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
 import ssl
+
 ssl._create_default_https_context = ssl._create_unverified_context
 
 
@@ -27,9 +30,9 @@ class BaseScraper:
         self.url = url
         self.emc = emc
         # self.driver = self.init_webdriver()
-        self.geo_locator = geopy.Nominatim(user_agent='1234')
+        self.geo_locator = geopy.Nominatim(user_agent="1234")
 
-    def fetch(self, url=None, header=None, data=None, method='GET', key='per_outage'):
+    def fetch(self, url=None, header=None, data=None, method="GET", key="per_outage"):
         """Fetches data from url and returns a dict of dataframes"""
         print(f"fetching {self.emc} outages from {self.url}")
         # TODO: should only return raw data
@@ -39,7 +42,7 @@ class BaseScraper:
         body, response = make_request(url, header, data, method)
 
         if isinstance(body, bytes):
-            raw_data[key] = json.loads(body.decode('utf8'))
+            raw_data[key] = json.loads(body.decode("utf8"))
         else:
             raw_data[key] = json.loads(body)
 
@@ -49,7 +52,7 @@ class BaseScraper:
         pass
 
     def get_page_source(self, url=None, timeout=5):
-        url= url if url else self.url
+        url = url if url else self.url
         self.driver.get(url)
         # let the page load
         time.sleep(timeout)
@@ -60,52 +63,60 @@ class BaseScraper:
     def extract_zipcode(self, lat, lon):
         addr = self.geo_locator.reverse((lat, lon))
         if addr:
-            return addr.raw['address'].get('postcode', 'unknown')
+            return addr.raw["address"].get("postcode", "unknown")
         else:
-            return 'unknown'
+            return "unknown"
 
     def init_webdriver(self):
-        chrome_driver_path = '/opt/chromedriver' if is_aws_env() else 'app/scrapers/chromedriver'
+        chrome_driver_path = (
+            "/opt/chromedriver"
+            if is_aws_env()
+            else "/Users/gtingliu/Desktop/Gatech/URG/outage-data-scraper/app/scrapers/chromedriver"
+        )
 
         desired_capabilities = DesiredCapabilities.CHROME.copy()
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
-        desired_capabilities['acceptInsecureCerts'] = True
+        desired_capabilities["acceptInsecureCerts"] = True
 
         # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument('--headless')
-        chrome_options.add_argument('--headless=new')
-        chrome_options.add_argument('--disable-dev-shm-usage')
-        chrome_options.add_argument('--disable-extensions')
-        chrome_options.add_argument('--no-sandbox')
-        chrome_options.add_argument('--no-cache')
-        chrome_options.add_argument('--disable-gpu')
-        chrome_options.add_argument('--window-size=1024x768')
-        chrome_options.add_argument('--user-data-dir=/tmp/user-data')
-        chrome_options.add_argument('--hide-scrollbars')
-        chrome_options.add_argument('--enable-logging')
-        chrome_options.add_argument('--log-level=0')
-        chrome_options.add_argument('--v=99')
-        chrome_options.add_argument('--single-process')
-        chrome_options.add_argument('--data-path=/tmp/data-path')
-        chrome_options.add_argument('--ignore-certificate-errors')
-        chrome_options.add_argument('--homedir=/tmp')
-        chrome_options.add_argument('--disk-cache-dir=/tmp/cache-dir')
+        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--disable-dev-shm-usage")
+        chrome_options.add_argument("--disable-extensions")
+        chrome_options.add_argument("--no-sandbox")
+        chrome_options.add_argument("--no-cache")
+        chrome_options.add_argument("--disable-gpu")
+        chrome_options.add_argument("--window-size=1024x768")
+        chrome_options.add_argument("--user-data-dir=/tmp/user-data")
+        chrome_options.add_argument("--hide-scrollbars")
+        chrome_options.add_argument("--enable-logging")
+        chrome_options.add_argument("--log-level=0")
+        chrome_options.add_argument("--v=99")
+        chrome_options.add_argument("--single-process")
+        chrome_options.add_argument("--data-path=/tmp/data-path")
+        chrome_options.add_argument("--ignore-certificate-errors")
+        chrome_options.add_argument("--homedir=/tmp")
+        chrome_options.add_argument("--disk-cache-dir=/tmp/cache-dir")
         chrome_options.add_argument(
-            'user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 '
-            'Safari/537.36')
+            "user-agent=Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 "
+            "Safari/537.36"
+        )
         chrome_options.headless = True
         selenium_options = {
-            'request_storage_base_dir': '/tmp',  # Use /tmp to store captured data
-            'exclude_hosts': ''
+            "request_storage_base_dir": "/tmp",  # Use /tmp to store captured data
+            "exclude_hosts": "",
         }
         if is_aws_env():
-            chrome_options.binary_location = '/opt/chrome/chrome'
+            chrome_options.binary_location = "/opt/chrome/chrome"
 
-        driver = webdriver.Chrome(executable_path=chrome_driver_path,
-                                  chrome_options=chrome_options,
-                                  seleniumwire_options=selenium_options,
-                                  desired_capabilities=desired_capabilities)
+        driver = webdriver.Chrome(
+            # ChromeDriverManager().install(),
+            executable_path=chrome_driver_path,
+            chrome_options=chrome_options,
+            seleniumwire_options=selenium_options,
+            desired_capabilities=desired_capabilities,
+        )
         return driver
 
 
@@ -120,18 +131,26 @@ class Scraper1(BaseScraper):
             if not val:
                 data.update({key: pd.DataFrame()})
             else:
-                if key == 'per_county':
-                    per_loc_df = pd.DataFrame(val[0]['boundaries'])
-                    per_loc_df = per_loc_df[(per_loc_df['customersAffected'] != 0) | (per_loc_df['customersOutNow'] != 0)]
-                    per_loc_df['timestamp'] = timenow()
-                    per_loc_df['EMC'] = self.emc
+                if key == "per_county":
+                    per_loc_df = pd.DataFrame(val[0]["boundaries"])
+                    per_loc_df = per_loc_df[
+                        (per_loc_df["customersAffected"] != 0)
+                        | (per_loc_df["customersOutNow"] != 0)
+                    ]
+                    per_loc_df["timestamp"] = timenow()
+                    per_loc_df["EMC"] = self.emc
                     data.update({key: per_loc_df})
-                if key == 'per_outage':
+                if key == "per_outage":
                     per_outage_df = pd.DataFrame(val)
-                    per_outage_df['timestamp'] = timenow()
-                    zips = [self.extract_zipcode(x['outagePoint']['lat'], x['outagePoint']['lng']) for x in val]
-                    per_outage_df['zip'] = zips
-                    per_outage_df['EMC'] = self.emc
+                    per_outage_df["timestamp"] = timenow()
+                    zips = [
+                        self.extract_zipcode(
+                            x["outagePoint"]["lat"], x["outagePoint"]["lng"]
+                        )
+                        for x in val
+                    ]
+                    per_outage_df["zip"] = zips
+                    per_outage_df["EMC"] = self.emc
                     data.update({key: per_outage_df})
 
         return data
@@ -139,11 +158,11 @@ class Scraper1(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
-        with urlopen(self.url + 'data/boundaries.json') as response:
-            raw_data['per_county'] = json.loads(response.read())
+        with urlopen(self.url + "data/boundaries.json") as response:
+            raw_data["per_county"] = json.loads(response.read())
 
-        with urlopen(self.url + 'data/outages.json') as response:
-            raw_data['per_outage'] = json.loads(response.read())
+        with urlopen(self.url + "data/outages.json") as response:
+            raw_data["per_outage"] = json.loads(response.read())
 
         return raw_data
 
@@ -156,13 +175,13 @@ class Scraper2(BaseScraper):
         data = self.fetch()
         for key, val in data.items():
             if val:
-                per_outage_df = pd.DataFrame(val['Outages'])
-                per_outage_df['timestamp'] = timenow()
+                per_outage_df = pd.DataFrame(val["Outages"])
+                per_outage_df["timestamp"] = timenow()
                 # TODO: sometimes error? mapping later
                 # zips = [self.extract_zipcode(x['OutageLocation']['X'], x['OutageLocation']['Y']) for x in val['Outages']]
                 # zips = [self.extract_zipcode(x['OutageLocation']['Y'],x['OutageLocation']['X']) for x in val['Outages']]
                 # per_outage_df['zip'] = zips
-                per_outage_df['EMC'] = self.emc
+                per_outage_df["EMC"] = self.emc
                 data.update({key: per_outage_df})
             else:
                 data.update({key: pd.DataFrame()})
@@ -173,8 +192,8 @@ class Scraper2(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
 
-        body, response = make_request(self.url+'api/weboutageviewer/get_live_data')
-        raw_data['per_outage'] = json.loads(body.decode('utf8'))
+        body, response = make_request(self.url + "api/weboutageviewer/get_live_data")
+        raw_data["per_outage"] = json.loads(body.decode("utf8"))
 
         return raw_data
 
@@ -190,21 +209,21 @@ class Scraper3(BaseScraper):
             if not val:
                 data.update({key: pd.DataFrame()})
             else:
-                if key == 'per_county':
+                if key == "per_county":
                     per_loc_df = pd.DataFrame(val)
-                    per_loc_df = per_loc_df[per_loc_df['CustomersAffected'] != '0']
-                    per_loc_df['timestamp'] = timenow()
-                    per_loc_df['EMC'] = self.emc
-                    per_loc_df.drop(columns=['Shape'], inplace=True)
+                    per_loc_df = per_loc_df[per_loc_df["CustomersAffected"] != "0"]
+                    per_loc_df["timestamp"] = timenow()
+                    per_loc_df["EMC"] = self.emc
+                    per_loc_df.drop(columns=["Shape"], inplace=True)
                     data.update({key: per_loc_df})
-                if key == 'per_outage':
-                    per_outage_df = pd.DataFrame(val['MobileOutage'])
-                    per_outage_df['timestamp'] = timenow()
+                if key == "per_outage":
+                    per_outage_df = pd.DataFrame(val["MobileOutage"])
+                    per_outage_df["timestamp"] = timenow()
                     # TODO: sometimes error? mapping later
                     # zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
                     # zips = [self.extract_zipcode(x['Y'], x['X']) for x in [val['MobileOutage']]]
                     # per_outage_df['zip'] = zips
-                    per_outage_df['EMC'] = self.emc
+                    per_outage_df["EMC"] = self.emc
                     data.update({key: per_outage_df})
 
         return data
@@ -215,13 +234,17 @@ class Scraper3(BaseScraper):
         print(self.url)
 
         # TODO: simplify
-        body, response = make_request(self.url + 'MobileMap/OMSMobileService.asmx/GetAllCounties')
+        body, response = make_request(
+            self.url + "MobileMap/OMSMobileService.asmx/GetAllCounties"
+        )
         temp = xmltodict.parse(body.decode("utf8"))
-        raw_data['per_county'] = temp['ArrayOfMobileCounty']['MobileCounty']
+        raw_data["per_county"] = temp["ArrayOfMobileCounty"]["MobileCounty"]
 
-        body, response = make_request(self.url + 'MobileMap/OMSMobileService.asmx/GetAllOutages')
+        body, response = make_request(
+            self.url + "MobileMap/OMSMobileService.asmx/GetAllOutages"
+        )
         temp = xmltodict.parse(body.decode("utf8"))
-        raw_data['per_outage'] = temp['MobileOutageInfo']['Outages']
+        raw_data["per_outage"] = temp["MobileOutageInfo"]["Outages"]
 
         return raw_data
 
@@ -236,16 +259,24 @@ class Scraper4(BaseScraper):
 
         for key, val in data.items():
             if val:
-                df = pd.DataFrame(val['areas'])
-                df[['cust_a', 'percent_cust_a']] = df[['cust_a', 'percent_cust_a']].applymap(lambda x : x['val'])
-                df = df[(df['cust_a'] != 0) | (df['n_out'] != 0)]
-                df['timestamp'] = timenow()
-                df['EMC'] = self.emc
-                df.drop(columns=['gotoMap'], inplace=True)
+                df = pd.DataFrame(val["areas"])
+                df[["cust_a", "percent_cust_a"]] = df[
+                    ["cust_a", "percent_cust_a"]
+                ].applymap(lambda x: x["val"])
+                df = df[(df["cust_a"] != 0) | (df["n_out"] != 0)]
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                df.drop(columns=["gotoMap"], inplace=True)
                 data.update({key: df})
             else:
-                print(f"no '{key}' outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+
+        self.driver.close()
+        self.driver.quit()
+
         return data
 
     def fetch(self):
@@ -259,26 +290,33 @@ class Scraper4(BaseScraper):
         # parse reports link
         soup = BeautifulSoup(page_source, "html.parser")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
+
         links = {}
         for c in containers:
-            links.update({c.get("data-metrics-label"): c.get("href")})
+            links.update({c.getText(): c.get("href")})
 
         # get json reports
         raw_data = {}
         for k, v in links.items():
-            self.driver.get(self.url+v[1:])
+            if "kubra" in self.url:
+                self.url = "https://kubra.io/"
+            self.driver.get(self.url + v[1:])
             time.sleep(5)
             requests = self.driver.requests
             for r in requests:
-                if v in r.url:
-                    print(r)
-                    response = sw_decode(r.response.body,
-                                         r.response.headers.get('Content-Encoding', 'identity'))
-                    data = response.decode("utf8", 'ignore')
-                    if any([x in data for x in ['zip', 'Zip', 'City']]):
-                        raw_data['per_zipcode'] = json.loads(data)['file_data']
-                    elif 'county' in data:
-                        raw_data['per_county'] = json.loads(data)['file_data']
+                if "kubra.io/data" in r.url:
+                    print(f"scraping data from {r.url}")
+                    response = sw_decode(
+                        r.response.body,
+                        r.response.headers.get("Content-Encoding", "identity"),
+                    )
+                    data = response.decode("utf8", "ignore")
+                    if any([x in data for x in ["zip", "Zip", "ZIP", "City"]]):
+                        raw_data["per_zipcode"] = json.loads(data)["file_data"]
+                        print(f"got zip code data")
+                    elif "county" in data or "County" in data:
+                        raw_data["per_county"] = json.loads(data)["file_data"]
+                        print(f"got county data")
         return raw_data
 
 
@@ -289,24 +327,30 @@ class Scraper5(BaseScraper):
     def parse(self):
         data = self.fetch()
         for key, val in data.items():
-            if key == 'per_outage' and val:
+            if key == "per_outage" and val:
                 df = pd.DataFrame(val)
-                df['timestamp'] = timenow()
-                df[['startTime', 'lastUpdatedTime', 'etrTime']] = df[['startTime', 'lastUpdatedTime', 'etrTime']].apply(
-                    pd.to_datetime, unit='ms')
-                df['EMC'] = self.emc
-                df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['latitude'], row['longitude']), axis=1)
+                df["timestamp"] = timenow()
+                df[["startTime", "lastUpdatedTime", "etrTime"]] = df[
+                    ["startTime", "lastUpdatedTime", "etrTime"]
+                ].apply(pd.to_datetime, unit="ms")
+                df["EMC"] = self.emc
+                df["zip_code"] = df.apply(
+                    lambda row: self.extract_zipcode(row["latitude"], row["longitude"]),
+                    axis=1,
+                )
                 data.update({key: df})
             else:
-                print(f"no outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+                print(
+                    f"no outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
 
         return data
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         body, response = make_request(self.url)
-        raw_data = {'per_outage': json.loads(body)}
+        raw_data = {"per_outage": json.loads(body)}
         return raw_data
 
 
@@ -319,30 +363,29 @@ class Scraper6(BaseScraper):
         data = {}
 
         for key, val in raw_data.items():
-            for r in val['reportData']['reports']:
-                if r['id'] == 'County':
-                    per_county_df = pd.DataFrame(r['polygons'])
-                    per_county_df['EMC'] = self.emc
-                    per_county_df['timestamp'] = timenow()
-                    per_county_df = per_county_df[per_county_df['affected'] > 0]
-                    data.update({'per_county': per_county_df})
-                elif r['id'] == 'Zip':
-                    per_zipcode_df = pd.DataFrame(r['polygons'])
-                    per_zipcode_df['EMC'] = self.emc
-                    per_zipcode_df['timestamp'] = timenow()
-                    per_zipcode_df = per_zipcode_df[per_zipcode_df['affected'] > 0]
-                    data.update({'per_zipcode': per_zipcode_df})
+            for r in val["reportData"]["reports"]:
+                if r["id"] == "County":
+                    per_county_df = pd.DataFrame(r["polygons"])
+                    per_county_df["EMC"] = self.emc
+                    per_county_df["timestamp"] = timenow()
+                    per_county_df = per_county_df[per_county_df["affected"] > 0]
+                    data.update({"per_county": per_county_df})
+                elif r["id"] == "Zip":
+                    per_zipcode_df = pd.DataFrame(r["polygons"])
+                    per_zipcode_df["EMC"] = self.emc
+                    per_zipcode_df["timestamp"] = timenow()
+                    per_zipcode_df = per_zipcode_df[per_zipcode_df["affected"] > 0]
+                    data.update({"per_zipcode": per_zipcode_df})
 
-            per_outage_df = pd.DataFrame(val['outageData']['outages'])
-            per_outage_df['EMC'] = self.emc
-            per_outage_df['timestamp'] = timenow()
-            data.update({'per_outage': per_outage_df})
+            per_outage_df = pd.DataFrame(val["outageData"]["outages"])
+            per_outage_df["EMC"] = self.emc
+            per_outage_df["timestamp"] = timenow()
+            data.update({"per_outage": per_outage_df})
 
         return data
 
 
 class Scraper7(BaseScraper):
-
     def __init__(self, url, emc):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
@@ -352,27 +395,34 @@ class Scraper7(BaseScraper):
 
         for key, val in data.items():
             if val:
-                isHighTraffic = val['isHighTraffic']
-                updateTime = val['timestamp']
+                isHighTraffic = val["isHighTraffic"]
+                updateTime = val["timestamp"]
                 per_outage_df = pd.DataFrame()
                 for k, v in val.items():
                     if isinstance(v, dict):
-                        if v['markers']:
-                            df = pd.DataFrame(v['markers'])
-                            df['service_index_name'] = v['service_index_name']
-                            df['outages'] = v['outages']
-                            df['NumConsumers'] = v['stats']['NumConsumers']
-                            df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis=1)
+                        if v["markers"]:
+                            df = pd.DataFrame(v["markers"])
+                            df["service_index_name"] = v["service_index_name"]
+                            df["outages"] = v["outages"]
+                            df["NumConsumers"] = v["stats"]["NumConsumers"]
+                            df["zip_code"] = df.apply(
+                                lambda row: self.extract_zipcode(
+                                    row["lat"], row["lon"]
+                                ),
+                                axis=1,
+                            )
                             per_outage_df = df
 
-                per_outage_df['isHighTraffic'] = isHighTraffic
-                per_outage_df['updateTime'] = updateTime
-                per_outage_df['timestamp'] = timenow()
-                per_outage_df['EMC'] = self.emc
+                per_outage_df["isHighTraffic"] = isHighTraffic
+                per_outage_df["updateTime"] = updateTime
+                per_outage_df["timestamp"] = timenow()
+                per_outage_df["EMC"] = self.emc
                 data.update({key: per_outage_df})
             else:
-                print(f"no '{key}' outage of {self.emc} update found at",
-                      datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"))
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
 
         return data
 
@@ -387,10 +437,13 @@ class Scraper7(BaseScraper):
         raw_data = {}
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                response = sw_decode(request.response.body, request.response.headers.get('Content-Encoding', 'identity'))
+                response = sw_decode(
+                    request.response.body,
+                    request.response.headers.get("Content-Encoding", "identity"),
+                )
                 data = response.decode("utf8")
-                if 'isHighTraffic' in data:
-                    raw_data['per_outage'] = json.loads(data)
+                if "isHighTraffic" in data:
+                    raw_data["per_outage"] = json.loads(data)
 
         return raw_data
 
@@ -419,19 +472,19 @@ class Scraper9(BaseScraper):
         tables = soup.find_all("table")
 
         # separate rows
-        rows = tables[1].find_all('tr')
+        rows = tables[1].find_all("tr")
         header_row = rows[0]
         data_rows = rows[1:]
 
         # Extract the table header cells
-        header_cells = header_row.find_all('th')
+        header_cells = header_row.find_all("th")
         header = [cell.get_text().strip() for cell in header_cells]
-        cols = [h for h in header if h != '']
+        cols = [h for h in header if h != ""]
 
         # Extract the table data cells
         data = []
         for row in data_rows:
-            cells = row.find_all('td')
+            cells = row.find_all("td")
             data.append([cell.get_text().strip() for cell in cells])
 
         # Print the table data as a list of dictionaries
@@ -440,9 +493,9 @@ class Scraper9(BaseScraper):
         if len(df.columns) > 1:
             df = df[cols]
             df = df.dropna(axis=0)
-            df['timestamp'] = timenow()
-            df['EMC'] = self.emc
-            df = df[df['# Out'] != '0']
+            df["timestamp"] = timenow()
+            df["EMC"] = self.emc
+            df = df[df["# Out"] != "0"]
         else:
             df = pd.DataFrame()
 
@@ -454,28 +507,34 @@ class Scraper9(BaseScraper):
         time.sleep(10)
 
         if self.emc != "Karnes Electric Coop, Inc.":
-            button = self.driver.find_elements("xpath", '//*[@id="OMS.Customers Summary"]')
+            button = self.driver.find_elements(
+                "xpath", '//*[@id="OMS.Customers Summary"]'
+            )
             if button:
                 wait = WebDriverWait(self.driver, 10)
-                label = wait.until(EC.element_to_be_clickable((By.XPATH, '//*[@id="OMS.Customers Summary"]')))
+                label = wait.until(
+                    EC.element_to_be_clickable(
+                        (By.XPATH, '//*[@id="OMS.Customers Summary"]')
+                    )
+                )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
 
         time.sleep(5)
         page_source = {}
-        select_elements = self.driver.find_elements(By.CLASS_NAME, 'gwt-ListBox')
+        select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
             menu.select_by_index(idx)
             time.sleep(3)
-            page_source.update({f'per_{level}':  self.driver.page_source})
+            page_source.update({f"per_{level}": self.driver.page_source})
 
         return page_source
 
 
 class Scraper10(BaseScraper):
-    def __init__(self, url, emc=''):
+    def __init__(self, url, emc=""):
         super().__init__(url, emc)
 
     def parse(self):
@@ -483,7 +542,7 @@ class Scraper10(BaseScraper):
         soup = BeautifulSoup(source_page, "html.parser")
         table = soup.find("table")
         # Find the table rows using their tag name
-        rows = table.find_all('tr')
+        rows = table.find_all("tr")
 
         # Extract the table header row
         header_row = rows[0]
@@ -492,22 +551,22 @@ class Scraper10(BaseScraper):
         data_rows = rows[1:]
 
         # Extract the table header cells
-        header_cells = header_row.find_all('th')
+        header_cells = header_row.find_all("th")
         header = [cell.get_text().strip() for cell in header_cells]
 
         # Extract the table data cells
         data = []
         for row in data_rows:
-            cells = row.find_all('td')
+            cells = row.find_all("td")
             data.append([cell.get_text().strip() for cell in cells])
 
         # Print the table data as a list of dictionaries
         table_data = [dict(zip(header, row)) for row in data]
         df = pd.DataFrame(table_data)[:-1]
-        df['timestamp'] = timenow()
-        df['EMC'] = self.emc
-        df = df[df['Customers Affected'] != '0']
-        data = {'per_county': df}
+        df["timestamp"] = timenow()
+        df["EMC"] = self.emc
+        df = df[df["Customers Affected"] != "0"]
+        data = {"per_county": df}
         return data
 
     def fetch(self):
@@ -524,38 +583,45 @@ class Scraper11(BaseScraper):
         data = self.fetch()
 
         for key, val in data.items():
-            if key == 'per_substation':
-                per_substation_df = pd.DataFrame(val['rows']['subs'])
-                per_substation_df['timestamp'] = timenow()
-                per_substation_df['EMC'] = self.emc
-                per_substation_df = per_substation_df[(per_substation_df.SubTotalConsumersOut != 0) |
-                                                      (per_substation_df.SubTotalMetersAffectedByDeviceOutages != 0)]
+            if key == "per_substation":
+                per_substation_df = pd.DataFrame(val["rows"]["subs"])
+                per_substation_df["timestamp"] = timenow()
+                per_substation_df["EMC"] = self.emc
+                per_substation_df = per_substation_df[
+                    (per_substation_df.SubTotalConsumersOut != 0)
+                    | (per_substation_df.SubTotalMetersAffectedByDeviceOutages != 0)
+                ]
                 data.update({key: per_substation_df})
-            elif key == 'per_county':
-                per_county_df = pd.DataFrame(val['rows'])
-                per_county_df['timestamp'] = timenow()
-                per_county_df['EMC'] = self.emc
+            elif key == "per_county":
+                per_county_df = pd.DataFrame(val["rows"])
+                per_county_df["timestamp"] = timenow()
+                per_county_df["EMC"] = self.emc
                 per_county_df = per_county_df[per_county_df.out != 0]
                 data.update({key: per_county_df})
-            elif key == 'per_outage':
+            elif key == "per_outage":
                 if val:
-                    isHighTraffic = val['isHighTraffic']
-                    updateTime = val['timestamp']
+                    isHighTraffic = val["isHighTraffic"]
+                    updateTime = val["timestamp"]
                     per_outage_df = pd.DataFrame()
                     for k, v in val.items():
                         if isinstance(v, dict):
-                            if v['markers']:
-                                df = pd.DataFrame(v['markers'])
-                                df['service_index_name'] = v['service_index_name']
-                                df['outages'] = v['outages']
-                                df['NumConsumers'] = v['stats']['NumConsumers']
-                                df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['lat'], row['lon']), axis=1)
+                            if v["markers"]:
+                                df = pd.DataFrame(v["markers"])
+                                df["service_index_name"] = v["service_index_name"]
+                                df["outages"] = v["outages"]
+                                df["NumConsumers"] = v["stats"]["NumConsumers"]
+                                df["zip_code"] = df.apply(
+                                    lambda row: self.extract_zipcode(
+                                        row["lat"], row["lon"]
+                                    ),
+                                    axis=1,
+                                )
                                 per_outage_df = df
 
-                    per_outage_df['isHighTraffic'] = isHighTraffic
-                    per_outage_df['updateTime'] = updateTime
-                    per_outage_df['timestamp'] = timenow()
-                    per_outage_df['EMC'] = self.emc
+                    per_outage_df["isHighTraffic"] = isHighTraffic
+                    per_outage_df["updateTime"] = updateTime
+                    per_outage_df["timestamp"] = timenow()
+                    per_outage_df["EMC"] = self.emc
                     data.update({key: per_outage_df})
 
         return data
@@ -571,15 +637,17 @@ class Scraper11(BaseScraper):
         raw_data = {}
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                response = sw_decode(request.response.body,
-                                     request.response.headers.get('Content-Encoding', 'identity'))
-                data = response.decode("utf8", 'ignore')
-                if 'sub_outages' in data:
-                    raw_data['per_substation'] = json.loads(data)
-                elif 'cfa_county_data' in data:
-                    raw_data['per_county'] = json.loads(data)
-                elif 'isHighTraffic' in data:
-                    raw_data['per_outage'] = json.loads(data)
+                response = sw_decode(
+                    request.response.body,
+                    request.response.headers.get("Content-Encoding", "identity"),
+                )
+                data = response.decode("utf8", "ignore")
+                if "sub_outages" in data:
+                    raw_data["per_substation"] = json.loads(data)
+                elif "cfa_county_data" in data:
+                    raw_data["per_county"] = json.loads(data)
+                elif "isHighTraffic" in data:
+                    raw_data["per_outage"] = json.loads(data)
 
         return raw_data
 
