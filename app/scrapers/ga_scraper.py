@@ -16,7 +16,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
 
-# from webdriver_manager.chrome import ChromeDriverManager  # need to remove
+# from webdriver_manager.chrome import ChromeDriverManager  # for local test
 from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
@@ -111,7 +111,7 @@ class BaseScraper:
             chrome_options.binary_location = "/opt/chrome/chrome"
 
         driver = webdriver.Chrome(
-            # ChromeDriverManager().install(),
+            # ChromeDriverManager().install(), # for local test
             executable_path=chrome_driver_path,
             chrome_options=chrome_options,
             seleniumwire_options=selenium_options,
