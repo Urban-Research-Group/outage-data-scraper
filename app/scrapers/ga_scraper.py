@@ -61,10 +61,14 @@ class BaseScraper:
         return page_source
 
     def extract_zipcode(self, lat, lon):
-        addr = self.geo_locator.reverse((lat, lon))
-        if addr:
-            return addr.raw["address"].get("postcode", "unknown")
-        else:
+        try:
+            addr = self.geo_locator.reverse((lat, lon), timeout=10)
+            if addr:
+                return addr.raw["address"].get("postcode", "unknown")
+            else:
+                return "unknown"
+        except Exception as e:
+            print(e)
             return "unknown"
 
     def init_webdriver(self):
@@ -464,6 +468,9 @@ class Scraper9(BaseScraper):
         for level, pg in data.items():
             df = self._parse(pg)
             data.update({level: df})
+
+        self.driver.close()
+        self.driver.quit()
 
         return data
 
