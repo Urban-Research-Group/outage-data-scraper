@@ -631,30 +631,56 @@ class Scraper11(BaseScraper):
                     per_outage_df["EMC"] = self.emc
                     data.update({key: per_outage_df})
 
+        self.driver.close()
+        self.driver.quit()
+
         return data
 
     def fetch(self=None):
         print(f"fetching {self.emc} outages from {self.url}")
+        raw_data = {}
+
         # Send a request to the website and let it load
         self.driver.get(self.url)
 
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        raw_data = {}
-        for request in self.driver.requests:
-            if "ShellOut" in request.url:
-                response = sw_decode(
-                    request.response.body,
-                    request.response.headers.get("Content-Encoding", "identity"),
-                )
-                data = response.decode("utf8", "ignore")
-                if "sub_outages" in data:
-                    raw_data["per_substation"] = json.loads(data)
-                elif "cfa_county_data" in data:
-                    raw_data["per_county"] = json.loads(data)
-                elif "isHighTraffic" in data:
-                    raw_data["per_outage"] = json.loads(data)
+        if self.emc != "Walton EMC":
+            for request in self.driver.requests:
+                if "ShellOut" in request.url:
+                    response = sw_decode(
+                        request.response.body,
+                        request.response.headers.get("Content-Encoding", "identity"),
+                    )
+                    data = response.decode("utf8", "ignore")
+                    if "sub_outages" in data:
+                        raw_data["per_substation"] = json.loads(data)
+                    elif "cfa_county_data" in data:
+                        raw_data["per_county"] = json.loads(data)
+                    elif "isHighTraffic" in data:
+                        raw_data["per_outage"] = json.loads(data)
+        else:
+            # def make_request(url, headers=None, data=None, method="GET"):
+            url = "https://www.outageentry.com/Outages/ajax/ajaxShellOut.php"
+
+            data = {"action": "get", "client": "walton", "target": "cfa_county_data"}
+
+            raw_data["per_county"] = json.loads(
+                make_request(url, None, data, "POST")[0]
+            )
+
+            data["target"] = "cfa_substation_data"
+
+            raw_data["per_substation"] = json.loads(
+                make_request(url, None, data, "POST")[0]
+            )
+
+            data["target"] = "cfa_device_markers"
+
+            raw_data["per_outage"] = json.loads(
+                make_request(url, None, data, "POST")[0]
+            )
 
         return raw_data
 
