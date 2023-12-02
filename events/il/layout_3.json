@@ -1,0 +1,8 @@
+{
+    "layout": 3,
+    "emc": {
+        "corn belt energy coop": "https://ebill.cornbeltenergy.com/mapviewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "il"
+}

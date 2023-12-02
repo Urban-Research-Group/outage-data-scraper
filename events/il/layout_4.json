@@ -1,0 +1,8 @@
+{
+    "layout": 4,
+    "emc": {
+        "southeastern illinois electric coop": "https://outage.seiec.com/"
+    },
+    "bucket": "data",
+    "folder": "il"
+}
