@@ -115,7 +115,7 @@ class BaseScraper:
             chrome_options.binary_location = "/opt/chrome/chrome"
 
         driver = webdriver.Chrome(
-            # ChromeDriverManager().install(), # for local test
+            # ChromeDriverManager().install(),  # for local test
             executable_path=chrome_driver_path,
             chrome_options=chrome_options,
             seleniumwire_options=selenium_options,
@@ -127,6 +127,7 @@ class BaseScraper:
 class Scraper1(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
         data = self.fetch()
@@ -162,6 +163,16 @@ class Scraper1(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
+        if self.emc == "Taylor Electric Coop, Inc.":
+            self.driver.get(self.url)
+            time.sleep(5)
+            _ = self.driver.page_source
+            self.url = self.driver.find_element(
+                By.XPATH,
+                "/html/body/div/div[1]/div[2]/div/div/main/article/div/div/div/div/section/div/div[2]/div/div[4]/div/div/a",
+            ).get_attribute("href")
+            print("new url", self.url)
+
         with urlopen(self.url + "data/boundaries.json") as response:
             raw_data["per_county"] = json.loads(response.read())
 
