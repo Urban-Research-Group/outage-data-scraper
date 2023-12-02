@@ -1,0 +1,8 @@
+{
+    "layout": 2,
+    "emc": {
+        "commonwealth edison company": "https://outagemap.comed.com"
+    },
+    "bucket": "data",
+    "folder": "il"
+}
