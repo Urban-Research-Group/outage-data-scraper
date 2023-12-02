@@ -19,7 +19,7 @@ from seleniumwire import webdriver
 
 from .util import is_aws_env, make_request, timenow
 
-from .ga_scraper import BaseScraper
+from .ga_scraper import BaseScraper, Scraper9 as GA_Scraper9
 
 
 # TODO: update for security
@@ -231,6 +231,8 @@ class ILScraper:
             obj = super().__new__(Scraper1)
         elif layout_id == 2:
             obj = super().__new__(Scraper2)
+        elif layout_id == 3:
+            obj = super().__new__(GA_Scraper9)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 2"
         obj.__init__(url, emc)
