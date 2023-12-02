@@ -1,0 +1,8 @@
+{
+    "layout": 1,
+    "emc": {
+        "ameren illinois": "https://outagemap.ameren.com"
+    },
+    "bucket": "data",
+    "folder": "il"
+}
