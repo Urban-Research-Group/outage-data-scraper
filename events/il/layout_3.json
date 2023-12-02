@@ -1,7 +1,9 @@
 {
     "layout": 3,
     "emc": {
-        "corn belt energy coop": "https://ebill.cornbeltenergy.com/mapviewer/mapviewer.html?config=Outage+Web+Map"
+        "corn belt energy coop": "https://ebill.cornbeltenergy.com/mapviewer/mapviewer.html?config=Outage+Web+Map",
+        "wayne-white electric coop": "https://ebill.waynewhitecoop.com/maps/ext/OutageWebMap/",
+        "tri-county electric coop": "https://ebill.tricountycoop.com/woViewer/mapviewer.html?config=Outage%20Web%20Map"
     },
     "bucket": "data",
     "folder": "il"
