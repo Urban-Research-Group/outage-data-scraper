@@ -1,0 +1,9 @@
+{
+    "layout": 5,
+    "emc": {
+        "norris electric coop": "https://outage.norriselectric.com/OMSWebMap/",
+        "adams electric coop": "https://outagemap.adamselectric.coop/OMSWebMap/"
+    },
+    "bucket": "data",
+    "folder": "il"
+}
