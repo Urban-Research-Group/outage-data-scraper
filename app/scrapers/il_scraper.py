@@ -24,6 +24,7 @@ from .ga_scraper import (
     Scraper1 as GA_Scraper1,
     Scraper9 as GA_Scraper9,
     Scraper3 as GA_Scraper3,
+    Scraper11 as GA_Scraper11,
 )
 
 
@@ -242,6 +243,8 @@ class ILScraper:
             obj = super().__new__(GA_Scraper1)
         elif layout_id == 5:
             obj = super().__new__(GA_Scraper3)
+        elif layout_id == 6:
+            obj = super().__new__(GA_Scraper11)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 2"
         obj.__init__(url, emc)

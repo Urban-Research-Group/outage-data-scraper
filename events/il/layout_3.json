@@ -9,7 +9,8 @@
         "shelby electric coop": "https://ebill.shelbyelectric.coop/maps/OutageWebMap/",
         "monroe county electric coop": "https://ebill.mcec.org/woViewer/mapviewer.html?config=Outage+Web+Map",
         "clinton county": "https://ebill.cceci.com/woViewer/mapviewer.html?config=Outage+Web+Map",
-        "enerstar electric coop": "https://ebill.enerstar.com/mapviewer/mapviewer.html?config=Outage%20Web%20Map"
+        "enerstar electric coop": "https://ebill.enerstar.com/mapviewer/mapviewer.html?config=Outage%20Web%20Map",
+        "mjm electric coop": "https://ebill.mjmec.coop/maps/EXT/OutageWebMap/"
     },
     "bucket": "data",
     "folder": "il"
