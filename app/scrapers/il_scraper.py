@@ -231,6 +231,123 @@ class Scraper2(BaseScraper):
         return raw_data
 
 
+class Scraper7(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+        for key, val in data.items():
+            print(key)
+            if val:
+                df = pd.DataFrame(val)
+                df = df[(df["NumOutages"] != 0)]
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                data.update({key: df})
+            else:
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+
+        self.driver.close()
+        self.driver.quit()
+
+        return data
+
+    def fetch(self):
+        print(f"Fetching {self.emc} outages from {self.url}")
+        # get javascript rendered source page
+        self.driver.get(self.url)
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        try:
+            data_source = []
+            for request in self.driver.requests:
+                if (
+                    "CityOutageData" in request.url
+                    or "CountyInfo" in request.url
+                    or "GetAllMetroOutages" in request.url
+                ):
+                    data_source.append(request.url)
+            raw_data = {}
+            for url in data_source:
+                if "CityOutageData" in url:
+                    raw_data["per_city"] = requests.post(url).json()
+                    print(f"got city data")
+                elif "CountyInfo" in url:
+                    raw_data["per_county"] = requests.post(url).json()
+                    print(f"got county data")
+                elif "GetAllMetroOutages" in url:
+                    raw_data["per_metro"] = requests.post(url).json()
+                    print(f"got metro data")
+        except Exception as e:
+            print(f"Error: {e}")
+            self.driver.close()
+            self.driver.quit()
+
+        return raw_data
+
+
+class Scraper8(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+        for key, val in data.items():
+            print(key)
+            if val:
+                df = pd.DataFrame(val)
+                df = df[(df["Out"] != 0)]
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                data.update({key: df})
+            else:
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+
+        self.driver.close()
+        self.driver.quit()
+
+        return data
+
+    def fetch(self):
+        print(f"Fetching {self.emc} outages from {self.url}")
+        # get javascript rendered source page
+        self.driver.get(self.url)
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        try:
+            data_source = []
+            for request in self.driver.requests:
+                if "AreaSummary" in request.url:
+                    data_source.append(request.url)
+            raw_data = {}
+            for url in data_source:
+                if "AreaSummary" in url:
+                    tmp = requests.get(url).json()
+                    if tmp["zipCodeAreas"]:
+                        raw_data["per_zipcode"] = tmp["zipCodeAreas"]
+                    if tmp["countyAreas"]:
+                        raw_data["per_county"] = tmp["countyAreas"]
+                    if tmp["districtAreas"]:
+                        raw_data["per_district"] = tmp["districtAreas"]
+        except Exception as e:
+            print(f"Error: {e}")
+            self.driver.close()
+            self.driver.quit()
+
+        return raw_data
+
+
 class ILScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -245,6 +362,10 @@ class ILScraper:
             obj = super().__new__(GA_Scraper3)
         elif layout_id == 6:
             obj = super().__new__(GA_Scraper11)
+        elif layout_id == 7:
+            obj = super().__new__(Scraper7)
+        elif layout_id == 8:
+            obj = super().__new__(Scraper8)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 2"
         obj.__init__(url, emc)

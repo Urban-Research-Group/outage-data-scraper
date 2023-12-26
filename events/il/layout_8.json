@@ -1,0 +1,8 @@
+{
+    "layout": 8,
+    "emc": {
+        "jo-carroll energy": "https://outagemap.jocarroll.com/DMSOutageMap/default.html"
+    },
+    "bucket": "data",
+    "folder": "il"
+}

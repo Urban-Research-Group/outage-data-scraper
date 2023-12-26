@@ -1,0 +1,8 @@
+{
+    "layout": 6,
+    "emc": {
+        "menard electric coop": "https://www.outageentry.com/Outages/outage.php?Client=MENARD&serviceIndex=1&openingPage="
+    },
+    "bucket": "data",
+    "folder": "il"
+}

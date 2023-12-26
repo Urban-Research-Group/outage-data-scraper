@@ -1,0 +1,8 @@
+{
+    "layout": 7,
+    "emc": {
+        "midamerican energy": "https://www.midamericanenergy.com/OutageWatch/dsk.html"
+    },
+    "bucket": "data",
+    "folder": "il"
+}
