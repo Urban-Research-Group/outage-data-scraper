@@ -1,0 +1,9 @@
+{
+    "layout": 1,
+    "emc": {
+        "conedison": "https://outagemap.coned.com/external/default.html",
+        "orange&rockland": "https://outagemap.oru.com/external/default.html"
+    },
+    "bucket": "data",
+    "folder": "ny"
+}

@@ -1,0 +1,9 @@
+{
+    "layout": 3,
+    "emc": {
+        "nyseg": "https://www.nyseg.com/outages/reportorviewoutage/viewoutagelist",
+        "rg&e": "https://www.rge.com/outages/reportorviewoutage/viewoutagelist"
+    },
+    "bucket": "data",
+    "folder": "ny"
+}

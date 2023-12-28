@@ -2,6 +2,7 @@ from .ca_scraper import CAScraper
 from .ga_scraper import GAScraper
 from .tx_scraper import TXScraper
 from .il_scraper import ILScraper
+from .ny_scraper import NYScraper
 
 
 class Scraper:
@@ -14,5 +15,7 @@ class Scraper:
             return TXScraper(layout_id, url, emc)
         elif state == "il":
             return ILScraper(layout_id, url, emc)
+        elif state == "ny":
+            return NYScraper(layout_id, url, emc)
         else:
             raise "Invalid input state"

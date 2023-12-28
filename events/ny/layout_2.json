@@ -1,0 +1,9 @@
+{
+    "layout": 2,
+    "emc": {
+        "central hudson": "https://outagemap.cenhud.com/",
+        "nationalgrid": "https://outagemap.ma.nationalgridus.com/"
+    },
+    "bucket": "data",
+    "folder": "ny"
+}
