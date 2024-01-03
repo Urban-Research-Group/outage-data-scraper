@@ -86,6 +86,7 @@ class BaseScraper:
         chrome_options = webdriver.ChromeOptions()
         # chrome_options.add_argument("--headless")
         chrome_options.add_argument("--headless=new")
+        chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-dev-shm-usage")
         chrome_options.add_argument("--disable-extensions")
         chrome_options.add_argument("--no-sandbox")
@@ -260,7 +261,6 @@ class Scraper3(BaseScraper):
         )
         temp = xmltodict.parse(body.decode("utf8"))
         raw_data["per_outage"] = temp["MobileOutageInfo"]["Outages"]
-
         return raw_data
 
 
@@ -547,21 +547,27 @@ class Scraper9(BaseScraper):
             menu.select_by_index(idx)
             time.sleep(3)
             page_source.update({f"per_{level}": self.driver.page_source})
-
         return page_source
 
 
 class Scraper10(BaseScraper):
     def __init__(self, url, emc=""):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
         source_page = self.fetch()
         soup = BeautifulSoup(source_page, "html.parser")
+        if soup.find(string="No data"):
+            print(
+                f"no outage of {self.emc} update found at",
+                datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+            )
+            return {}
+
         table = soup.find("table")
         # Find the table rows using their tag name
         rows = table.find_all("tr")
-
         # Extract the table header row
         header_row = rows[0]
 
@@ -588,8 +594,17 @@ class Scraper10(BaseScraper):
         return data
 
     def fetch(self):
-        body, response = make_request(self.url)
-        return body
+        self.driver.get(self.url)   
+        time.sleep(5)
+        requests = self.driver.requests
+        for r in requests:
+            if "maps.ssemc.com" in r.url and "index.html" in r.url:
+                self.url = r.url
+                break
+
+        self.driver.get(self.url)   
+        time.sleep(30)
+        return self.driver.page_source
 
 
 class Scraper11(BaseScraper):
