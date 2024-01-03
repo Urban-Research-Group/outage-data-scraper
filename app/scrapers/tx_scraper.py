@@ -16,6 +16,7 @@ from .ga_scraper import (
     Scraper9 as GA_Scraper9,
     Scraper11 as GA_Scraper11,
 )
+from selenium.webdriver.common.by import By
 
 # TODO: update for security
 import ssl
@@ -132,6 +133,19 @@ class Scraper5(BaseScraper):
 
         # parse reports link
         soup = BeautifulSoup(page_source, "html.parser")
+        if self.emc == "Texas-New Mexico Power Co.":
+            iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
+            source_page = iframe_tag.get_attribute("src")
+            print("Redirect to", source_page)
+            self.url = "https://kubra.io/"
+            self.driver.get(source_page)
+            time.sleep(10)
+            page_source = self.driver.page_source
+
+            # parse reports link
+            soup = BeautifulSoup(page_source, "html.parser")
+
+
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
         counter = 0  # we use counter to avoid duplicate key bug
