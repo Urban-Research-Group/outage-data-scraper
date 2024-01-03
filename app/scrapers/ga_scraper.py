@@ -138,7 +138,17 @@ class Scraper1(BaseScraper):
                 data.update({key: pd.DataFrame()})
             else:
                 if key == "per_county":
-                    per_loc_df = pd.DataFrame(val[0]["boundaries"])
+                    # Turns out that some val has more than one item
+                    boundaries_lists = [item["boundaries"] for item in val]
+
+                    flattened_boundaries = []
+                    for b in boundaries_lists:
+                        flattened_boundaries = flattened_boundaries + b
+
+                    # Creating a DataFrame from the concatenated list
+                    per_loc_df = pd.DataFrame(flattened_boundaries)
+                    # per_loc_df = pd.DataFrame(val[0]["boundaries"])
+
                     per_loc_df = per_loc_df[
                         (per_loc_df["customersAffected"] != 0)
                         | (per_loc_df["customersOutNow"] != 0)
@@ -359,7 +369,6 @@ class Scraper5(BaseScraper):
                     f"no outage of {self.emc} update found at",
                     datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
                 )
-
         return data
 
     def fetch(self):
@@ -594,7 +603,7 @@ class Scraper10(BaseScraper):
         return data
 
     def fetch(self):
-        self.driver.get(self.url)   
+        self.driver.get(self.url)
         time.sleep(5)
         requests = self.driver.requests
         for r in requests:
@@ -602,7 +611,7 @@ class Scraper10(BaseScraper):
                 self.url = r.url
                 break
 
-        self.driver.get(self.url)   
+        self.driver.get(self.url)
         time.sleep(30)
         return self.driver.page_source
 
@@ -707,7 +716,6 @@ class Scraper11(BaseScraper):
             raw_data["per_outage"] = json.loads(
                 make_request(url, None, data, "POST")[0]
             )
-
         return raw_data
 
 
