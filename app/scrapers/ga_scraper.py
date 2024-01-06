@@ -355,8 +355,8 @@ class Scraper5(BaseScraper):
             if key == "per_outage" and val:
                 df = pd.DataFrame(val)
                 df["timestamp"] = timenow()
-                df[["startTime", "lastUpdatedTime", "etrTime"]] = df[
-                    ["startTime", "lastUpdatedTime", "etrTime"]
+                df[["startTime", "lastUpdatedTime"]] = df[
+                    ["startTime", "lastUpdatedTime"]
                 ].apply(pd.to_datetime, unit="ms")
                 df["EMC"] = self.emc
                 df["zip_code"] = df.apply(
