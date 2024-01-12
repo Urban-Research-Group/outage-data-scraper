@@ -1,0 +1,11 @@
+{
+    "layout": 3,
+    "emc": {
+        "Duck River Electric Membership Corporation": "https://outagemap.dremc.com:8182/",
+        "Gibson Electric Membership Corporation": "https://outagemap.gibsonemc.com/",
+        "Holston Electric Cooperative Inc.": "https://outage.holstonelectric.com/",
+        "North Georgia Electric Membership Corporation": "https://www2.ngemc.com/"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

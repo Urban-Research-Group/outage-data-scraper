@@ -1,0 +1,11 @@
+{
+    "layout": 1,
+    "emc": {
+        "Appalachian Electric Cooperative": "https://www.outageentry.com/Outages/outage.php?Client=appalachian",
+        "Chickasaw Electric Cooperative": "https://www.outageentry.com/Outages/outage.php?Client=CHICKASAW&serviceIndex=1&openingPage=",
+        "Forked Deer Electric Cooperative Inc.": "https://www.outageentry.com/Outages/outage.php?Client=FDEC&serviceIndex=1&openingPage=",
+        "Plateau Electric Cooperative": "https://www.outageentry.com/Outages/outage.php?Client=plateau"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

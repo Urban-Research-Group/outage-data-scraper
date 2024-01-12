@@ -1,0 +1,9 @@
+{
+    "layout": 4,
+    "emc": {
+        "Fayetteville Public Utilities": "https://billing.fpu-tn.com/maps/OutageWebMap/",
+        "Middle Tennessee Electric Membership Corporation": "https://member.mtemc.com/mapviewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

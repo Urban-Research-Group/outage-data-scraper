@@ -1,0 +1,8 @@
+{
+    "layout": 2,
+    "emc": {
+        "Cumberland Electric Membership Corporation": "https://www.cemc.org/outagemap/#outage-map"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

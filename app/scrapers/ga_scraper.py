@@ -497,7 +497,6 @@ class Scraper9(BaseScraper):
     def _parse(self, page_source):
         soup = BeautifulSoup(page_source, "html.parser")
         tables = soup.find_all("table")
-
         # separate rows
         rows = tables[1].find_all("tr")
         header_row = rows[0]
