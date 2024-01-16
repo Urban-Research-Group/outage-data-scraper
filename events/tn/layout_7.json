@@ -1,0 +1,8 @@
+{
+    "layout": 7,
+    "emc": {
+        "Knoxville Utilities Board": "https://www.kub.org/outage/details"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

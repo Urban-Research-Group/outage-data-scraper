@@ -4,7 +4,15 @@
         "Duck River Electric Membership Corporation": "https://outagemap.dremc.com:8182/",
         "Gibson Electric Membership Corporation": "https://outagemap.gibsonemc.com/",
         "Holston Electric Cooperative Inc.": "https://outage.holstonelectric.com/",
-        "North Georgia Electric Membership Corporation": "https://www2.ngemc.com/"
+        "North Georgia Electric Membership Corporation": "https://www2.ngemc.com/",
+        "Powell Valley Electric Cooperative": "https://outages.pve.coop/",
+        "Southwest Tennessee Electric Membership Corporation": "https://map.stemc.com/",
+        "Upper Cumberland Electric Membership Corporation": "https://outagemap.ucemc.com/",
+        "Cleveland Utilities": "http://outage.clevelandutilities.com:7576/",
+        "Clinton Utilities Board": "http://outage.clintonub.com/",
+        "Columbia Power & Water Systems": "https://oms.cpws.com/",
+        "Dickson Electric System": "http://outage.dicksonelectric.com/",
+        "Murfreesboro Electric Department": "http://outage.clintonub.com/"
     },
     "bucket": "data",
     "folder": "tn"

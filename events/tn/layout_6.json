@@ -1,0 +1,8 @@
+{
+    "layout": 6,
+    "emc": {
+        "Nashville Electric Service": "https://utilisocial.io/datacapable/v2/p/NES/map/events"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

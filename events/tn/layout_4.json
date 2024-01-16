@@ -2,7 +2,13 @@
     "layout": 4,
     "emc": {
         "Fayetteville Public Utilities": "https://billing.fpu-tn.com/maps/OutageWebMap/",
-        "Middle Tennessee Electric Membership Corporation": "https://member.mtemc.com/mapviewer/mapviewer.html?config=Outage+Web+Map"
+        "Middle Tennessee Electric Membership Corporation": "https://member.mtemc.com/mapviewer/mapviewer.html?config=Outage+Web+Map",
+        "Volunteer Energy Cooperative": "https://ebill.vec.org/maps/public/OutageWebMap/?config=Outage+Web+Map",
+        "Erwin Utilities": "https://eu.ebill.coop/maps/OMS/",
+        "Greeneville Light & Power System": "https://ebill.glps.net/maps/public/OutageWebMap/?from=article",
+        "Harriman Utility Board": "https://ebill.hub-tn.com/mapviewer/mapviewer.html?config=Outage+Web+Map",
+        "BrightRidge": "https://css.brightridge.com/maps/external/OutageWebMap/",
+        "Lawrenceburg Utility Systems": "https://ebill.lburgus.com/maps/Outage_Web_Map/"
     },
     "bucket": "data",
     "folder": "tn"

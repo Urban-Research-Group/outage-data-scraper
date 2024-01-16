@@ -21,9 +21,10 @@ from .util import is_aws_env, make_request, timenow
 
 from .ga_scraper import (
     BaseScraper,
-    Scraper11 as GA_Scraper11,
     Scraper1 as GA_Scraper1,
+    Scraper5 as GA_Scraper5,
     Scraper9 as GA_Scraper9,
+    Scraper11 as GA_Scraper11,
 )
 
 
@@ -90,13 +91,13 @@ class Scraper2(BaseScraper):
         # get javascript rendered source page
         self.driver.get(self.url)
         # Sleeps for 5 seconds
-        time.sleep(10)
+        time.sleep(20)
 
         page_source = {}
         try:
             iframe_tag = self.driver.find_element(
                 By.XPATH,
-                "/html/body/div[1]/main/div/article/div[3]/div[1]/div/div/div/iframe",
+                "/html/body/div[2]/main/div/article/div[3]/div[1]/div/div/div/iframe",
             )
             self.driver.switch_to.frame(iframe_tag)
             time.sleep(50)  # since this iframe is super slow
@@ -122,6 +123,132 @@ class Scraper2(BaseScraper):
         return page_source
 
 
+class Scraper5(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+        for key, val in data.items():
+            if val:
+                if key == "per_district":
+                    new_val = []
+                    for item in val:
+                        if "outage_reported" not in item:
+                            continue
+                        new_item = {
+                            "district": item["district"],
+                            "custom_qty": item.get("outage_reported", {}).get(
+                                "customer_qty", 0
+                            ),
+                            "incident_qty": item.get("outage_reported", {}).get(
+                                "incident_qty", 0
+                            ),
+                        }
+                        new_val.append(new_item)
+                    df = pd.DataFrame(new_val)
+                    df["timestamp"] = timenow()
+                    df["EMC"] = self.emc
+                    data.update({key: df})
+                elif key == "per_outage":
+                    df = pd.DataFrame(val)
+                    df["timestamp"] = timenow()
+                    df["EMC"] = self.emc
+                    data.update({key: df})
+            else:
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+
+        self.driver.close()
+        self.driver.quit()
+
+        return data
+
+    def fetch(self):
+        print(f"Fetching {self.emc} outages from {self.url}")
+        # get javascript rendered source page
+        self.driver.get(self.url)
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        try:
+            raw_data = {}
+            for request in self.driver.requests:
+                if "incidents" in request.url:
+                    data = requests.get(request.url).json()
+                    raw_data["per_district"] = data["district_metrics"]
+                    raw_data["per_outage"] = data["outage_points"]
+                    break
+
+        except Exception as e:
+            print(f"Error: {e}")
+            self.driver.close()
+            self.driver.quit()
+
+        return raw_data
+
+
+class Scraper7(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+        result = {}
+        for key, val in data.items():
+            if val:
+                result["per_outage"] = pd.DataFrame(val)
+
+                df = pd.DataFrame(val).drop(["id", "zipcode"], axis=1, errors="ignore")
+                df = df.groupby("county", as_index=False)["customerCount"].sum()
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                result["per_county"] = df
+
+                df = pd.DataFrame(val).drop(["id", "county"], axis=1, errors="ignore")
+                df = df.groupby("zipcode", as_index=False)["customerCount"].sum()
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                result["per_zipcode"] = df
+
+            else:
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+
+        self.driver.close()
+        self.driver.quit()
+
+        return result
+
+    def fetch(self):
+        print(f"Fetching {self.emc} outages from {self.url}")
+        # get javascript rendered source page
+        self.driver.get(self.url)
+        # Sleeps for 5 seconds
+        time.sleep(5)
+
+        try:
+            raw_data = {}
+            for request in self.driver.requests:
+                if "electric-outage-details" in request.url:
+                    data = requests.get(request.url).json()
+                    raw_data["per_outage"] = data["electricOutageDetails"]
+                    break
+
+        except Exception as e:
+            print(f"Error: {e}")
+            self.driver.close()
+            self.driver.quit()
+
+        return raw_data
+
+
 class TNScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -132,6 +259,12 @@ class TNScraper:
             obj = super().__new__(GA_Scraper1)
         elif layout_id == 4:
             obj = super().__new__(GA_Scraper9)
+        elif layout_id == 5:
+            obj = super().__new__(Scraper5)
+        elif layout_id == 6:
+            obj = super().__new__(GA_Scraper5)
+        elif layout_id == 7:
+            obj = super().__new__(Scraper7)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 3"
         obj.__init__(url, emc)

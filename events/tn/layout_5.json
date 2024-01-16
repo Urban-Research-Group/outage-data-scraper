@@ -1,0 +1,8 @@
+{
+    "layout": 5,
+    "emc": {
+        "EPB - Chattanooga Electric Power Board": "https://epb.com/outage-and-storm-center/energy-outages/"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}
