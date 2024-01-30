@@ -12,7 +12,8 @@
         "Clinton Utilities Board": "http://outage.clintonub.com/",
         "Columbia Power & Water Systems": "https://oms.cpws.com/",
         "Dickson Electric System": "http://outage.dicksonelectric.com/",
-        "Murfreesboro Electric Department": "http://outage.clintonub.com/"
+        "Murfreesboro Electric Department": "http://outage.clintonub.com/",
+        "Fort Loudoun Electric Cooperative": "http://outage.flec.org/"
     },
     "bucket": "data",
     "folder": "tn"

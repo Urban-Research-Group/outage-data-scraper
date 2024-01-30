@@ -264,7 +264,8 @@ class Scraper3(BaseScraper):
             self.url + "MobileMap/OMSMobileService.asmx/GetAllCounties"
         )
         temp = xmltodict.parse(body.decode("utf8"))
-        raw_data["per_county"] = temp["ArrayOfMobileCounty"]["MobileCounty"]
+        if "MobileCounty" in temp["ArrayOfMobileCounty"]:
+            raw_data["per_county"] = temp["ArrayOfMobileCounty"]["MobileCounty"]
 
         body, response = make_request(
             self.url + "MobileMap/OMSMobileService.asmx/GetAllOutages"
