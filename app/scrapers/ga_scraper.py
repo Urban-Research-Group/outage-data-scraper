@@ -4,6 +4,7 @@ import pandas as pd
 import geopy
 import xmltodict
 import time
+import requests
 
 from bs4 import BeautifulSoup
 from datetime import datetime
@@ -565,55 +566,40 @@ class Scraper10(BaseScraper):
         self.driver = self.init_webdriver()
 
     def parse(self):
-        source_page = self.fetch()
-        soup = BeautifulSoup(source_page, "html.parser")
-        if soup.find(string="No data"):
-            print(
-                f"no outage of {self.emc} update found at",
-                datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
-            )
-            return {}
+        data = self.fetch()
+        df = pd.DataFrame(data["per_county"])
 
-        table = soup.find("table")
-        # Find the table rows using their tag name
-        rows = table.find_all("tr")
-        # Extract the table header row
-        header_row = rows[0]
-
-        # Extract the table data rows
-        data_rows = rows[1:]
-
-        # Extract the table header cells
-        header_cells = header_row.find_all("th")
-        header = [cell.get_text().strip() for cell in header_cells]
-
-        # Extract the table data cells
-        data = []
-        for row in data_rows:
-            cells = row.find_all("td")
-            data.append([cell.get_text().strip() for cell in cells])
-
-        # Print the table data as a list of dictionaries
-        table_data = [dict(zip(header, row)) for row in data]
-        df = pd.DataFrame(table_data)[:-1]
+        df.rename(columns={"attributes": "data"}, inplace=True)
+        df = pd.concat([df.drop(["data"], axis=1), df["data"].apply(pd.Series)], axis=1)
+        df.columns = df.columns.str.lower()
+        df.rename(columns={"cont_sum": "Members Affected"}, inplace=True)
+        print(df)
         df["timestamp"] = timenow()
         df["EMC"] = self.emc
-        df = df[df["Customers Affected"] != "0"]
+        df = df[df["Members Affected"] != "0"]
         data = {"per_county": df}
         return data
 
     def fetch(self):
         self.driver.get(self.url)
         time.sleep(5)
-        requests = self.driver.requests
-        for r in requests:
+        for r in self.driver.requests:
             if "maps.ssemc.com" in r.url and "index.html" in r.url:
                 self.url = r.url
+                print(self.url)
                 break
 
         self.driver.get(self.url)
-        time.sleep(30)
-        return self.driver.page_source
+        time.sleep(5)
+        for r in self.driver.requests:
+            if "County" in r.url:
+                self.url = r.url
+                break
+
+        raw_data = {}
+        raw_data["per_county"] = requests.get(self.url).json()["features"]
+
+        return raw_data
 
 
 class Scraper11(BaseScraper):
