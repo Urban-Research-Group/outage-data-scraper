@@ -586,18 +586,23 @@ class Scraper10(BaseScraper):
         for r in self.driver.requests:
             if "maps.ssemc.com" in r.url and "index.html" in r.url:
                 self.url = r.url
-                print(self.url)
+                print("Redirect to", self.url)
                 break
 
         self.driver.get(self.url)
-        time.sleep(5)
+        time.sleep(30)  # super slow site...
         for r in self.driver.requests:
-            if "County" in r.url:
+            if "County" in r.url or "county" in r.url:
                 self.url = r.url
+                print("Fetch data from", self.url)
                 break
 
         raw_data = {}
-        raw_data["per_county"] = requests.get(self.url).json()["features"]
+        try:
+            raw_data["per_county"] = requests.get(self.url).json()["features"]
+        except Exception as e:
+            print(e.text)
+            print("No data!")
 
         return raw_data
 
