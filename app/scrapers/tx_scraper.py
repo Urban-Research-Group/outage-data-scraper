@@ -145,7 +145,6 @@ class Scraper5(BaseScraper):
             # parse reports link
             soup = BeautifulSoup(page_source, "html.parser")
 
-
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
         counter = 0  # we use counter to avoid duplicate key bug
@@ -330,7 +329,7 @@ class TXScraper:
         elif layout_id == 16:
             obj = super().__new__(GA_Scraper3)
         elif layout_id == 17:
-            obj = super().__new__(GA_Scraper2)
+            obj = super().__new__(GA_Scraper1)
         elif layout_id == 18:
             obj = super().__new__(Scraper18)
         else:

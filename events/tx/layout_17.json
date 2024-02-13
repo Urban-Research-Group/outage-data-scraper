@@ -1,8 +1,8 @@
 {
-        "layout": 17,
-        "emc": {
-          "United Coop Services, Inc.": "http://outage.united-cs.com:7576/"
-        },
-        "bucket": "data",
-        "folder": "tx"
-    }
+  "layout": 17,
+  "emc": {
+    "United Coop Services, Inc.": "https://outage.united-cs.com:7577/"
+  },
+  "bucket": "data",
+  "folder": "tx"
+}
