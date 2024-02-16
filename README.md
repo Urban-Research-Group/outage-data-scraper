@@ -7,11 +7,21 @@ Web scraper gathering GA, CA, TX, IL, NY, TN raw power outage data and unifying 
 The src code for this project is located in the [app](./app) directory; [main.py](./app/main.py)
 contains the lambda function handler and modules [scraper](./app/scrapers).
 
-## Local test
+## Environment
 
-he image can be run locally before you deploy to AWS Lambda. Providing
-AWS credentials is set up in `~/.aws/credentials`. Simply run the
-command.
+If you do not have a python distribution installed yet, we recommend installing Anaconda: https://www.ana-conda.com/ (or miniconda) with Python 3.
+
+You can use `env.yaml` and `requirements.txt` to create a copy of conda environment.
+
+`conda env create -f env.yaml`
+`conda activate urg`
+`pip3 install -r requirements.txt`
+
+Refer to the users’ manual: https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html for more details.
+
+After you finish your task, you can leave this environment by `conda deactivate`.
+
+## Local test
 
 Make a testing event looks like:
 
@@ -34,6 +44,8 @@ In the above testing event, we will use TXScraper's first scraper and store the 
 
 Push the above built image to the AWS Elastic Container Registry (ECR) and create the Lambda function based on the image. Refer to [official doc](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html)
 
+Please refer to assignment 2's slide for more details
+
 ## Docker build
 
 We use Amazon ECR to deploy out lambda function, so please use the instruction to build and push the docker image.
@@ -45,6 +57,9 @@ docker build -t outage-data-scraper:latest .
 ```
 
 Contributors:
+
 Rickon,
-Chi-Ting
+
+Chi-Ting,
+
 Rakshith
