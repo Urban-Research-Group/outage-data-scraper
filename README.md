@@ -40,6 +40,20 @@ Modify the path of testing event in `main.py` and you can execute the scrapers l
 
 In the above testing event, we will use TXScraper's first scraper and store the result to `/data/tx/layout_1`. Please make the directory before running the program.
 
+For local test, please use ChromeDriverManager (in GA_scraper)
+
+```
+driver = webdriver.Chrome(
+            ChromeDriverManager().install(),  # for local test
+            # executable_path=chrome_driver_path,
+            chrome_options=chrome_options,
+            seleniumwire_options=selenium_options,
+            desired_capabilities=desired_capabilities,
+        )
+```
+
+Remember to comment out ChromeDriver (and also import) and use executable_path=chrome_driver_path before deploying to AWS lambda
+
 ## Lambda deployment
 
 Push the above built image to the AWS Elastic Container Registry (ECR) and create the Lambda function based on the image. Refer to [official doc](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-images.html)
