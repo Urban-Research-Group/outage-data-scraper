@@ -40,15 +40,13 @@ class Scraper1(BaseScraper):
             # print(html)
 
             # parse table
-            soup = BeautifulSoup(html, "html.parser")
-            table = soup.find("table", attrs={"class": "report-table tree"})
-            rows = table.find_all("tr")
+            soup = BeautifulSoup(html, "lxml")
+            table = soup.select_one(".report-table.tree")
+            rows = table.select("tr")
+            
+            # changed
 
-            data_rows = rows[2:]
-            raw_data = []
-            for row in data_rows:
-                cells = row.find_all("td")
-                raw_data.append([cell.text.strip() for cell in cells])
+            raw_data = [[cell.text.strip() for cell in row.find_all('td')] for row in rows[2:]]
 
             loc = "COUNTY" if s == "?report=report-panel-county" else "ZIP"
             header = ["VIEW", loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
