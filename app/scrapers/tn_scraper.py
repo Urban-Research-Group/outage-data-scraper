@@ -201,7 +201,10 @@ class Scraper7(BaseScraper):
         result = {}
         for key, val in data.items():
             if val:
-                result["per_outage"] = pd.DataFrame(val)
+                df = pd.DataFrame(val)
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                result["per_outage"] = df
 
                 df = pd.DataFrame(val).drop(["id", "zipcode"], axis=1, errors="ignore")
                 df = df.groupby("county", as_index=False)["customerCount"].sum()
