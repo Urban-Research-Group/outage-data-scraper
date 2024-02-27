@@ -1,0 +1,110 @@
+globals:
+  local_base_file_path: /Users/xuanedx1/github/outage-data-scraper/data/s3
+
+providers:
+  # - name: Amicalola EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Canoochee EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Central Georgia EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Dalton Utility
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Diverse Power
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Excelsior EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Flint EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Grady EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Jefferson Energy Cooperative
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: North Georgia EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Okefenoke REMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Satilla REMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  # - name: Washington EMC
+  #   state: ga
+  #   layout: 1
+  #   type: o
+  - name: Bluebonnet Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Bryan Texas Utilities
+    state: tx
+    layout: 8
+    type: o
+  - name: Bowie-Cass Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: College Station Utilities
+    state: tx
+    layout: 8
+    type: o
+  - name: Farmers Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Guadalupe Valley Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Mid-South Electric Coop Association
+    state: tx
+    layout: 8
+    type: o
+  - name: New Braunfels Utilities
+    state: tx
+    layout: 8
+    type: o
+  - name: North Plains Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Nueces Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Taylor Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Trinity Valley Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+  - name: Wood County Electric Coop, Inc.
+    state: tx
+    layout: 8
+    type: o
+
+
