@@ -1,10 +1,15 @@
+import yaml
+from pipeline import GA1TX8
+from IPython.display import display
 
 
-# Usage
-config = {"parameter": "value",}
-pipeline_a = DatasetATransformer(config)
-pipeline_b = DatasetBTransformer(config)
+def hendler():
+    with open('/Users/xuanedx1/github/outage-data-scraper/app/pipeline/config.yaml', 'r') as file:
+        config = yaml.safe_load(file)
+        base_file_path = config['globals']['local_base_file_path']
 
-# Assuming `data_a` and `data_b` are your raw datasets
-transformed_a = pipeline_a.transform(data_a)
-transformed_b = pipeline_b.transform(data_b)
+    # Instantiate a BasePipeline object for each provider in the configuration
+    for provider in config['providers']:
+        pipeline = GA1TX8(provider, base_file_path)
+        pipeline.standardize()
+        display(pipeline._data)
