@@ -53,14 +53,23 @@ class BaseScraper:
     def parse(self):
         pass
 
-    def get_page_source(self, url=None, timeout=1):
+
+    def get_page_source(self, url=None, timeout=10, css_selector = None):
         url = url if url else self.url
         self.driver.get(url)
         # let the page load
-        time.sleep(timeout)
-        page_source = self.driver.page_source
-
+        try:
+            # wait for the element to load
+            WebDriverWait(self.driver, timeout).until(
+                # css_selector is often same as the keyword BeautifulSoup trying to find
+                EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
+            )
+            page_source = self.driver.page_source
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            page_source = None  # Return None or appropriate content in case of failure
         return page_source
+
 
     def extract_zipcode(self, lat, lon):
         try:

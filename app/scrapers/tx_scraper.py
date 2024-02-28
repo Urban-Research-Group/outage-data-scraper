@@ -36,16 +36,13 @@ class Scraper1(BaseScraper):
         for s in suffix:
             url = self.url + s
             print(f"fetching {self.emc} outages from {url}")
-            html = self.get_page_source(url)
-            # print(html)
-
+            html = self.get_page_source(url, css_selector = ".report-table.tree")
             # parse table
             soup = BeautifulSoup(html, "lxml")
             table = soup.select_one(".report-table.tree")
             rows = table.select("tr")
             
-            # changed
-
+            # Change from appending to a list to list comprehension will speed the list operation about 50%.
             raw_data = [[cell.text.strip() for cell in row.find_all('td')] for row in rows[2:]]
 
             loc = "COUNTY" if s == "?report=report-panel-county" else "ZIP"
@@ -53,7 +50,7 @@ class Scraper1(BaseScraper):
             table_data = [dict(zip(header, row)) for row in raw_data]
             df = pd.DataFrame(table_data)[
                 [loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
-            ]
+            ]                              
             df["timestamp"] = timenow()
             df["EMC"] = self.emc
             df = df[df["CUSTOMER OUTAGES"] != "0"]
@@ -61,7 +58,6 @@ class Scraper1(BaseScraper):
             data.update({key: df})
 
         return data
-
 
 class Scraper3(BaseScraper):
     def __init__(self, url, emc):
