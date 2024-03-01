@@ -97,7 +97,7 @@ class Scraper5(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
-
+    
     def parse(self):
         data = self.fetch()
 
@@ -124,6 +124,25 @@ class Scraper5(BaseScraper):
                 )
         # print(data)
         return data
+    
+    
+    def wait_for_json_request(self, part_of_url, timeout=10):
+        """
+        Waits for a JSON request to be made that contains a specific part in its URL.
+        Args:
+            part_of_url: A substring of the URL to look for.
+            timeout: How long to wait for the request, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            requests = [r for r in self.driver.requests if part_of_url in r.url and
+                        r.response and 'application/json' in r.response.headers.get('Content-Type', '')]
+            if requests:
+                return requests[0]  # Return the first matching request
+            elif time.time() - start_time > timeout:
+                raise TimeoutError(f"JSON request containing '{part_of_url}' not found within timeout.")
+            time.sleep(0.5)  # Short sleep to avoid busy loop
+
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
@@ -159,32 +178,26 @@ class Scraper5(BaseScraper):
         # get json reports
         raw_data = {}
         for k, v in links.items():
-            self.driver.get(self.url + v[1:])
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "span.clickable.hyperlink-secondary "))
-            )
-            requests = self.driver.requests
-            json_requests = [
-                r
-                for r in requests
-                if r.response
-                and r.response.headers.get("Content-Type") == "application/json"
-            ]
-            hash = v.split("/")[-1]
-            for r in json_requests:
-                if hash in r.url:
-                    print(r)
-                    response = sw_decode(
-                        r.response.body,
-                        r.response.headers.get("Content-Encoding", "identity"),
-                    )
-                    data = response.decode("utf8", "ignore")
-                    if any([x in data for x in ["zip", "Zip"]]):
-                        raw_data["per_zipcode"] = json.loads(data)["file_data"]
-                    elif "county" in data:
-                        raw_data["per_county"] = json.loads(data)["file_data"]
-                    elif any([x in data for x in ["city", "Cities"]]):
-                        raw_data["per_city"] = json.loads(data)["file_data"]
+            new_url = self.url + v[1:]
+            self.driver.get(new_url)
+            
+            # Use the dynamic wait method instead of time.sleep(5)
+            hash_part = v.split("/")[-1]
+            try:
+                json_request = self.wait_for_json_request(hash_part)
+                response = sw_decode(
+                    json_request.response.body,
+                    json_request.response.headers.get("Content-Encoding", "identity"),
+                )
+                data = response.decode("utf8", "ignore")
+                if any([x in data for x in ["zip", "Zip"]]):
+                    raw_data["per_zipcode"] = json.loads(data)["file_data"]
+                elif "county" in data:
+                    raw_data["per_county"] = json.loads(data)["file_data"]
+                elif any([x in data for x in ["city", "Cities"]]):
+                    raw_data["per_city"] = json.loads(data)["file_data"]
+            except TimeoutError as e:
+                print(e)
         return raw_data
 
 
@@ -193,13 +206,34 @@ class Scraper6(BaseScraper):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
 
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # or True, if you just need to know it happened
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid busy loop
+    
     def parse(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
 
-        # Sleeps for 5 seconds
-        time.sleep(5)
+        try:
+            self.wait_for_request(
+                lambda request: "geometryType=esriGeometryEnvelope" in request.url
+            )
+        except TimeoutError:
+            print("The specific request was not made within the timeout period.")
+            return {}
 
         data = {}
         for request in self.driver.requests:
@@ -217,19 +251,24 @@ class Scraper6(BaseScraper):
                     data["per_outage"] = json.loads(data_str[start:end])
 
         for key, val in data.items():
-            attributes = [x["attributes"] for x in val["features"]]
-            geometry = [x["geometry"] for x in val["features"]]
-            df = pd.DataFrame(attributes)
-            df[["BEGINTIME", "ESTIMATEDTIMERESTORATION"]] = df[
-                ["BEGINTIME", "ESTIMATEDTIMERESTORATION"]
-            ].apply(pd.to_datetime, unit="ms")
-            df[["x", "y"]] = pd.DataFrame(geometry)
-            # df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['y'], row['x']), axis=1)
-            df["timestamp"] = timenow()
-            df["EMC"] = self.emc
-            # df = df.dropna()
-            data.update({key: df})
 
+            df = pd.DataFrame([x["attributes"] for x in val["features"]])
+            # Convert date columns directly without apply()
+            df["BEGINTIME"] = pd.to_datetime(df["BEGINTIME"], unit="ms")
+            df["ESTIMATEDTIMERESTORATION"] = pd.to_datetime(df["ESTIMATEDTIMERESTORATION"], unit="ms")
+
+            # For geometry, assuming each geometry is a dictionary with 'x' and 'y' keys
+            # Extract 'x' and 'y' directly into the DataFrame without creating a separate DataFrame first
+            df["x"] = [x["geometry"]["x"] for x in val["features"]]
+            df["y"] = [x["geometry"]["y"] for x in val["features"]]
+            # Set a single timestamp for the entire column
+            current_timestamp = pd.Timestamp.now()  # Or use your 'timenow()' if it's different
+            df["timestamp"] = current_timestamp
+
+            df["EMC"] = self.emc  # Assign EMC value directly
+            # df.dropna(inplace=True)
+            data.update({key: df})
+            
         return data
 
 
@@ -238,13 +277,35 @@ class Scraper7(BaseScraper):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
 
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # Return the request if condition is met
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
+
     def parse(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
-
-        # Sleeps for 5 seconds
-        time.sleep(5)
+        
+        try:
+            self.wait_for_request(
+                lambda request: "loadLatLongOuterOutage" in request.url,
+                timeout=15  # Adjust timeout as necessary
+            )
+        except TimeoutError:
+            print("The specific request was not made within the timeout period.")
+            return {}
 
         data = {}
         for request in self.driver.requests:
@@ -256,8 +317,9 @@ class Scraper7(BaseScraper):
                 data["per_outage"] = json.loads(response.decode("utf8", "ignore"))
 
         for key, val in data.items():
-            df = pd.DataFrame(pd.DataFrame(json.loads(val["d"])["Table"]))
-            df["timestamp"] = timenow()
+            df = pd.DataFrame(json.loads(val["d"])["Table"])
+            current_timestamp = pd.Timestamp.now()  # Call once and use for all rows
+            df["timestamp"] = current_timestamp
             df["EMC"] = self.emc
             df = df.dropna()
             data.update({key: df})
