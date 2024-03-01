@@ -96,7 +96,7 @@ class BaseScraper:
 
         # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-dev-shm-usage")

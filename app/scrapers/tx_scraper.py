@@ -22,7 +22,10 @@ from selenium.webdriver.common.by import By
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 class Scraper1(BaseScraper):
     def __init__(self, url, emc):
@@ -101,13 +104,18 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if val:
                 df = pd.DataFrame(val["areas"])
-                df[["cust_a", "percent_cust_a"]] = df[
-                    ["cust_a", "percent_cust_a"]
-                ].applymap(lambda x: x["val"])
-                df = df[(df["cust_a"] != 0) | (df["n_out"] != 0)]
-                df["timestamp"] = timenow()
-                df["EMC"] = self.emc
-                df.drop(columns=["gotoMap"], inplace=True)
+                df['cust_a'] = df['cust_a'].map(lambda x: x['val'])
+                df['percent_cust_a'] = df['percent_cust_a'].map(lambda x: x['val'])
+
+                # Filter rows in a more efficient manner
+                df = df.query("cust_a != 0 or n_out != 0")
+
+                df = df.copy()  # Make a copy to avoid SettingWithCopyWarning
+                df['timestamp'] = pd.Timestamp.now()
+                df['EMC'] = self.emc
+
+                # Now, since df is explicitly copied, this operation should not cause warnings
+                df.drop(columns=['gotoMap'], inplace=True)
                 data.update({key: df})
             else:
                 print(
@@ -122,22 +130,25 @@ class Scraper5(BaseScraper):
         # get javascript rendered source page
         self.driver.get(self.url)
         # let the page load
-        time.sleep(10)
-        page_source = self.driver.page_source
-
-        # parse reports link
-        soup = BeautifulSoup(page_source, "html.parser")
-        if self.emc == "Texas-New Mexico Power Co.":
+        if self.emc != "Texas-New Mexico Power Co.":
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "a.row.report-link.hyperlink-primary"))
+            )
+            page_source = self.driver.page_source
+            # parse reports link
+            soup = BeautifulSoup(page_source, "lxml")
+        else:
             iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
             source_page = iframe_tag.get_attribute("src")
             print("Redirect to", source_page)
             self.url = "https://kubra.io/"
             self.driver.get(source_page)
-            time.sleep(10)
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "a.row.report-link.hyperlink-primary"))
+            )
             page_source = self.driver.page_source
-
             # parse reports link
-            soup = BeautifulSoup(page_source, "html.parser")
+            soup = BeautifulSoup(page_source, "lxml")
 
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
@@ -149,7 +160,9 @@ class Scraper5(BaseScraper):
         raw_data = {}
         for k, v in links.items():
             self.driver.get(self.url + v[1:])
-            time.sleep(5)
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.CSS_SELECTOR, "span.clickable.hyperlink-secondary "))
+            )
             requests = self.driver.requests
             json_requests = [
                 r
