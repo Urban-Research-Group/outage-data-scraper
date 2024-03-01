@@ -147,28 +147,21 @@ class Scraper5(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
-        self.driver.get(self.url)
+
         # let the page load
         if self.emc != "Texas-New Mexico Power Co.":
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a.row.report-link.hyperlink-primary"))
-            )
-            page_source = self.driver.page_source
-            # parse reports link
-            soup = BeautifulSoup(page_source, "lxml")
+            css_selector = "a.row.report-link.hyperlink-primary"
+            page_source = self.get_page_source(css_selector=css_selector)
+
         else:
+            self.driver.get(self.url)
             iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
             source_page = iframe_tag.get_attribute("src")
             print("Redirect to", source_page)
             self.url = "https://kubra.io/"
-            self.driver.get(source_page)
-            WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CSS_SELECTOR, "a.row.report-link.hyperlink-primary"))
-            )
-            page_source = self.driver.page_source
-            # parse reports link
-            soup = BeautifulSoup(page_source, "lxml")
-
+            page_source = self.get_page_source(url=source_page, css_selector="a.row.report-link.hyperlink-primary")
+            
+        soup = BeautifulSoup(page_source, "lxml")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
         counter = 0  # we use counter to avoid duplicate key bug
@@ -205,22 +198,6 @@ class Scraper6(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
-
-    def wait_for_request(self, condition, timeout=10):
-        """
-        Waits for a specific request to be made that matches the given condition.
-        Args:
-            condition: A function that takes a request object and returns True if the condition is met.
-            timeout: How long to wait for the condition to be met, in seconds.
-        """
-        start_time = time.time()
-        while True:
-            for request in self.driver.requests:
-                if condition(request):
-                    return request  # or True, if you just need to know it happened
-            if time.time() - start_time > timeout:
-                raise TimeoutError("Request not found within timeout period.")
-            time.sleep(0.5)  # Short sleep to avoid busy loop
     
     def parse(self):
         print(f"fetching {self.emc} outages from {self.url}")
@@ -277,22 +254,6 @@ class Scraper7(BaseScraper):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
 
-    def wait_for_request(self, condition, timeout=10):
-        """
-        Waits for a specific request to be made that matches the given condition.
-        Args:
-            condition: A function that takes a request object and returns True if the condition is met.
-            timeout: How long to wait for the condition to be met, in seconds.
-        """
-        start_time = time.time()
-        while True:
-            for request in self.driver.requests:
-                if condition(request):
-                    return request  # Return the request if condition is met
-            if time.time() - start_time > timeout:
-                raise TimeoutError("Request not found within timeout period.")
-            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
-
     def parse(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
@@ -300,8 +261,7 @@ class Scraper7(BaseScraper):
         
         try:
             self.wait_for_request(
-                lambda request: "loadLatLongOuterOutage" in request.url,
-                timeout=15  # Adjust timeout as necessary
+                lambda request: "loadLatLongOuterOutage" in request.url
             )
         except TimeoutError:
             print("The specific request was not made within the timeout period.")

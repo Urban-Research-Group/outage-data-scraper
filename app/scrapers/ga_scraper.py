@@ -52,7 +52,22 @@ class BaseScraper:
 
     def parse(self):
         pass
-
+    
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # Return the request if condition is met
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
 
     def get_page_source(self, url=None, timeout=10, css_selector = None):
         url = url if url else self.url
