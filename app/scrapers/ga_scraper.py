@@ -17,7 +17,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
 
-# from webdriver_manager.chrome import ChromeDriverManager  # for local test
+
+from webdriver_manager.chrome import ChromeDriverManager  # for local test
 from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
@@ -51,15 +52,39 @@ class BaseScraper:
 
     def parse(self):
         pass
+    
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # Return the request if condition is met
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
 
-    def get_page_source(self, url=None, timeout=5):
+    def get_page_source(self, url=None, timeout=10, css_selector = None):
         url = url if url else self.url
         self.driver.get(url)
         # let the page load
-        time.sleep(timeout)
-        page_source = self.driver.page_source
-
+        try:
+            # wait for the element to load
+            WebDriverWait(self.driver, timeout).until(
+                # css_selector is often same as the keyword BeautifulSoup trying to find
+                EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
+            )
+            page_source = self.driver.page_source
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            page_source = None  # Return None or appropriate content in case of failure
         return page_source
+
 
     def extract_zipcode(self, lat, lon):
         try:
@@ -76,16 +101,17 @@ class BaseScraper:
         chrome_driver_path = (
             "/opt/chromedriver"
             if is_aws_env()
-            else "/Users/gtingliu/Desktop/Gatech/URG/outage-data-scraper/app/scrapers/chromedriver"
+            else "/Users/xuanzhangliu/Downloads/chromedriver-mac-arm64/chromedriver"
         )
 
         desired_capabilities = DesiredCapabilities.CHROME.copy()
+        desired_capabilities["pageLoadStrategy"] = "eager"  # or 'none'
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         desired_capabilities["acceptInsecureCerts"] = True
 
         # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-dev-shm-usage")
@@ -99,6 +125,8 @@ class BaseScraper:
         chrome_options.add_argument("--enable-logging")
         chrome_options.add_argument("--log-level=0")
         chrome_options.add_argument("--v=99")
+        chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+        chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
         chrome_options.add_argument("--single-process")
         chrome_options.add_argument("--data-path=/tmp/data-path")
         chrome_options.add_argument("--ignore-certificate-errors")
@@ -117,8 +145,8 @@ class BaseScraper:
             chrome_options.binary_location = "/opt/chrome/chrome"
 
         driver = webdriver.Chrome(
-            # ChromeDriverManager().install(),  # for local test
-            executable_path=chrome_driver_path,
+            ChromeDriverManager().install(),  # for local test
+            # executable_path=chrome_driver_path,
             chrome_options=chrome_options,
             seleniumwire_options=selenium_options,
             desired_capabilities=desired_capabilities,

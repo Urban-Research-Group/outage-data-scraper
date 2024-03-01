@@ -20,7 +20,7 @@ def handler(event, context=""):
                 if df.empty:
                     print(f"no {key} outages for {emc} as of {timenow()}")
                 else:
-                    path = f"{state}/layout_{layout_id}/{key}_{emc}.csv"
+                    path = f"data/{state}/layout_{layout_id}/{key}_{emc}.csv"
                     save(df, bucket, path)
             success_cnt += 1
         except Exception as e:
@@ -39,7 +39,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/ca/investor.json")
+    event_path = os.path.join(os.getcwd(), "events/tx/layout_1.json")
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)
