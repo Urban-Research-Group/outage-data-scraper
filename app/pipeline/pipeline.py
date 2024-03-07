@@ -123,9 +123,26 @@ class GA2TX17(BasePipeline):
         pass
     
 class GA3TX16(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for GA3TX16
-        pass
+    def transform(self):
+        try:
+            # Convert timestamps
+            eastern = tz.gettz('US/Eastern')
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
+            self._data['OutageTime'] = pd.to_datetime(self._data['OutageTime'], utc=True).dt.tz_convert(eastern)
+            self._data['end_time'] = self._data.groupby('CaseNumber')['timestamp'].transform('max')
+            
+             # TODO: get zipcode from lat and long
+            self._data['zipcode'] = "000000"
+            
+            self._data = self._data.rename(columns={
+                'CaseNumber':'outage_id',
+                'OutageTime': 'start_time',
+                'CutomersAffected':'customer_affected',
+                'X':'lat',
+                'Y': 'lng'
+            })
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
     
 class GA4TX5(BasePipeline):
     def standardize(self, outage_data):
