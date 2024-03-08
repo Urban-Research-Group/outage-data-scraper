@@ -1,6 +1,6 @@
 globals:
-  local_base_file_path: /Users/xuanedx1/github/outage-data-scraper/data/s3
-
+  # local_base_file_path: /Users/xuanedx1/github/outage-data-scraper/data/s3
+  local_base_file_path: /Users/uirja/OneDrive/Personal Files/CS Projects/outage-data-scraper/raw_data
 providers:
   # - name: Amicalola EMC
   #   state: ga
@@ -54,57 +54,85 @@ providers:
   #   state: ga
   #   layout: 1
   #   type: o
-  - name: Bluebonnet Electric Coop, Inc.
-    state: tx
-    layout: 8
+  # - name: Bluebonnet Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Bryan Texas Utilities
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Bowie-Cass Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: College Station Utilities
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Farmers Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Guadalupe Valley Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Mid-South Electric Coop Association
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: New Braunfels Utilities
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: North Plains Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Nueces Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Taylor Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Trinity Valley Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  # - name: Wood County Electric Coop, Inc.
+  #   state: tx
+  #   layout: 8
+  #   type: o
+  - name: Walton EMC
+    state: ga
+    layout: 11
     type: o
-  - name: Bryan Texas Utilities
-    state: tx
-    layout: 8
+  - name: Tri-State EMC
+    state: ga
+    layout: 11
     type: o
-  - name: Bowie-Cass Electric Coop, Inc.
-    state: tx
-    layout: 8
+  - name: Oconee EMC
+    state: ga
+    layout: 11
     type: o
-  - name: College Station Utilities
-    state: tx
-    layout: 8
+  - name: Mitchell EMC
+    state: ga
+    layout: 11
     type: o
-  - name: Farmers Electric Coop, Inc.
+  - name: Wise Electric Coop, Inc.
     state: tx
-    layout: 8
+    layout: 12
     type: o
-  - name: Guadalupe Valley Electric Coop, Inc.
+  - name: Houston County Electric Coop, Inc.
     state: tx
-    layout: 8
+    layout: 12
     type: o
-  - name: Mid-South Electric Coop Association
+  - name: Cherokee County Electric Coop Association
     state: tx
-    layout: 8
-    type: o
-  - name: New Braunfels Utilities
-    state: tx
-    layout: 8
-    type: o
-  - name: North Plains Electric Coop, Inc.
-    state: tx
-    layout: 8
-    type: o
-  - name: Nueces Electric Coop, Inc.
-    state: tx
-    layout: 8
-    type: o
-  - name: Taylor Electric Coop, Inc.
-    state: tx
-    layout: 8
-    type: o
-  - name: Trinity Valley Electric Coop, Inc.
-    state: tx
-    layout: 8
-    type: o
-  - name: Wood County Electric Coop, Inc.
-    state: tx
-    layout: 8
+    layout: 12
     type: o
 
 
