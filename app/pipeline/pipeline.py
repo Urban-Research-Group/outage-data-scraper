@@ -11,18 +11,6 @@ from IPython.display import display
 
 pd.set_option('display.max_columns', None)
 
-# import pandas as pd
-# import ast
-# import pytz
-# import os
-# import json
-# import yaml
-# from dateutil import tz
-# from datetime import datetime
-# from IPython.display import display
-
-# pd.set_option('display.max_columns', None)
-
 class BasePipeline:
     def __init__(self, config, base_file_path):
         self.config = config
@@ -31,7 +19,7 @@ class BasePipeline:
         self._data = pd.DataFrame({})
     
     def construct_file_path(self):
-        #TODO: add type to prefix mapping
+        #TODO: add type to prefix 
         file_prefix = 'per_outage' if self.config['type'] == 'o' else 'per_county'
         file_path = f"{self.base_file_path}/{self.config['state']}/layout_{self.config['layout']}/{file_prefix}_{self.config['name']}.csv"
         return file_path.replace('//', '/')
@@ -42,7 +30,7 @@ class BasePipeline:
             file_path = self.construct_file_path()
             print(file_path)
             self._data = pd.read_csv(file_path)
-            with open(f"{self.config['state']}_mapping.json", 'r') as json_file:
+            with open(f"{self.config['state']}_.json", 'r') as json_file:
                 self.map = json.load(json_file)
         except Exception as e:
             print(f"An error occurred during file loading: {e}")
@@ -52,8 +40,7 @@ class BasePipeline:
         raise NotImplementedError
 
     def standardize(self):
-        # Base transformation method
-        # where most of the functionality is
+        # Base standardization
         self.load_data()
         self.transform()
         grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
@@ -164,7 +151,7 @@ class GA10(BasePipeline):
 class GA11TX12(BasePipeline):    
     def __init__(self, config, base_file_path):
         super().__init__(config, base_file_path)
-        with open('us_mapping.json', 'r') as json_file:
+        with open('us_.json', 'r') as json_file:
             self._usmap = json.load(json_file)
     
     def transform(self): # if edited, must recreate pipeline to reset transformed flag
@@ -287,73 +274,11 @@ class GA11TX12(BasePipeline):
     def _compute_metrics(self, group): # overwriting super class because the most accurate duration seems to be calculated from update times
         # group = groupby groupy of a unique outage_id
         ## HELPER METHOD TO VALIDATE DIFFERENT TIME
-        
-        def _validate(group): # custom aggregating function for each groupby unique outage_id to see wehether the latest outage start date for a outage_id is before the earliest update time
-            num_rows = len(group)
-            num_unique_lon = len(group['lon'].unique())
-            num_unique_lat = len(group['lat'].unique())
-            num_unique_outages = len(group['outages'].unique())
-            num_unique_customers_aff = len(group['consumers_affected'].unique())
-            num_unique_customers = len(group['NumConsumers'].unique())
-            num_unique_start_times = len(group['start_date'].unique())
-            earliest_start_time = group['start_date'].min()
-            latest_start_time = group['start_date'].max()
-            earliest_update_time = group['updateTime'].min()
-            latest_update_time = group['updateTime'].max()
-            earliest_timestamp = group['timestamp'].min()
-            latest_timestamp = group['timestamp'].max()
-            duration_by_lastupt_laststrt = latest_update_time - latest_start_time
-            duration_by_lastupt_firststart = latest_update_time - earliest_start_time
-            duration_by_update_time = latest_update_time - earliest_update_time
-            duration_by_timestamp = latest_timestamp - earliest_timestamp
-            timestamp_upt_diff = latest_timestamp - latest_update_time
-            is_update_dur_div_15_min = (duration_by_update_time.total_seconds()/60) % 15 == 0
-            max_duration = group['duration'].max()
-            update_dur_timestamp_dur_err = abs(duration_by_update_time - duration_by_timestamp) if pd.notna(duration_by_update_time) and pd.notna(duration_by_timestamp) else pd.NaT
-            update_dur_max_dur_error = abs(max_duration - duration_by_update_time) if pd.notna(max_duration) and pd.notna(duration_by_update_time) else pd.NaT
-            timestamp_dur_max_dur_err = abs(duration_by_timestamp - max_duration) if pd.notna(max_duration) and pd.notna(duration_by_timestamp) else pd.NaT
-            does_start_update_intersect = latest_start_time > earliest_update_time and earliest_start_time < latest_update_time# does start and update intersect?
-            is_start_after_update = earliest_start_time >= latest_update_time # is updatetime range just completely before the startdate range? 
-            is_start_before_update = latest_start_time <= earliest_update_time
-            is_timestamp_upt_00_min = (timestamp_upt_diff.total_seconds() // 60) % 60 == 0 if pd.notna(timestamp_upt_diff) else None
-
-            return pd.Series({
-                'num_rows': num_rows,
-                'num_unique_lon': num_unique_lon,
-                'num_unique_lat': num_unique_lat,
-                'num_unique_outages': num_unique_outages,
-                'num_unique_customers_aff': num_unique_customers_aff,
-                'num_unique_customers': num_unique_customers,
-                'num_unique_start_times': num_unique_start_times,
-                'earliest_start_time': earliest_start_time,
-                'latest_start_time': latest_start_time, 
-                'earliest_update_time': earliest_update_time,
-                'latest_update_time': latest_update_time, 
-                'earliest_timestamp': earliest_start_time,
-                'latest_timestamp': latest_timestamp,
-                'is_start_before_update': is_start_before_update, 
-                'does_start_update_intersect': does_start_update_intersect, # is the latest start time before the earliest update time?
-                'is_start_after_update': is_start_after_update, # is updatetime range just completely before the startdate range? 
-                'max_duration': max_duration, # duration from the given df column
-                'duration_by_update': duration_by_update_time,
-                'duration_by_timestamp': duration_by_timestamp,
-                'timestamp_upt_diff': timestamp_upt_diff,
-                'update_dur_max_dur_error': update_dur_max_dur_error,
-                'update_dur_timestamp_dur_err': update_dur_timestamp_dur_err,
-                'timestamp_dur_max_dur_err': timestamp_dur_max_dur_err,
-                'duration_by_lastupt_laststrt': duration_by_lastupt_laststrt, # duration from calculating via update times
-                'duration_by_lastupt_firststart': duration_by_lastupt_firststart, 
-                'is_update_dur_div_15_min': is_update_dur_div_15_min,
-                'is_timestamp_upt_00_min': is_timestamp_upt_00_min
-            })        
-    ##
-        
-        validated_provider_per_outage = _validate(group)
-        
-        duration_diff = validated_provider_per_outage['max_duration']
+                
+        duration_diff = group['duration'].max()
         duration_max = duration_diff + timedelta(minutes=15) # because 15 minute update intervals
         duration_mean = (duration_diff + duration_max) / 2
-        end_time = validated_provider_per_outage['latest_update_time']
+        end_time = group['updateTime'].max()
         start_time = end_time - duration_diff
         customer_affected_mean = group['consumers_affected'].mean()
         total_customer_outage_time = customer_affected_mean * duration_diff
