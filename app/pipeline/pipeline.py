@@ -151,7 +151,7 @@ class GA10(BasePipeline):
 class GA11TX12(BasePipeline):    
     def __init__(self, config, base_file_path):
         super().__init__(config, base_file_path)
-        with open('us_.json', 'r') as json_file:
+        with open('us_mapping.json', 'r') as json_file:
             self._usmap = json.load(json_file)
     
     def transform(self): # if edited, must recreate pipeline to reset transformed flag
@@ -243,6 +243,7 @@ class GA11TX12(BasePipeline):
             reformatted_date = f'{u_month}-{u_day}-{year} {hour}:{minute}:00'
 
             return reformatted_date
+
         ## HELPER METHOD ####
         
 
@@ -259,7 +260,14 @@ class GA11TX12(BasePipeline):
                 'incident_id':'outage_id',
                 'zip_code':'zipcode'
             })
-            self._transformed = True
+            
+            # Eliminating outage_id's with multiple start dates since there are not that many of them
+            df = self._data
+            grouped = df.groupby('outage_id')['start_date'].nunique()
+            multi_start_outages = grouped[grouped > 1].index.tolist()
+            self._data = df[~df['outage_id'].isin(multi_start_outages)]
+
+
         except Exception as e:
             print(f"An error occurred during transformation: {e}")
 
@@ -273,13 +281,12 @@ class GA11TX12(BasePipeline):
 
     def _compute_metrics(self, group): # overwriting super class because the most accurate duration seems to be calculated from update times
         # group = groupby groupy of a unique outage_id
-        ## HELPER METHOD TO VALIDATE DIFFERENT TIME
                 
         duration_diff = group['duration'].max()
         duration_max = duration_diff + timedelta(minutes=15) # because 15 minute update intervals
         duration_mean = (duration_diff + duration_max) / 2
-        end_time = group['updateTime'].max()
-        start_time = end_time - duration_diff
+        start_time = group['start_date'].iloc[0]
+        end_time = start_time + duration_diff
         customer_affected_mean = group['consumers_affected'].mean()
         total_customer_outage_time = customer_affected_mean * duration_diff
         zipcode = group['zipcode'].iloc[-1]
