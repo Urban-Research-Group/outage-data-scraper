@@ -5,20 +5,12 @@ import os
 import json
 import yaml
 import glob
+from arcgis.geocoding import reverse_geocode
+from arcgis.geometry import Geometry
+from arcgis.gis import GIS
 from dateutil import tz
 from datetime import datetime
-from IPython.display import display
-
-pd.set_option('display.max_columns', None)
-
-import pandas as pd
-import ast
-import pytz
-import os
-import json
-import yaml
-from dateutil import tz
-from datetime import datetime
+from datetime import timedelta
 from IPython.display import display
 
 pd.set_option('display.max_columns', None)
@@ -37,12 +29,17 @@ class BasePipeline:
         return file_path.replace('//', '/')
 
     def load_data(self):
+        # TODO: use us zipcode database
         try:
             file_path = self.construct_file_path()
-            print(file_path)
+            # print(file_path)
             self._data = pd.read_csv(file_path)
-            with open(f"{self.config['state']}_mapping.json", 'r') as json_file:
-                self.map = json.load(json_file)
+            with open('zip_to_county_name.json', 'r') as json_file:
+                self.geomap['zip_to_county_name'] = json.load(json_file)
+            with open('zip_to_county_fips.json', 'r') as json_file:
+                self.geomap['zip_to_county_fips'] = json.load(json_file)
+            with open('zip_to_state_name.json', 'r') as json_file:
+                self.geomap['zip_to_state_name'] = json.load(json_file)
         except Exception as e:
             print(f"An error occurred during file loading: {e}")
             
@@ -129,9 +126,92 @@ class GA1TX8(BasePipeline):
             print(f"An error occurred during transformation: {e}")
 
 class GA2TX17(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for GA2TX17
-        pass
+    def transform(self):
+        # helper function to truncate the seconds value of the timestamp
+        dataframe = self._data
+        def reformat_starttime(startTime): 
+            # format: 2023-03-15T21:51:54-04:00
+            reformatted = startTime
+            if pd.notna(startTime) and "." in startTime: # if not NaN and there is a decimal (assuming only seconds can have decimals)
+                # Find the index of the first period
+                first_period_index = startTime.find('.')
+
+                # Find the index of the first hyphen after the first period
+                first_hyphen_after_period_index = startTime.find('-', first_period_index)
+                
+                # essentially removing the decimal part of the seconds 
+                reformatted = startTime[:first_period_index] + startTime[first_hyphen_after_period_index:]
+
+            return reformatted
+        
+        try:
+            # Convert timestamps
+            eastern = tz.gettz('US/Eastern')
+            utc = tz.gettz('UTC')
+            # truncated_time = dataframe['timestamp'].str[:19]
+            dataframe['OutageStartTime'] = dataframe['OutageStartTime'].apply(reformat_starttime)
+            dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'], utc=True).dt.tz_convert(eastern)
+            dataframe['OutageStartTime'] = pd.to_datetime(dataframe['OutageStartTime'], format='mixed', utc=True).dt.tz_convert(eastern)
+            dataframe['OutageEndTime'] =pd.to_datetime(dataframe['OutageEndTime'], format='mixed', utc=True).dt.tz_convert(eastern)
+
+            # extract lat and long
+            dataframe['OutageLocation'] = dataframe['OutageLocation'].apply(lambda x: json.loads(x.replace("'", '"')))
+            dataframe[['lat', 'long']] = dataframe['OutageLocation'].apply(lambda x: pd.Series([x['Y'], x['X']]))
+            
+            dataframe.rename(columns={
+                'OutageRecID':'outage_id',
+                'OutageStartTime': 'start_time',
+                'CustomersOutNow':'customer_affected',
+                'EMC': 'utility_provider',
+                'zip': 'zipcode'
+            }, inplace=True)
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
+
+    def standardize(self): # outage_data is another argument in the original
+        self.load_data()
+        self.transform()
+        grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
+        self._data = grouped
+
+    
+    gis = GIS("http://www.arcgis.com", "JK9035", "60129@GR0W3R5") # signing in to get access to arcGIS api
+    def _compute_metrics(self, group):
+        # helper method to get the zipcode from the latitudes and longitudes of each group
+        def get_zipcode(long, lat): # using arcgis package
+            location = reverse_geocode((Geometry({"x":float(long), "y":float(lat), "spatialReference":{"wkid": 4326}})))
+            return location['address']['Postal']
+        
+        start_time = group['start_time'].min()
+        duration_diff = group['timestamp'].max() - group['timestamp'].min()
+        end_time = start_time + duration_diff
+        lat = group['lat'].iloc[-1]
+        long = group['long'].iloc[-1]
+        zipcode = get_zipcode(long, lat)
+        county_name = self.geomap['zip_to_county_name'][zipcode] if (pd.notna(zipcode) and zipcode != '') else pd.NA
+        county_fips = self.geomap['zip_to_county_fips'][zipcode] if (pd.notna(zipcode) and zipcode != '') else pd.NA
+        state = self.geomap['zip_to_state_name'][zipcode] if (pd.notna(zipcode) and zipcode != '') else pd.NA
+        utility_provider = group['utility_provider'].iloc[-1]
+        duration_max = duration_diff + timedelta(minutes=15)
+        duration_mean = (duration_diff + duration_max) / 2
+        customer_affected_mean = group['customer_affected'].mean()
+        total_customer_outage_time = customer_affected_mean * duration_diff
+
+        return pd.Series({
+            'start_time': start_time,
+            'end_time': end_time,
+            'lat': lat,
+            'long': long,
+            'zipcode': zipcode,
+            'county_name': county_name,
+            'county_fips': county_fips,
+            'state': state,
+            'utility_provider': utility_provider,
+            'duration_max': duration_max,
+            'duration_mean': duration_mean,
+            'customer_affected_mean': customer_affected_mean,
+            'total_customer_outage_time': total_customer_outage_time
+        })
     
 class GA3TX16(BasePipeline):
     def transform(self):
