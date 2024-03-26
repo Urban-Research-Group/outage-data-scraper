@@ -32,7 +32,6 @@ class BasePipeline:
         # TODO: use us zipcode database
         try:
             file_path = self.construct_file_path()
-            # print(file_path)
             self._data = pd.read_csv(file_path)
             with open('zip_to_county_name.json', 'r') as json_file:
                 self.geomap['zip_to_county_name'] = json.load(json_file)
@@ -127,34 +126,28 @@ class GA1TX8(BasePipeline):
 
 class GA2TX17(BasePipeline):
     def transform(self):
-        # helper function to truncate the seconds value of the timestamp
+        """
+        Formatting issues with startTime as some times have decimal seconds
+        Extracting long and lat from location string
+        """
         dataframe = self._data
         def reformat_starttime(startTime): 
             # format: 2023-03-15T21:51:54-04:00
             reformatted = startTime
-            if pd.notna(startTime) and "." in startTime: # if not NaN and there is a decimal (assuming only seconds can have decimals)
-                # Find the index of the first period
+            if pd.notna(startTime) and "." in startTime: 
                 first_period_index = startTime.find('.')
-
-                # Find the index of the first hyphen after the first period
                 first_hyphen_after_period_index = startTime.find('-', first_period_index)
-                
-                # essentially removing the decimal part of the seconds 
                 reformatted = startTime[:first_period_index] + startTime[first_hyphen_after_period_index:]
-
             return reformatted
         
         try:
-            # Convert timestamps
             eastern = tz.gettz('US/Eastern')
             utc = tz.gettz('UTC')
-            # truncated_time = dataframe['timestamp'].str[:19]
             dataframe['OutageStartTime'] = dataframe['OutageStartTime'].apply(reformat_starttime)
             dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'], utc=True).dt.tz_convert(eastern)
             dataframe['OutageStartTime'] = pd.to_datetime(dataframe['OutageStartTime'], format='mixed', utc=True).dt.tz_convert(eastern)
             dataframe['OutageEndTime'] =pd.to_datetime(dataframe['OutageEndTime'], format='mixed', utc=True).dt.tz_convert(eastern)
 
-            # extract lat and long
             dataframe['OutageLocation'] = dataframe['OutageLocation'].apply(lambda x: json.loads(x.replace("'", '"')))
             dataframe[['lat', 'long']] = dataframe['OutageLocation'].apply(lambda x: pd.Series([x['Y'], x['X']]))
             
@@ -168,7 +161,7 @@ class GA2TX17(BasePipeline):
         except Exception as e:
             print(f"An error occurred during transformation: {e}")
 
-    def standardize(self): # outage_data is another argument in the original
+    def standardize(self): 
         self.load_data()
         self.transform()
         grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
@@ -177,8 +170,10 @@ class GA2TX17(BasePipeline):
     
     gis = GIS("http://www.arcgis.com", "JK9035", "60129@GR0W3R5") # signing in to get access to arcGIS api
     def _compute_metrics(self, group):
-        # helper method to get the zipcode from the latitudes and longitudes of each group
-        def get_zipcode(long, lat): # using arcgis package
+        """
+        Raw data has no zipcodes so must calculate them using the long, lat using arcGIS api
+        """
+        def get_zipcode(long, lat):
             location = reverse_geocode((Geometry({"x":float(long), "y":float(lat), "spatialReference":{"wkid": 4326}})))
             return location['address']['Postal']
         
@@ -266,36 +261,37 @@ class GA11TX12(BasePipeline):
         with open('us_mapping.json', 'r') as json_file:
             self._usmap = json.load(json_file)
     
-    def transform(self): # if edited, must recreate pipeline to reset transformed flag
-        #### HELPER METHOD
-        def _reformat_start_date(row): # taking the row and reformating its 'start_date' based on timestamp
-            # Split the date string into components
-            # start_date format: 03/15 05:28 pm
-            month_day, time, ampm = row['start_date'].split(' ') # taking the row's start_date and parsing it
-            # Split the month and day and determine year
+    def transform(self):
+        """
+        Formatting issues with start_date and updateTime
+        start_date format: 03/15 05:28 pm
+        timestamp format: 01-18-2024 15:25:06 (For Walton, Tri-State, Oconee, and Mitchell, there are null timestamps in March 2023)
+        updateTime format: Mar 15, 5 09, pm
+
+        Remove outages with multiple start dates due to not there being many
+        """
+        
+        def _reformat_start_date(row):
+            month_day, time, ampm = row['start_date'].split(' ')
             s_month, s_day = month_day.split('/')
             year = None
             # Determining year using timestamp as start_date does not include year
-            if pd.notna(row['timestamp']): # if the timestamp value for the given row is not null (hopefully it works)
-            # timestamp format: 01-18-2024 15:25:06
+            if pd.notna(row['timestamp']): 
                 timestamp_components = row['timestamp'].split(' ')
                 ts_date_comp = timestamp_components[0].split('-')
                 t_month, t_day = ts_date_comp[0], ts_date_comp[1]
                 t_year = pd.to_numeric(ts_date_comp[2])
                 if t_month == '01' and s_month == '12':
-                    # if the timestamp is in january but the start time is reported to be in december, make the update time have the previous year (year of Jan - 1)
                     year = str(int(t_year) - 1)
-                else: # use timestamp year
+                else:
                     year = t_year 
-            else: # if no timestamp
+            else:
             # for Walton, Tri-State, Oconee, and Mitchell, the na timestamps are in march 2023
                 year = '2023'
 
-            # Extract the hour and minute from the time
             hour, minute = time.split(':')
 
-            # Convert hour to 24-hour format
-            if 'am' in ampm.lower() and hour == '12': # if 12 am, then set to 00
+            if 'am' in ampm.lower() and hour == '12':
                 hour = '00' 
             if 'pm' in ampm.lower():
                 hour = str(int(hour) + 12) if int(hour) < 12 else hour
@@ -304,68 +300,49 @@ class GA11TX12(BasePipeline):
             hour = hour.zfill(2)
             minute = minute.zfill(2)
 
-            # Combine the components into the desired format
             reformatted_date = f'{s_month}-{s_day}-{year} {hour}:{minute}:00'
 
             return reformatted_date
 
 
-        # Helper method
         def _reformat_update(row):
-            # Format: Mar 15, 5 09, pm
-            ## Splitting updateTime into components month, day, hour, min, am/pm
-            month_day, time, ampm = row['updateTime'].split(',') # split into date; time; and pm/am 
-            # Splitting into month, day
+            month_day, time, ampm = row['updateTime'].split(',') 
             u_month, u_day = month_day.split(' ')
             month_dict = { 'Jan': '01', 'Feb': '02', 'Mar': '03', 'Apr': '04', 'May': '05', 'Jun': '06', 
                         'Jul': '07', 'Aug': '08', 'Sep': '09', 'Oct': '10', 'Nov': '11', 'Dec': '12' }
-            u_month = month_dict[u_month] # turning the 3 char month name to its two digit form
+            u_month = month_dict[u_month]
             
-            # Determining year from timestamp as updateTime does not have year
             year = None
-            if pd.notna(row['timestamp']): # if the timestamp value for the given row is not null (hopefully it works)
-                # timestamp format: 01-18-2024 15:25:06
+            if pd.notna(row['timestamp']):
                 timestamp_components = row['timestamp'].split(' ')
                 ts_date_comp = timestamp_components[0].split('-')
                 t_month, t_day = ts_date_comp[0], ts_date_comp[1]
                 t_year = pd.to_numeric(ts_date_comp[2])
-
                 if t_month == '01' and u_month == '12':
-                    # if the timestamp is in january but the start time is reported to be in december, make the update time have the previous year (year of Jan - 1)
                     year = str(int(t_year) - 1)
-                else: # use timestamp year
+                else:
                     year = t_year 
-            else: # if no timestamp
-            # for Walton, Tri-State, Oconee, and Mitchell, the na timestamps are in march 2023
+            else:
                 year = '2023'
 
-            # Extract the hour and minute from the update time
-            hour, minute = time.split() # splits based on whtie space which is space in this case and removed leading space
-            # Convert hour to 24-hour format
-            if 'am' in ampm.lower() and hour == '12': # if 12 am, then set to 00
+            hour, minute = time.split()
+            if 'am' in ampm.lower() and hour == '12':
                 hour = '00' 
             if 'pm' in ampm.lower():
-                hour = str(int(hour) + 12) if int(hour) < 12 else hour # if pm and less than 12, add 12 hours  --> othertest it is 12 pm
-
-            # Add leading zeros if necessary
+                hour = str(int(hour) + 12) if int(hour) < 12 else hour
             hour = hour.zfill(2)
             minute = minute.zfill(2)
 
-            # Combine the components into the desired format
             reformatted_date = f'{u_month}-{u_day}-{year} {hour}:{minute}:00'
-
             return reformatted_date
 
-        ## HELPER METHOD ####
-        
-
         try:
-            self._data['start_date'] = self._data.apply(_reformat_start_date, axis=1) # reformattin the string to be datetime string form
-            self._data['start_date'] = pd.to_datetime(self._data['start_date']) # change to timestamp data format
+            self._data['start_date'] = self._data.apply(_reformat_start_date, axis=1) 
+            self._data['start_date'] = pd.to_datetime(self._data['start_date']) 
             self._data['updateTime'] = self._data.apply(_reformat_update, axis=1)
             self._data['updateTime'] = pd.to_datetime(self._data['updateTime'])
             self._data['duration'] = pd.to_timedelta(self._data['duration'])
-            self._data['timestamp'] = pd.to_datetime(self._data['timestamp']) # THIS HAS TO BE BEFORE applying reformat functions as splitting only works on timestamp in string form, not datetime
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp']) 
 
             # Renaming column names to match with superclass standardize
             self._data = self._data.rename(columns={
@@ -373,27 +350,24 @@ class GA11TX12(BasePipeline):
                 'zip_code':'zipcode'
             })
             
-            # Eliminating outage_id's with multiple start dates since there are not that many of them
+            # Eliminating outage_id's with multiple start dates
             df = self._data
             grouped = df.groupby('outage_id')['start_date'].nunique()
             multi_start_outages = grouped[grouped > 1].index.tolist()
             self._data = df[~df['outage_id'].isin(multi_start_outages)]
-
-
         except Exception as e:
             print(f"An error occurred during transformation: {e}")
 
     def standardize(self):
-        # Specific transformation for GA11TX12
-        # print(self.config)
         self.load_data()
         self.transform()
         grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
         self._data = grouped
 
-    def _compute_metrics(self, group): # overwriting super class because the most accurate duration seems to be calculated from update times
-        # group = groupby groupy of a unique outage_id
-                
+    def _compute_metrics(self, group): 
+        """
+        Overwriting superclass _compute_metrics as duration is given in this layout is more accurate
+        """
         duration_diff = group['duration'].max()
         duration_max = duration_diff + timedelta(minutes=15) # because 15 minute update intervals
         duration_mean = (duration_diff + duration_max) / 2
@@ -406,14 +380,12 @@ class GA11TX12(BasePipeline):
         
         null_zipcode = [None, None, None] 
         try:
-            zipcode_values = self.map[zipcode] # the tuple of values from zipcode map (county name, fip, state) 
+            zipcode_values = self.map[zipcode] 
         except KeyError:
             try:
                 zipcode_values = self._usmap[zipcode]
-            except KeyError:
-                # print(f"Nonexistent zipcode in {self.config['name']}: {zipcode}")        
+            except KeyError:    
                 zipcode_values = null_zipcode
-
 
         return pd.Series({
             'start_time': start_time,
@@ -431,7 +403,6 @@ class GA11TX12(BasePipeline):
             'customer_affected_mean': customer_affected_mean,
             'total_customer_outage_time': total_customer_outage_time
         })
-
     
 class CA1(BasePipeline):
     def load_data(self):
