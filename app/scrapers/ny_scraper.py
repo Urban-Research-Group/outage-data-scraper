@@ -136,25 +136,25 @@ class Scraper1(BaseScraper):
             for url in data_source:
                 if "report_nyc" in url:
                     print(url)
-                    raw_data["per_borough_new_york"] = requests.get(url).json()[
+                    raw_data["per_borough_new_york"] = requests.get(url, verify=False).json()[
                         "file_data"
                     ]["areas"][0]["areas"]
                     print(f"got borough data")
                 elif "report_westchester" in url:
                     print(url)
-                    raw_data["per_area_westchester"] = requests.get(url).json()[
+                    raw_data["per_area_westchester"] = requests.get(url, verify=False).json()[
                         "file_data"
                     ]["areas"][0]["areas"]
                     print(f"got area data")
                 elif "report_ny" in url:
                     print(url)
-                    raw_data["per_county_new_york"] = requests.get(url).json()[
+                    raw_data["per_county_new_york"] = requests.get(url, verify=False).json()[
                         "file_data"
                     ]["areas"][0]["areas"]
                     print(f"got new york's county data")
                 elif "report_nj" in url:
                     print(url)
-                    raw_data["per_county_new_jersey"] = requests.get(url).json()[
+                    raw_data["per_county_new_jersey"] = requests.get(url, verify=False).json()[
                         "file_data"
                     ]["areas"][0]["areas"]
                     print(f"got new jersey's county data")
