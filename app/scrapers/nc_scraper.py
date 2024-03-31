@@ -231,6 +231,8 @@ class NCScraper:
             obj = super().__new__(GA_Scraper6)
         elif layout_id == 5:
             obj = super().__new__(Scraper6)
+        elif layout_id == 6:
+            obj = super().__new__(Scraper7)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 2"
         obj.__init__(url, emc)
