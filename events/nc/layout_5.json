@@ -1,0 +1,8 @@
+{
+    "layout": 5,
+    "emc": {
+        "Blue Ridge Energy": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/bremco/all/OUTAGES_DATA_TYPE=CUSTOMER,CREWS_DATA_TYPE"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}

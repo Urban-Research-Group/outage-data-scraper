@@ -1,0 +1,10 @@
+{
+    "layout": 2,
+    "emc": {
+        "EnergyUnited": "https://smarthub.energyunited.com/maps/OutageMap/",
+        "Mecklenburg Electric Cooperative": "https://smarthub.meckelec.org/maps/OutageWebMap/",
+        "Surry-Yadkin EMC": "https://ebill.syemc.com/mapviewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}
