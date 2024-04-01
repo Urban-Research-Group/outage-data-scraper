@@ -1,0 +1,9 @@
+{
+    "layout": 5,
+    "emc": {
+        "Kissimmee Utility Authority": "https://utilisocial.io/datacapable/v2/p/kissimmee/map/events?types=OUTAGE&polygons=&sortBy=CUSTOMERS_AFFECTED&orderBy=DESCENDING",
+        "Gainesville Regional Utilities": "https://utilisocial.io/datacapable/v2/p/GRU/map/events"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

@@ -1,0 +1,8 @@
+{
+    "layout": 8,
+    "emc": {
+        "Duke Energy Florida": "https://outagemap.duke-energy.com/#/current-outages/fl"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}
