@@ -52,13 +52,56 @@ class BaseScraper:
     def parse(self):
         pass
 
-    def get_page_source(self, url=None, timeout=5):
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # Return the request if condition is met
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
+    
+    def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout = 10):
+
         url = url if url else self.url
         self.driver.get(url)
-        # let the page load
-        time.sleep(timeout)
-        page_source = self.driver.page_source
 
+        # Map find_type to Selenium's By types
+        find_type_map = {
+            "class": By.CLASS_NAME,
+            "id": By.ID,
+            "tag": By.TAG_NAME,
+            "css": By.CSS_SELECTOR,
+            "xpath": By.XPATH,
+            "name": By.NAME,
+            "link_text": By.LINK_TEXT,
+            "partial_link_text": By.PARTIAL_LINK_TEXT,
+        }
+
+        # Check if the provided find_type is supported
+        if find_type not in find_type_map:
+            raise ValueError(f"Unsupported find_type: {find_type}")
+        by_type = find_type_map[find_type]
+
+
+        # let the page load
+        try:
+            # wait for the element to load
+            WebDriverWait(self.driver, timeout).until(
+                # css_selector is often same as the keyword BeautifulSoup trying to find
+                EC.presence_of_element_located((by_type, findkeyword))
+            )
+            page_source = self.driver.page_source
+        except Exception as e:
+            print(f"An error occurred: {e}")
+            page_source = None  # Return None or appropriate content in case of failure
         return page_source
 
     def extract_zipcode(self, lat, lon):
@@ -80,12 +123,13 @@ class BaseScraper:
         )
 
         desired_capabilities = DesiredCapabilities.CHROME.copy()
+        desired_capabilities["pageLoadStrategy"] = "eager"  # or 'none'
         desired_capabilities["goog:loggingPrefs"] = {"performance": "ALL"}
         desired_capabilities["acceptInsecureCerts"] = True
 
         # Create the webdriver object and pass the arguments
         chrome_options = webdriver.ChromeOptions()
-        # chrome_options.add_argument("--headless")
+        chrome_options.add_argument("--headless")
         chrome_options.add_argument("--headless=new")
         chrome_options.add_argument("--allow-insecure-localhost")
         chrome_options.add_argument("--disable-dev-shm-usage")
@@ -99,6 +143,8 @@ class BaseScraper:
         chrome_options.add_argument("--enable-logging")
         chrome_options.add_argument("--log-level=0")
         chrome_options.add_argument("--v=99")
+        chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+        chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
         chrome_options.add_argument("--single-process")
         chrome_options.add_argument("--data-path=/tmp/data-path")
         chrome_options.add_argument("--ignore-certificate-errors")
@@ -131,59 +177,40 @@ class Scraper1(BaseScraper):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
 
+
     def parse(self):
         data = self.fetch()
+        timenow_value = timenow()  # Call once and reuse, assuming it returns a static time for the run.
 
         for key, val in data.items():
             if not val:
-                data.update({key: pd.DataFrame()})
-            else:
-                if key == "per_county":
-                    # Turns out that some val has more than one item
-                    boundaries_lists = [item["boundaries"] for item in val]
+                data[key] = pd.DataFrame()  # Direct assignment is fine here.
+                continue  # Skip the rest of the loop if val is empty.
 
-                    flattened_boundaries = []
-                    for b in boundaries_lists:
-                        flattened_boundaries = flattened_boundaries + b
+            # Processing per_county data.
+            if key == "per_county":
+                flattened_boundaries = [boundary for item in val for boundary in item["boundaries"]]
+                per_loc_df = pd.DataFrame(flattened_boundaries)
+                per_loc_df = per_loc_df[(per_loc_df["customersAffected"] != 0) | (per_loc_df["customersOutNow"] != 0)]
+                per_loc_df["timestamp"] = timenow_value
+                per_loc_df["EMC"] = self.emc
+                data[key] = per_loc_df
 
-                    # Creating a DataFrame from the concatenated list
-                    per_loc_df = pd.DataFrame(flattened_boundaries)
-                    # per_loc_df = pd.DataFrame(val[0]["boundaries"])
-
-                    per_loc_df = per_loc_df[
-                        (per_loc_df["customersAffected"] != 0)
-                        | (per_loc_df["customersOutNow"] != 0)
-                    ]
-                    per_loc_df["timestamp"] = timenow()
-                    per_loc_df["EMC"] = self.emc
-                    data.update({key: per_loc_df})
-                if key == "per_outage":
-                    per_outage_df = pd.DataFrame(val)
-                    per_outage_df["timestamp"] = timenow()
-                    zips = [
-                        self.extract_zipcode(
-                            x["outagePoint"]["lat"], x["outagePoint"]["lng"]
-                        )
-                        for x in val
-                    ]
-                    per_outage_df["zip"] = zips
-                    per_outage_df["EMC"] = self.emc
-                    data.update({key: per_outage_df})
+            # Processing per_outage data.
+            elif key == "per_outage":
+                per_outage_df = pd.DataFrame(val)
+                zips = [self.extract_zipcode(point["lat"], point["lng"]) for point in per_outage_df["outagePoint"]]
+                per_outage_df["zip"] = zips
+                per_outage_df["timestamp"] = timenow_value
+                per_outage_df["EMC"] = self.emc
+                data[key] = per_outage_df
 
         return data
+
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
-        if self.emc == "Taylor Electric Coop, Inc.":
-            self.driver.get(self.url)
-            time.sleep(5)
-            _ = self.driver.page_source
-            self.url = self.driver.find_element(
-                By.XPATH,
-                "/html/body/div/div[1]/div[2]/div/div/main/article/div/div/div/div/section/div/div[2]/div/div[4]/div/div/a",
-            ).get_attribute("href")
-            print("new url", self.url)
 
         with urlopen(self.url + "data/boundaries.json") as response:
             raw_data["per_county"] = json.loads(response.read())
@@ -310,17 +337,17 @@ class Scraper4(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
         self.driver.get(self.url)
-        # Sleeps for 5 seconds
-        time.sleep(5)
-        page_source = self.driver.page_source
-
+        page_source = self.get_page_source(find_type="css", 
+                                           findkeyword="a.row.report-link.hyperlink-primary")
+        if not page_source:
+            print("Failed to load the page source.")
+            return {}
         # parse reports link
-        soup = BeautifulSoup(page_source, "html.parser")
+        soup = BeautifulSoup(page_source, "lxml")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
 
         links = {}
-        for c in containers:
-            links.update({c.getText(): c.get("href")})
+        links = {container.text: container.get("href") for container in containers}
 
         # get json reports
         raw_data = {}
@@ -328,8 +355,9 @@ class Scraper4(BaseScraper):
             if "kubra" in self.url:
                 self.url = "https://kubra.io/"
             self.driver.get(self.url + v[1:])
-            time.sleep(5)
+            time.sleep(2)
             requests = self.driver.requests
+
             for r in requests:
                 if "kubra.io/data" in r.url:
                     print(f"scraping data from {r.url}")
@@ -457,8 +485,13 @@ class Scraper7(BaseScraper):
         # Send a request to the website and let it load
         self.driver.get(self.url)
 
-        # Sleeps for 5 seconds
-        time.sleep(5)
+        try:
+            self.wait_for_request(
+                lambda request: "ShellOut" in request.url
+            )
+        except TimeoutError:
+            print("The specific request was not made within the timeout period.")
+            return {}
 
         raw_data = {}
         for request in self.driver.requests:
@@ -532,30 +565,34 @@ class Scraper9(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         self.driver.get(self.url)
-        time.sleep(10)
 
         if self.emc != "Karnes Electric Coop, Inc.":
+            if self.emc == "San Patricio Electric Coop, Inc.":
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.mapwise-web-modal-header h5"))
+                )
+            else:
+                WebDriverWait(self.driver, 10).until(
+                    EC.presence_of_element_located((By.ID, 'OMS.Customers Summary'))
+                )
             button = self.driver.find_elements(
                 "xpath", '//*[@id="OMS.Customers Summary"]'
             )
             if button:
-                wait = WebDriverWait(self.driver, 10)
-                label = wait.until(
+                label = WebDriverWait(self.driver, 10).until(
                     EC.element_to_be_clickable(
-                        (By.XPATH, '//*[@id="OMS.Customers Summary"]')
+                        (By.ID, "OMS.Customers Summary")
                     )
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
 
-        time.sleep(5)
+        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox")))
         page_source = {}
         select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
-            menu.select_by_index(idx)
-            time.sleep(3)
             page_source.update({f"per_{level}": self.driver.page_source})
         return page_source
 
@@ -666,13 +703,11 @@ class Scraper11(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         raw_data = {}
 
-        # Send a request to the website and let it load
-        self.driver.get(self.url)
-
-        # Sleeps for 5 seconds
-        time.sleep(5)
-
         if self.emc != "Walton EMC":
+            # Send a request to the website and let it load
+            self.driver.get(self.url)
+            # Sleeps for 5 seconds
+            time.sleep(5)   
             for request in self.driver.requests:
                 if "ShellOut" in request.url:
                     response = sw_decode(
@@ -739,3 +774,4 @@ class GAScraper:
 
         obj.__init__(url, emc)
         return obj
+
