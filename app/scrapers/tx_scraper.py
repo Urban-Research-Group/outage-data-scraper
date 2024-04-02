@@ -39,7 +39,7 @@ class Scraper1(BaseScraper):
         for s in suffix:
             url = self.url + s
             print(f"fetching {self.emc} outages from {url}")
-            html = self.get_page_source(url, css_selector = ".report-table.tree")
+            html = self.get_page_source(url = url, find_type = "css", findkeyword = ".report-table.tree")
             # parse table
             soup = BeautifulSoup(html, "lxml")
             table = soup.select_one(".report-table.tree")
@@ -150,16 +150,18 @@ class Scraper5(BaseScraper):
 
         # let the page load
         if self.emc != "Texas-New Mexico Power Co.":
-            css_selector = "a.row.report-link.hyperlink-primary"
-            page_source = self.get_page_source(css_selector=css_selector)
+            findkeyword = "a.row.report-link.hyperlink-primary"
+            page_source = self.get_page_source(find_type="css", findkeyword=findkeyword)
 
         else:
             self.driver.get(self.url)
-            iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
+            iframe_tag = self.driver.find_elent(By.ID, "sc5_iframe")
             source_page = iframe_tag.get_attribute("src")
             print("Redirect to", source_page)
             self.url = "https://kubra.io/"
-            page_source = self.get_page_source(url=source_page, css_selector="a.row.report-link.hyperlink-primary")
+            page_source = self.get_page_source(url=source_page, 
+                                               find_type="css",
+                                               findkeyword="a.row.report-link.hyperlink-primary")
             
         soup = BeautifulSoup(page_source, "lxml")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
