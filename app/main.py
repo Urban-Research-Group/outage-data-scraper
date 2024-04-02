@@ -39,9 +39,9 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "events/tx/layout_1.json")
+    event_path = os.path.join(os.getcwd(), "events/ga/layout_11.json")
     with open(event_path) as f:
-        test_event = json.loads(f.read())
+        test_event =json.loads(f.read())
     handler(test_event)
 
     # single test here
