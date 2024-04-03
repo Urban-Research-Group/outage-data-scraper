@@ -1,0 +1,11 @@
+{
+    "layout": 4,
+    "emc": {
+        "York Electric Cooperative": "http://outage.yorkelectric.net/omswebmap/OMSWebMap.htm?",
+        "Tri-County Electric Cooperative": "http://outages.tce.coop/OMSWebMap/OMSWebMap.htm?clientKey=undefined",
+        "Little River Electric Cooperative": "http://207.144.23.199/OMSWebMap/OMSWebMap.htm?clientKey=undefined"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

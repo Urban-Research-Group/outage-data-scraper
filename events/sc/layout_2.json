@@ -1,0 +1,15 @@
+{
+    "layout": 2, 
+    "emc": {
+        "Fairfield Electric Coop": "http://97.107.102.70",
+        "Aiken Electric Cooperative": "http://map.aikenco-op.org:8080/",
+        "Blue Ridge Electric Cooperative": "https://www.brecoutagemap.com:7575",
+        "Santee Electric Coop": "https://outageviewer.santee.org/",
+        "Union Power Cooperative": "https://outage.union-power.com",
+        "Horry Electric Cooperative": "http://outages.horryelectric.com:8080"
+        
+
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

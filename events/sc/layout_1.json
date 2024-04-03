@@ -1,0 +1,12 @@
+{
+    "layout": 1,
+    "emc": {
+        "Haywood EMC": "https://www.outageentry.com/Outages/outage.php?Client=haywood",
+        "Orangeburg Public Utilities": "https://www.outageentry.com/Outages/outage.php?Client=coorg",
+        "Rock Hill Utilities": "https://www.outageentry.com/Outages/outage.php?Client=ROCK",
+        "Mitchell EMC": "https://www.outageentry.com/Outages/outage.php?Client=MITCHELL"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}
