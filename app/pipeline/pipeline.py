@@ -236,10 +236,59 @@ class TX6(BasePipeline):
         pass
 
 class TX10(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for TX10
-        pass
+    def load_data(self):
+        # Implementation for loading data
+        try:
+            file_path = self.construct_file_path()
+            self._data = pd.read_csv(file_path)
+        except Exception as e:
+            print(f"An error occurred during file loading: {e}")
 
+    def map_zipcode_to_more(self, zipcode_state_df, zipcode_county_df, zipcode_fips_df, zipcode_column):
+        #Converting the zipcode in data_df to int to match the json file
+        self._data[zipcode_column] = pd.to_numeric(self._data[zipcode_column], errors='coerce')
+        self._data[zipcode_column] = self._data[zipcode_column].astype('Int64')
+
+
+        # Create dictionaries from zipcode_data_df to map zip codes 
+        zipcode_to_state = zipcode_state_df.to_dict()
+        zipcode_to_county = zipcode_county_df.to_dict()
+        zipcode_to_fips = zipcode_fips_df.to_dict()
+
+        
+        # Map zip codes to states for each row in data_df
+        self._data['state'] = self._data[zipcode_column].map(zipcode_to_state[0])
+        self._data['county_name'] = self._data[zipcode_column].map(zipcode_to_county[0])
+        self._data['county_fips'] = self._data[zipcode_column].map(zipcode_to_fips[0])
+    
+    def transform(self):
+        try:
+            eastern = tz.gettz('US/Eastern')
+            self._data['date'] = pd.to_datetime(self._data['date'].str[:-4], format='%B %d, %Y %I:%M %p', errors='coerce')
+            self._data['date'] = self._data['date'].dt.tz_localize(None).dt.tz_localize('UTC').dt.tz_convert(eastern)
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True, errors='coerce').dt.tz_convert(eastern)
+            
+            self._data['start_time'] = self._data.groupby('id')['timestamp'].transform('min')
+            self._data['end_time'] = self._data.groupby('id')['timestamp'].transform('max')
+
+            zipcode_state_df = pd.read_json("zip_to_state_name.json", orient='index')
+            zipcode_county_df = pd.read_json("zip_to_county_name.json",orient = "index")
+            zipcode_fips_df = pd.read_json("zip_to_county_fips.json",orient="index")
+            # Map zip codes to states
+            self.map_zipcode_to_more(zipcode_state_df, zipcode_county_df,zipcode_fips_df, 'zip')
+            self._data = self._data.rename(columns={
+                'id':'outage_id',
+                'custAffected':'customer_affected',
+                'zip':'zipcode',
+                'EMC': 'utility_provider',
+                'lon' : 'lng',
+
+            })
+
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
+
+            
 class TX18(BasePipeline):
     def standardize(self, outage_data):
         # Specific transformation for TX18
