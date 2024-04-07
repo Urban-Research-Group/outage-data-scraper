@@ -1,13 +1,13 @@
 {
         "layout": 11,
-        "emc": {"Bandera Electric Coop, Inc.":"https://smarthub.banderaelectric.com/maps/external/OutageWebMap/",
+        "emc": {
+                "Bandera Electric Coop, Inc.": "https://smarthub.banderaelectric.com/maps/external/OutageWebMap/",
                 "Bartlett Electric Coop, Inc.": "https://ebill.bartlettec.coop/maps/External_Outage_Map/",
                 "Central Texas Electric Coop, Inc.": "https://ebill.ctec.coop/woViewer/mapviewer.html?config=Outage+Web+Map",
-                "Concho Valley Electric Coop, Inc.":"https://ebill.cvec.coop/maps/OutageWebMap/",
+                "Concho Valley Electric Coop, Inc.": "https://ebill.cvec.coop/maps/OutageWebMap/",
                 "CoServ Electric": "https://nrc4.coserv.com/maps/CoServOutageMap/",
                 "Deaf Smith Electric Coop, Inc.": "https://ebill.dsec.org/maps/public/OutageWebMap/",
-
-                "Grayson Collin Electric Coop, Inc.":  "https://ebill.grayson-collin.coop/woViewer/mapviewer.html?config=Outage+Web+Map",
+                "Grayson Collin Electric Coop, Inc.": "https://ebill.grayson-collin.coop/woViewer/mapviewer.html?config=Outage+Web+Map",
                 "Hill Country Electric Coop, Inc.": "https://ebill.hilco.coop/maps/public/OutageWebMap/",
                 "Karnes Electric Coop, Inc.": "https://ebill.karnesec.org/maps/ExternalOutageMap/",
                 "Lamb County Electric Coop, Inc.": "https://ebill.lcec.coop/maps/external/OutageWebMap/",
@@ -15,10 +15,9 @@
                 "Medina Electric Coop, Inc.": "https://ebill.medinaec.org/maps/OutageWebMap/",
                 "Rio Grande Electric Coop, Inc.": "https://ebill.rgec.com/woViewer/mapviewer.html?config=Outage+Web+Map",
                 "Rita Blanca Electric Coop, Inc.": "https://ebill.ritablancaelectric.com/maps/IvueConnect/",
-                "Rusk County Electric Coop, Inc.":  "https://ebill.rcelectric.org/woViewer/mapviewer.html?config=Outage+Web+Map",
+                "Rusk County Electric Coop, Inc.": "https://ebill.rcelectric.org/woViewer/mapviewer.html?config=Outage+Web+Map",
                 "Sam Houston Electric Coop, Inc.": "https://outage.samhouston.net/maps/OutageWebMap/",
-                "San Patricio Electric Coop, Inc.":  "https://ebill.sanpatricioelectric.org/mapviewer/mapviewer.html?config=Outage+Web+Map",
-
+                "San Patricio Electric Coop, Inc.": "https://ebill.sanpatricioelectric.org/mapviewer/mapviewer.html?config=Outage+Web+Map",
                 "Southwest Rural Electric Association, Inc.": "https://swre.ebill.coop/maps/ExternalOutageMap/",
                 "Swisher Electric Coop, Inc.": "https://ebill.swisherelectric.org/maps/OutageWebMap/",
                 "Upshur Rural Electric Coop Corp.": "https://ebill.urecc.coop/maps/OutageWebMap/",
@@ -26,4 +25,4 @@
         },
         "bucket": "data",
         "folder": "tx"
-    }
+}

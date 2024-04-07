@@ -2,7 +2,7 @@
     "layout": 1,
     "emc": {
         "Washington EMC": "http://74.121.99.238:8081/",
-        "Rayle EMC": "http://outage.rayleemc.com:82/",
+        "Rayle EMC": "https://outage.rayleemc.com/",
         "Grady EMC": "http://outage.gradyemc.com:7576/",
         "Canoochee EMC": "https://outage.canoocheeemc.com:8889/",
         "Jefferson Energy Cooperative": "https://outage.jec.coop:83/",
@@ -17,6 +17,6 @@
         "Dalton Utility": "https://outageviewer.dutil.com/",
         "Blueridge Mountain EMC": "http://outage.brmemc.com:8008/"
     },
-    "bucket": "gting-testing",
+    "bucket": "data",
     "folder": "ga"
 }
