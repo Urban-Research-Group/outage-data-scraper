@@ -181,7 +181,7 @@ class Scraper1(BaseScraper):
             _ = self.driver.page_source
             self.url = self.driver.find_element(
                 By.XPATH,
-                "/html/body/div/div[1]/div[2]/div/div/main/article/div/div/div/div/section/div/div[2]/div/div[4]/div/div/a",
+                "/html/body/div[1]/section[2]/div/div/div/div/div/div/section/div/div/div/section/div/div[1]/div/div[3]/div/div/a",
             ).get_attribute("href")
             print("new url", self.url)
 
