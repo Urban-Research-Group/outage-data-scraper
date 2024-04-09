@@ -130,7 +130,7 @@ class GA2TX17(BasePipeline):
         Formatting issues with startTime as some times have decimal seconds
         Extracting long and lat from location string
         """
-        dataframe = self._data
+        # dataframe = self._data
         def reformat_starttime(startTime): 
             # format: 2023-03-15T21:51:54-04:00
             reformatted = startTime
@@ -143,15 +143,15 @@ class GA2TX17(BasePipeline):
         try:
             eastern = tz.gettz('US/Eastern')
             utc = tz.gettz('UTC')
-            dataframe['OutageStartTime'] = dataframe['OutageStartTime'].apply(reformat_starttime)
-            dataframe['timestamp'] = pd.to_datetime(dataframe['timestamp'], utc=True).dt.tz_convert(eastern)
-            dataframe['OutageStartTime'] = pd.to_datetime(dataframe['OutageStartTime'], format='mixed', utc=True).dt.tz_convert(eastern)
-            dataframe['OutageEndTime'] =pd.to_datetime(dataframe['OutageEndTime'], format='mixed', utc=True).dt.tz_convert(eastern)
+            self._data['OutageStartTime'] = self._data['OutageStartTime'].apply(reformat_starttime)
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
+            self._data['OutageStartTime'] = pd.to_datetime(self._data['OutageStartTime'], format='mixed', utc=True).dt.tz_convert(eastern)
+            self._data['OutageEndTime'] =pd.to_datetime(self._data['OutageEndTime'], format='mixed', utc=True).dt.tz_convert(eastern)
 
-            dataframe['OutageLocation'] = dataframe['OutageLocation'].apply(lambda x: json.loads(x.replace("'", '"')))
-            dataframe[['lat', 'long']] = dataframe['OutageLocation'].apply(lambda x: pd.Series([x['Y'], x['X']]))
+            self._data['OutageLocation'] = self._data['OutageLocation'].apply(lambda x: json.loads(x.replace("'", '"')))
+            self._data[['lat', 'long']] = self._data['OutageLocation'].apply(lambda x: pd.Series([x['Y'], x['X']]))
             
-            dataframe.rename(columns={
+            self._data.rename(columns={
                 'OutageRecID':'outage_id',
                 'OutageStartTime': 'start_time',
                 'CustomersOutNow':'customer_affected',
@@ -236,10 +236,130 @@ class GA4TX5(BasePipeline):
         pass
     
 class GA5(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for GA5
-        pass
-    
+    def transform(self):
+        eastern = tz.gettz('US/Eastern')
+        utc = tz.gettz('UTC')
+
+        def reformat_time(time):
+            # format: 2024-01-18 09:04:15 but can also be in milliseconds since the Unix epoch (January 1, 1970, 00:00:00 UTC)
+            eastern = tz.gettz('US/Eastern')
+            utc = tz.gettz('UTC')
+            if isinstance(time, str) and time.isdigit():
+                # Convert millisecond timestamp to datetime
+                return pd.to_datetime(int(time), unit='ms', utc=True).tz_convert(eastern)
+                
+            # else the time is string format of datetime
+            elif isinstance(time, str) and ":" in time:
+                return pd.to_datetime(time, utc=True).tz_convert(eastern)
+            
+            elif isinstance(time, datetime): # is datetime object already
+                return time
+            
+            else: # is null or extraneous values that should be null (like '-1000')
+                return pd.NaT
+
+        try:
+            """
+            Transforming the dataframe
+            - Some of the time columns has millisecond format, error codes, and NaN so we need to separately reformat before pd.to_datetime
+            - etrTime has times before 2023-01-01, so we will set them to NaT
+            - "county" values look like city names so renaming accordingly
+            """
+            # Masks for extracting rows with millisecond format, errors, or NA
+            start_time_ms = self._data['startTime'].apply(lambda x: (isinstance(x, str) and (x.isdigit() or ":" not in x)) or pd.NA)
+            lastUptTime_ms = self._data['lastUpdatedTime'].apply(lambda x: (isinstance(x, str) and (x.isdigit() or ":" not in x)) or pd.NA)
+            etrTime_ms_null = self._data['etrTime'].apply(lambda x: (isinstance(x, str) and (x.isdigit() or ":" not in x)) or pd.NA) # or pd.NA
+            timeSt_null = self._data['timestamp'].isna()
+            extraneous_mask = start_time_ms | lastUptTime_ms | etrTime_ms_null | timeSt_null
+
+            extraneous_rows = self._data[extraneous_mask]
+
+            extraneous_rows['startTime'] = extraneous_rows['startTime'].apply(reformat_time)
+            extraneous_rows['lastUpdatedTime'] = extraneous_rows['lastUpdatedTime'].apply(reformat_time)
+            extraneous_rows['etrTime'] = extraneous_rows['etrTime'].apply(reformat_time)
+            extraneous_rows['timestamp'] = extraneous_rows['timestamp'].apply(reformat_time)
+
+            eastern = tz.gettz('US/Eastern')
+            utc = tz.gettz('UTC')
+
+            self._data.loc[extraneous_rows.index, 'startTime'] = extraneous_rows['startTime']
+            self._data.loc[extraneous_rows.index, 'lastUpdatedTime'] = extraneous_rows['lastUpdatedTime']
+            self._data.loc[extraneous_rows.index, 'etrTime'] = extraneous_rows['etrTime']
+            self._data.loc[extraneous_rows.index, 'timestamp'] = extraneous_rows['timestamp']
+        
+            self._data['startTime'] = pd.to_datetime(self._data['startTime'], utc=True).dt.tz_convert(eastern)
+            self._data['lastUpdatedTime'] = pd.to_datetime(self._data['lastUpdatedTime'], utc=True).dt.tz_convert(eastern)
+            self._data['etrTime'] =pd.to_datetime(self._data['etrTime'], utc=True).dt.tz_convert(eastern)
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
+
+            time_col = ['startTime', 'lastUpdatedTime', 'etrTime', 'timestamp']
+            minimum_datetime = pd.to_datetime('2023-01-01 23:59:59-05:00', utc=True).tz_convert('US/Eastern')
+            for col in time_col:
+                self._data.loc[self._data[col] < minimum_datetime, col] = pd.NaT
+
+            self._data.rename(columns={
+                'id':'outage_id',
+                'startTime': 'start_time',
+                'numPeople':'customer_affected',
+                'EMC': 'utility_provider',
+                'zip_code': 'zipcode',
+                'latitude': 'lat',
+                'longitude': 'long',
+                'county': 'city'
+            }, inplace=True)
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
+
+    def standardize(self):
+        self.load_data()
+        self.transform()
+        grouped = self._data.groupby(['outage_id', 'start_time']).apply(self._compute_metrics).reset_index().round(2)
+        self._data = grouped
+
+    gis = GIS("http://www.arcgis.com", "JK9035", "60129@GR0W3R5") # signing in to get access to arcGIS api
+    def _compute_metrics(self, group):
+        """
+        Generic method to compute standardized metrics, used for being apply in DataFrame.groupby method, 
+        given dataframe being transformed with standardized column names
+        """
+        def get_zipcode(long, lat):
+            location = reverse_geocode((Geometry({"x":float(long), "y":float(lat), "spatialReference":{"wkid": 4326}})))
+            return location['address']['Postal']
+
+        start_time = group['start_time'].min()
+        duration_diff = group['etrTime'].max() - start_time if group['etrTime'].notna().all() else group['timestamp'].max() - group['timestamp'].min()
+        end_time = group['etrTime'].max() if group['etrTime'].notna().all() else start_time + duration_diff
+        
+        lat = group['lat'].iloc[-1]
+        long = group['long'].iloc[-1]
+
+        zipcode_map = self.geomap['zip_to_county_name']
+        zipcode = group['zipcode'].iloc[-1] if group['zipcode'].iloc[-1] != 'unknown' else get_zipcode(long, lat)
+        county_name = self.geomap['zip_to_county_name'][zipcode] if (pd.notna(zipcode) and zipcode != '' and zipcode in zipcode_map) else pd.NA
+        county_fips = self.geomap['zip_to_county_fips'][zipcode] if (pd.notna(zipcode) and zipcode != '' and zipcode in zipcode_map) else pd.NA
+        state = self.geomap['zip_to_state_name'][zipcode] if (pd.notna(zipcode) and zipcode != '' and zipcode in zipcode_map) else pd.NA
+        
+        utility_provider = group['utility_provider'].iloc[-1]
+        duration_max = duration_diff + timedelta(minutes=15)
+        duration_mean = (duration_diff + duration_max) / 2
+        customer_affected_mean = group['customer_affected'].mean()
+        total_customer_outage_time = customer_affected_mean * duration_diff
+
+        return pd.Series({
+            'end_time': end_time,
+            'lat': lat,
+            'long': long,
+            'zipcode': zipcode,
+            'county_name': county_name,
+            'county_fips': county_fips,
+            'state': state,
+            'utility_provider': utility_provider,
+            'duration_max': duration_max,
+            'duration_mean': duration_mean,
+            'customer_affected_mean': customer_affected_mean,
+            'total_customer_outage_time': total_customer_outage_time
+        })
+
 class GA7(BasePipeline):
     def standardize(self, outage_data):
         # Specific transformation for GA4TX5
