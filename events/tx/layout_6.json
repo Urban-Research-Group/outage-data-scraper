@@ -1,8 +1,8 @@
 {
-        "layout": 6,
-        "emc": {
-            "Southwestern Public Service Co.": "https://www.outagemap-xcelenergy.com/outagemap/"
-        },
-        "bucket": "data",
-        "folder": "tx"
-    }
+    "layout": 6,
+    "emc": {
+        "Southwestern Public Service Co._1": "https://www.outagemap-xcelenergy.com/outagemap/"
+    },
+    "bucket": "data",
+    "folder": "tx"
+}
