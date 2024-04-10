@@ -4,29 +4,15 @@ import pytz
 import os
 import json
 import yaml
+import glob
 from dateutil import tz
 from datetime import datetime
-from IPython.display import display
-
-pd.set_option('display.max_columns', None)
-
-import pandas as pd
-import ast
-import pytz
-import os
-import json
-import yaml
-from dateutil import tz
-from datetime import datetime
-from IPython.display import display
-
-pd.set_option('display.max_columns', None)
 
 class BasePipeline:
     def __init__(self, config, base_file_path):
         self.config = config
         self.base_file_path = base_file_path
-        self.map = {}
+        self.geomap = {}
         self._data = pd.DataFrame({})
     
     def construct_file_path(self):
@@ -36,30 +22,33 @@ class BasePipeline:
         return file_path.replace('//', '/')
 
     def load_data(self):
-        # TODO: use us zipcode database
         try:
             file_path = self.construct_file_path()
             print(file_path)
             self._data = pd.read_csv(file_path)
-            with open(f"{self.config['state']}_mapping.json", 'r') as json_file:
-                self.map = json.load(json_file)
+            with open('zip_to_county_name.json', 'r') as json_file:
+                self.geomap['zip_to_county_name'] = json.load(json_file)
+            with open('zip_to_county_fips.json', 'r') as json_file:
+                self.geomap['zip_to_county_fips'] = json.load(json_file)
         except Exception as e:
             print(f"An error occurred during file loading: {e}")
             
     def transform(self):
-        # Base transformation method
         raise NotImplementedError
 
     def standardize(self):
-        # Base transformation method
+        """
+        Generic method to compute and output standardized metrics
+        """
         self.load_data()
         self.transform()
         grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
         self._data = pd.merge(grouped, self._data, on=['outage_id', 'timestamp'], how='inner')
         
-        self._data['utility_provider'] = self.config['name']
         self._data['state'] = self.config['state']
-        self._data['county'] = self._data['zipcode'].map(self.map)
+        if self.config['state'] != 'ca':
+            self._data['utility_provider'] = self.config['name'] 
+            self._data['county'] = self._data['zipcode'].map(self.geomap) 
         
         self._data = self._data[[
             'utility_provider', 'state', 'county', 'zipcode',
@@ -77,6 +66,10 @@ class BasePipeline:
         return self._data
     
     def _compute_metrics(self, group):
+        """
+        Generic method to compute standardized metrics, used for being apply in DataFrame.groupby method, 
+        given dataframe being transformed with standardized column names
+        """
         duration = (group['end_time'] - group['start_time']).dt.total_seconds() / 60
         duration_max = duration + 15
         duration_mean = (duration + duration_max) / 2
@@ -97,7 +90,7 @@ class BasePipeline:
             'total_customer_outage_time_mean': total_customer_outage_time_mean
         })
         
-    def _check_other_vars(self):
+    def check_vars(self):
         # TODO: Check other useful variables
         pass
     
@@ -130,9 +123,26 @@ class GA2TX17(BasePipeline):
         pass
     
 class GA3TX16(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for GA3TX16
-        pass
+    def transform(self):
+        try:
+            # Convert timestamps
+            eastern = tz.gettz('US/Eastern')
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
+            self._data['OutageTime'] = pd.to_datetime(self._data['OutageTime'], utc=True).dt.tz_convert(eastern)
+            self._data['end_time'] = self._data.groupby('CaseNumber')['timestamp'].transform('max')
+            
+             # TODO: get zipcode from lat and long
+            self._data['zipcode'] = "000000"
+            
+            self._data = self._data.rename(columns={
+                'CaseNumber':'outage_id',
+                'OutageTime': 'start_time',
+                'CutomersAffected':'customer_affected',
+                'X':'lat',
+                'Y': 'lng'
+            })
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
     
 class GA4TX5(BasePipeline):
     def standardize(self, outage_data):
@@ -165,9 +175,45 @@ class GA11TX12(BasePipeline):
         pass
     
 class CA1(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for CA1
-        pass
+    def load_data(self):
+        try:
+            dir_path = f"{self.base_file_path}/{self.config['state']}/layout_{self.config['layout']}/"
+            csv_files = glob.glob(os.path.join(dir_path, "*.csv"))
+            df_list = [pd.read_csv(file) for file in csv_files]
+            self._data = pd.concat(df_list, ignore_index=True)
+            
+            with open('zip_to_county_name.json', 'r') as json_file:
+                self.geomap['zip_to_county_name'] = json.load(json_file)
+            with open('zip_to_county_fips.json', 'r') as json_file:
+                self.geomap['zip_to_county_fips'] = json.load(json_file)
+        except Exception as e:
+            print(f"An error occurred during file loading: {e}")
+    
+    def transform(self):
+        try:
+            # Convert timestamps
+            eastern = tz.gettz('US/Eastern')
+            utc = tz.gettz('UTC')
+            self._data['StartDate'] = pd.to_datetime(self._data['StartDate'], utc=True).dt.tz_convert(eastern)
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
+            
+            # Since there's no direct 'end_time' in the new dataset, assuming 'EstimatedRestoreDate' serves a similar purpose
+            self._data['end_time'] = self._data.groupby('OBJECTID')['timestamp'].transform('max')
+            
+            # TODO: get zipcode from lat and long
+            self._data['zipcode'] = "000000"
+            
+            self._data = self._data.rename(columns={
+                'x': 'lat',
+                'y': 'lng',
+                'OBJECTID': 'outage_id',
+                'StartDate': 'start_time',
+                'ImpactedCustomers': 'customer_affected',
+                'UtilityCompany': 'utility_provider',
+                'County': 'county'
+            })
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
 
 class CA2(BasePipeline):
     def standardize(self, outage_data):
@@ -190,10 +236,59 @@ class TX6(BasePipeline):
         pass
 
 class TX10(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for TX10
-        pass
+    def load_data(self):
+        # Implementation for loading data
+        try:
+            file_path = self.construct_file_path()
+            self._data = pd.read_csv(file_path)
+        except Exception as e:
+            print(f"An error occurred during file loading: {e}")
 
+    def map_zipcode_to_more(self, zipcode_state_df, zipcode_county_df, zipcode_fips_df, zipcode_column):
+        #Converting the zipcode in data_df to int to match the json file
+        self._data[zipcode_column] = pd.to_numeric(self._data[zipcode_column], errors='coerce')
+        self._data[zipcode_column] = self._data[zipcode_column].astype('Int64')
+
+
+        # Create dictionaries from zipcode_data_df to map zip codes 
+        zipcode_to_state = zipcode_state_df.to_dict()
+        zipcode_to_county = zipcode_county_df.to_dict()
+        zipcode_to_fips = zipcode_fips_df.to_dict()
+
+        
+        # Map zip codes to states for each row in data_df
+        self._data['state'] = self._data[zipcode_column].map(zipcode_to_state[0])
+        self._data['county_name'] = self._data[zipcode_column].map(zipcode_to_county[0])
+        self._data['county_fips'] = self._data[zipcode_column].map(zipcode_to_fips[0])
+    
+    def transform(self):
+        try:
+            eastern = tz.gettz('US/Eastern')
+            self._data['date'] = pd.to_datetime(self._data['date'].str[:-4], format='%B %d, %Y %I:%M %p', errors='coerce')
+            self._data['date'] = self._data['date'].dt.tz_localize(None).dt.tz_localize('UTC').dt.tz_convert(eastern)
+            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True, errors='coerce').dt.tz_convert(eastern)
+            
+            self._data['start_time'] = self._data.groupby('id')['timestamp'].transform('min')
+            self._data['end_time'] = self._data.groupby('id')['timestamp'].transform('max')
+
+            zipcode_state_df = pd.read_json("zip_to_state_name.json", orient='index')
+            zipcode_county_df = pd.read_json("zip_to_county_name.json",orient = "index")
+            zipcode_fips_df = pd.read_json("zip_to_county_fips.json",orient="index")
+            # Map zip codes to states
+            self.map_zipcode_to_more(zipcode_state_df, zipcode_county_df,zipcode_fips_df, 'zip')
+            self._data = self._data.rename(columns={
+                'id':'outage_id',
+                'custAffected':'customer_affected',
+                'zip':'zipcode',
+                'EMC': 'utility_provider',
+                'lon' : 'lng',
+
+            })
+
+        except Exception as e:
+            print(f"An error occurred during transformation: {e}")
+
+            
 class TX18(BasePipeline):
     def standardize(self, outage_data):
         # Specific transformation for TX18
