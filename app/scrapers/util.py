@@ -54,7 +54,7 @@ def save(df, bucket_name=None, file_path=None):
 
     else:
         # TODO check path
-        local_path = f"{os.getcwd()}/{file_path}"
+        local_path = f"{os.getcwd()}/../{bucket_name}/local/{file_path}"
         header = False if os.path.exists(local_path) else True
         df.to_csv(local_path, mode="a", header=header, index=False)
         print(f"outages data saved to {file_path}")
