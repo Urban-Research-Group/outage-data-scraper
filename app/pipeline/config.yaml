@@ -2,10 +2,10 @@ globals:
   LOCAL_FILE_BASE_PATH: /Users/xuanedx1/github/outage-data-scraper/data/s3
 
 providers:
-  # - name: investor_owned
-  #   state: ca
-  #   layout: investor
-  #   type: o
+  - name: investor_owned
+    state: ca
+    layout: investor
+    type: o
   # - name: Amicalola EMC
   #   state: ga
   #   layout: 1
@@ -74,10 +74,10 @@ providers:
   #   state: ga
   #   layout: 3
   #   type: o
-  - name: Georgia Power
-    state: ga
-    layout: 4
-    type: c
+  # - name: Georgia Power
+  #   state: ga
+  #   layout: 4
+  #   type: c
   # - name: Bluebonnet Electric Coop, Inc.
   #   state: tx
   #   layout: 8
