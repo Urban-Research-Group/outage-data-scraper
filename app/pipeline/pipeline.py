@@ -10,7 +10,7 @@ from datetime import datetime
 from base_pipeline import BasePipeline
     
 class GA1TX8(BasePipeline):
-    def transform(self, geo_level, time_interval=None):
+    def transform(self, geo_level):
         try:
             # Convert timestamps
             eastern = tz.gettz('US/Eastern')
@@ -30,7 +30,7 @@ class GA1TX8(BasePipeline):
                 'zip':'zipcode'
             })
             
-            if time_interval:
+            if geo_level != 'incident':
                 #TODO: add variables for hourly zipcode level transformation
                 pass
             
@@ -87,9 +87,14 @@ class GA3TX16(BasePipeline):
             print(f"An error occurred during transformation: {e}")
     
 class GA4TX5(BasePipeline):
-    def standardize(self, outage_data):
-        # Specific transformation for GA4TX5
-        pass
+        def transform(self, geo_level):
+            self._data = self._data.rename(columns={
+                'name':'zipcode',
+                'cust_a':'customer_affected',
+                'cust_s': 'customer_served',
+                'percent_cust_a':'percent_customer_affected',
+                'n_out':'outage_count'
+            })
     
 class GA5(BasePipeline):
     def standardize(self, outage_data):

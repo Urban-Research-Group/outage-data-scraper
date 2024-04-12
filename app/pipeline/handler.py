@@ -1,5 +1,5 @@
 import yaml
-from pipeline import CA1, GA1TX8
+from pipeline import CA1, GA1TX8, GA4TX5
 
 
 def main():
@@ -9,10 +9,12 @@ def main():
 
     # Instantiate a pipeline object for each provider
     for provider in config['providers']:
-        pipeline = GA1TX8(provider, base_file_path)
-        pipeline.standardize_new(geo_level='incident', 
-                                 identifer='outage_id', 
-                                 method='id_grouping')
+        pipeline = GA4TX5(provider, base_file_path)
+        pipeline.standardize_new(geo_level='zipcode', 
+                                 time_interval = 'hourly',
+                                #  identifer='outage_id', 
+                                #  method='id_grouping'
+                                )
         print(pipeline.get_dataframe())
         
 if __name__ == "__main__":

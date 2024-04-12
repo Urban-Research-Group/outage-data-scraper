@@ -34,7 +34,7 @@ class BasePipeline:
         except Exception as e:
             print(f"An error occurred during file loading: {e}")
             
-    def transform(self, geo_level, time_interval=None):
+    def transform(self, geo_level):
         raise NotImplementedError
             
     def standardize(self):
@@ -69,7 +69,6 @@ class BasePipeline:
             self.transform(geo_level)
             self.to_incident_level(identifer, method)
         else:
-            self.transform(geo_level, time_interval)
             self.to_geoarea_level(geo_level, time_interval)
     
     def to_incident_level(self, identifer='outage_id', method='id_grouping'):
@@ -86,7 +85,45 @@ class BasePipeline:
         geo_level: 'zipcode', 'county', 'state'
         time_interval: 'hourly', 'daily', 'monthly'
         """
-        raise NotImplementedError
+        self._load_data()
+        
+        # Convert 'timestamp' column to datetime format
+        self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], format='%m-%d-%Y %H:%M:%S')
+
+        # Extract year, month, day, hour from 'timestamp'
+        self._data['year'] = self._data['timestamp'].dt.year
+        self._data['month'] = self._data['timestamp'].dt.month
+        self._data['day'] = self._data['timestamp'].dt.day
+        self._data['hour'] = self._data['timestamp'].dt.hour
+        
+        self.transform(geo_level)
+        # TODO: apply rules for getting n_out 
+        # df['delta_timestamp'] = (df['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(0)
+        # df['delta_percent_cust_a'] = df['percent_cust_a'].diff().fillna(0)
+        
+        # element wise metrics computation
+        self._data['duration_weight'] = 15
+        self._data['outage_freq_x_cust_a'] = self._data['customer_affected'] * self._data['outage_count']
+        self._data['cust_a_x_duration'] = self._data['customer_affected'] * self._data['duration_weight']
+        self._data['outage_freq_x_cust_a'] = self._data['customer_affected'] * self._data['outage_count']
+        self._data['duration_weight'] = 15
+        self._data['cust_a_x_duration'] = self._data['customer_affected'] * self._data['duration_weight']
+        
+        #TODO: add support for 'daily' and 'monthly
+        key = [geo_level, 'EMC', 'year', 'month', 'day', 'hour']
+        grouped = self._data.groupby(key).agg({
+            'customer_affected': 'mean',
+            'customer_served': 'mean',
+            'percent_customer_affected': 'mean',
+            'outage_count': 'max',
+            'duration_weight': 'sum',
+            'outage_freq_x_cust_a': 'sum',
+            'cust_a_x_duration': 'sum'
+            }).reset_index()
+        
+        #TODO: fill non outage hours with 0
+        
+        self._data = grouped
     
     def output_data(self, path=None):
         raise NotImplementedError
