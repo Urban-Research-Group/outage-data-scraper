@@ -1,10 +1,9 @@
 {
-        "layout": 13,
-        "emc": {
-            "Tri-County Electric Coop, Inc.": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/TCEC/all",
-            "Magic Valley Electric Coop, Inc.": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/MVEC/all"
-        },
-        "bucket": "data",
-        "folder": "tx"
-    }
-
+    "layout": 13,
+    "emc": {
+        "Tri-County Electric Coop, Inc.": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/TCEC/all",
+        "Magic Valley Electric Coop, Inc.": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/MVEC/all"
+    },
+    "bucket": "data",
+    "folder": "tx"
+}

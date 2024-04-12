@@ -14,8 +14,9 @@
         "Flint EMC": "http://outage.flintemc.com:8283/",
         "North Georgia EMC": "https://www2.ngemc.com/",
         "Excelsior EMC": "http://outage.excelsioremc.com:8181/",
-        "Dalton Utility": "https://outageviewer.dutil.com/"
+        "Dalton Utility": "https://outageviewer.dutil.com/",
+        "Blueridge Mountain EMC": "http://outage.brmemc.com:8008/"
     },
-    "bucket": "gting-testing",
+    "bucket": "data",
     "folder": "ga"
 }

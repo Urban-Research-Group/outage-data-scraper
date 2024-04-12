@@ -17,7 +17,8 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
 
-# from webdriver_manager.chrome import ChromeDriverManager  # for local test
+
+from webdriver_manager.chrome import ChromeDriverManager  # for local test
 from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
@@ -51,7 +52,26 @@ class BaseScraper:
 
     def parse(self):
         pass
+    
+    def wait_for_request(self, condition, timeout=10):
+        """
+        Waits for a specific request to be made that matches the given condition.
+        Args:
+            condition: A function that takes a request object and returns True if the condition is met.
+            timeout: How long to wait for the condition to be met, in seconds.
+        """
+        start_time = time.time()
+        while True:
+            for request in self.driver.requests:
+                if condition(request):
+                    return request  # Return the request if condition is met
+            if time.time() - start_time > timeout:
+                raise TimeoutError("Request not found within timeout period.")
+            time.sleep(0.5)  # Short sleep to avoid an overly busy loop
 
+    def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout = 10):
+
+<<<<<<< HEAD
     def wait_for_request(self, condition, timeout=10):
         """
         Waits for a specific request to be made that matches the given condition.
@@ -70,6 +90,8 @@ class BaseScraper:
     
     def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout = 10):
 
+=======
+>>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
         url = url if url else self.url
         self.driver.get(url)
 
@@ -104,6 +126,7 @@ class BaseScraper:
             page_source = None  # Return None or appropriate content in case of failure
         return page_source
 
+
     def extract_zipcode(self, lat, lon):
         try:
             addr = self.geo_locator.reverse((lat, lon), timeout=10)
@@ -119,7 +142,7 @@ class BaseScraper:
         chrome_driver_path = (
             "/opt/chromedriver"
             if is_aws_env()
-            else "/Users/gtingliu/Desktop/Gatech/URG/outage-data-scraper/app/scrapers/chromedriver"
+            else "/Users/xuanzhangliu/Downloads/chromedriver-mac-arm64/chromedriver"
         )
 
         desired_capabilities = DesiredCapabilities.CHROME.copy()
@@ -163,8 +186,8 @@ class BaseScraper:
             chrome_options.binary_location = "/opt/chrome/chrome"
 
         driver = webdriver.Chrome(
-            # ChromeDriverManager().install(),  # for local test
-            executable_path=chrome_driver_path,
+            ChromeDriverManager().install(),  # for local test
+            # executable_path=chrome_driver_path,
             chrome_options=chrome_options,
             seleniumwire_options=selenium_options,
             desired_capabilities=desired_capabilities,
