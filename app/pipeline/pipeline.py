@@ -31,9 +31,16 @@ class GA1TX8(BasePipeline):
             })
             
             if geo_level != 'incident':
-                #TODO: add variables for hourly zipcode level transformation
-                pass
-            
+                self._data['customer_served'] = 0
+                self._data['percent_customer_affected'] = 0
+                
+                # Aggregate count of unique outageRecID
+                count_df = self._data.groupby(['zipcode', 'year', 'month', 'day', 'hour'])['outage_id'].nunique().reset_index()
+                count_df.rename(columns={'outage_id': 'outage_count'}, inplace=True)
+
+                # Merge aggregated DataFrame with the original DataFrame
+                self._data = pd.merge(self._data, count_df, on=['zipcode', 'year', 'month', 'day', 'hour'], how='left')
+                
         except Exception as e:
             print(f"An error occurred during transformation: {e}")
     

@@ -9,7 +9,7 @@ def main():
 
     # Instantiate a pipeline object for each provider
     for provider in config['providers']:
-        pipeline = GA4TX5(provider, base_file_path)
+        pipeline = GA1TX8(provider, base_file_path)
         pipeline.standardize_new(geo_level='zipcode', 
                                  time_interval = 'hourly',
                                 #  identifer='outage_id', 

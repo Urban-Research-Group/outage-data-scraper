@@ -17,7 +17,6 @@ class BasePipeline:
         self._data = pd.DataFrame({})
         
     def _construct_file_path(self):
-        #TODO: add type to prefix mapping
         file_prefix = self.type_to_prefix[self.config['type']]
         file_path = f"{self.base_file_path}/{self.config['state']}/layout_{self.config['layout']}/{file_prefix}_{self.config['name']}.csv"
         return file_path.replace('//', '/')
@@ -25,7 +24,6 @@ class BasePipeline:
     def _load_data(self):
         try:
             file_path = self._construct_file_path()
-            print(file_path)
             self._data = pd.read_csv(file_path)
             # with open('zip_to_county_name.json', 'r') as json_file:
             #     self.geomap['zip_to_county_name'] = json.load(json_file)
@@ -104,9 +102,6 @@ class BasePipeline:
         # element wise metrics computation
         self._data['duration_weight'] = 15
         self._data['outage_freq_x_cust_a'] = self._data['customer_affected'] * self._data['outage_count']
-        self._data['cust_a_x_duration'] = self._data['customer_affected'] * self._data['duration_weight']
-        self._data['outage_freq_x_cust_a'] = self._data['customer_affected'] * self._data['outage_count']
-        self._data['duration_weight'] = 15
         self._data['cust_a_x_duration'] = self._data['customer_affected'] * self._data['duration_weight']
         
         #TODO: add support for 'daily' and 'monthly
