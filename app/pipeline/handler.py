@@ -1,6 +1,5 @@
 import yaml
-from pipeline import CA1
-from IPython.display import display
+from pipeline import CA1, GA1TX8
 
 
 def main():
@@ -10,9 +9,11 @@ def main():
 
     # Instantiate a pipeline object for each provider
     for provider in config['providers']:
-        pipeline = CA1(provider, base_file_path)
-        pipeline.standardize(method='timegap')
-        print(pipeline._data)
+        pipeline = GA1TX8(provider, base_file_path)
+        pipeline.standardize_new(geo_level='incident', 
+                                 identifer='outage_id', 
+                                 method='id_grouping')
+        print(pipeline.get_dataframe())
         
 if __name__ == "__main__":
     main()

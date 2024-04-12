@@ -2,14 +2,14 @@ globals:
   LOCAL_FILE_BASE_PATH: /Users/xuanedx1/github/outage-data-scraper/data/s3
 
 providers:
-  - name: investor_owned
-    state: ca
-    layout: investor
-    type: o
-  # - name: Amicalola EMC
-  #   state: ga
-  #   layout: 1
+  # - name: investor_owned
+  #   state: ca
+  #   layout: investor
   #   type: o
+  - name: Amicalola EMC
+    state: ga
+    layout: 1
+    type: o
   # - name: Canoochee EMC
   #   state: ga
   #   layout: 1
