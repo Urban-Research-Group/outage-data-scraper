@@ -1,6 +1,6 @@
 globals:
-  # local_base_file_path: /Users/uirja/OneDrive/Personal Files/CS Projects/outage-data-scraper/raw_data # for joshua
-  LOCAL_FILE_BASE_PATH: /Users/xuanedx1/github/outage-data-scraper/data/s3
+  local_base_file_path: /Users/uirja/OneDrive/Personal Files/CS Projects/outage-data-scraper/raw_data # for joshua
+  # LOCAL_FILE_BASE_PATH: /Users/xuanedx1/github/outage-data-scraper/data/s3
 
 providers:
   # - name: Amicalola EMC
@@ -127,18 +127,18 @@ providers:
   #   state: tx
   #   layout: 8
   #   type: o
-  - name: Blueridge Mountain EMC
-    state: ga 
-    layout: 2
-    type: o
-  - name: Tri-County EMC  # I ASSUMED "TRI-COUNTT" WAS A TYPO AND CHANGED IT TO TRI-COUNTY
-    state: ga
-    layout: 2
-    type: o
-  - name: United Coop Services, Inc.
-    state: tx
-    layout: 17
-    type: o
+  # - name: Blueridge Mountain EMC
+  #   state: ga 
+  #   layout: 2
+  #   type: o
+  # - name: Tri-County EMC  # I ASSUMED "TRI-COUNTT" WAS A TYPO AND CHANGED IT TO TRI-COUNTY
+  #   state: ga
+  #   layout: 2
+  #   type: o
+  # - name: United Coop Services, Inc.
+  #   state: tx
+  #   layout: 17
+  #   type: o
   # - name: Walton EMC
   #   state: ga
   #   layout: 11
@@ -167,11 +167,7 @@ providers:
   #   state: tx
   #   layout: 12
   #   type: o
-  # - name: Comanche Electric Coop
-  #   state: tx
-  #   layout: 16
-  #   type: o
-  # - name: Southwestern Electric Coop, Inc.
-  #   state: tx
-  #   layout: 16
-  #   type: o
+  - 'name': 'Colquitt EMC'
+    'state': 'ga'
+    'layout': 5
+    'type': 'o'
