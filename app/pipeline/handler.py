@@ -1,4 +1,5 @@
 import yaml
+import pandas as pd
 from pipeline import CA1, GA1TX8, GA4TX5
 
 
@@ -9,13 +10,18 @@ def main():
 
     # Instantiate a pipeline object for each provider
     for provider in config['providers']:
-        pipeline = GA1TX8(provider, base_file_path)
-        pipeline.standardize_new(geo_level='zipcode', 
-                                 time_interval = 'hourly',
-                                #  identifer='outage_id', 
-                                #  method='id_grouping'
-                                )
-        print(pipeline.get_dataframe())
+        pipeline = GA4TX5(provider, base_file_path)
+        # std = pipeline.to_incident_level(
+        #     identifers=['outage_id', 'latitude', 'longitude'], 
+        #     method='timegap_seperation'
+        #     )
+        
+        std = pipeline.to_geoarea_level()
+                
+        print(std)
+        
+        # std.to_csv('/Users/xuanedx1/github/outage-data-scraper/scripts/investor_owned_outage_level-v2.csv')
+        
         
 if __name__ == "__main__":
     main()

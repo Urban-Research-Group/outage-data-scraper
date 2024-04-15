@@ -12,9 +12,19 @@ class BasePipeline:
     def __init__(self, config, base_file_path):
         self.config = config
         self.base_file_path = base_file_path
-        self.type_to_prefix = {'o': 'per_outage', 'c': 'per_county'} 
-        self.geomap = {}
+        self.type_to_prefix = {'o': 'per_outage', 'c': 'per_county', 'z': 'per_zipcode'} 
         self._data = pd.DataFrame({})
+        self._load_data()
+        # self._load_geo_mapping()
+        
+    def _load_geo_mapping(self):
+        try:
+            with open('zip_to_county_name.json', 'r') as json_file:
+                self.geomap['zip_to_county_name'] = json.load(json_file)
+            with open('zip_to_county_fips.json', 'r') as json_file:
+                self.geomap['zip_to_county_fips'] = json.load(json_file)
+        except Exception as e:
+            print(f"An error occurred during geo map loading: {e}") 
         
     def _construct_file_path(self):
         file_prefix = self.type_to_prefix[self.config['type']]
@@ -25,17 +35,17 @@ class BasePipeline:
         try:
             file_path = self._construct_file_path()
             self._data = pd.read_csv(file_path)
-            # with open('zip_to_county_name.json', 'r') as json_file:
-            #     self.geomap['zip_to_county_name'] = json.load(json_file)
-            # with open('zip_to_county_fips.json', 'r') as json_file:
-            #     self.geomap['zip_to_county_fips'] = json.load(json_file)
         except Exception as e:
             print(f"An error occurred during file loading: {e}")
             
-    def transform(self, geo_level):
+    def transform(self, **kwargs):
         raise NotImplementedError
-            
+    
+    # TODO: remove 
     def standardize(self):
+        """
+        obslete
+        """
         self._load_data()
         self.transform()
         grouped = self._data.groupby('outage_id').apply(self._compute_metrics).reset_index().round(2)
@@ -54,59 +64,39 @@ class BasePipeline:
         
         return self._data
     
-    def standardize_new(self, geo_level='zipcode', time_interval='hourly', identifer='outage_id', method=None):
-        """
-        geo_level: 'incident', 'zipcode', 'county', 'state'
-        time_interval: 'hourly', 'daily', 'monthly'
-        method: 'id_grouping' or 'timegap_seperation'
-        """
-        self._load_data()
-        if geo_level == 'incident':
-            if not method:
-                print("Please specify a incident division method: 'id_grouping' or 'timegap_seperation'")
-            self.transform(geo_level)
-            self.to_incident_level(identifer, method)
-        else:
-            self.to_geoarea_level(geo_level, time_interval)
-    
-    def to_incident_level(self, identifer='outage_id', method='id_grouping'):
+    def to_incident_level(self, identifers=['outage_id'], method='id_grouping'):
         """
         identifer: default identifier name "outage_id", or list like ['IncidentId', 'lat', 'lng', 'subgroup']
         method: "id_grouping" or "timegap_seperation" 
         """
-        rule = self._id_grouping if method == 'id_grouping' else self._timegap_seperation
-        grouped = self._data.groupby(identifer).apply(rule).reset_index().round(2)
-        self._data = grouped
+        df = self.transform(identifiers=identifers, method=method)
+        grouped = df.groupby('id').apply(self._agg_vars).reset_index().round(2)
+        
+        return grouped
     
     def to_geoarea_level(self, geo_level='zipcode', time_interval='hourly'):
         """
         geo_level: 'zipcode', 'county', 'state'
         time_interval: 'hourly', 'daily', 'monthly'
-        """
-        self._load_data()
-        
-        # Convert 'timestamp' column to datetime format
-        self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], format='%m-%d-%Y %H:%M:%S')
-
-        # Extract year, month, day, hour from 'timestamp'
+        """    
+        # TODO: complet geo_level and time_interval support
+        eastern = tz.gettz('US/Eastern')
+        self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
         self._data['year'] = self._data['timestamp'].dt.year
         self._data['month'] = self._data['timestamp'].dt.month
         self._data['day'] = self._data['timestamp'].dt.day
         self._data['hour'] = self._data['timestamp'].dt.hour
         
-        self.transform(geo_level)
-        # TODO: apply rules for getting n_out 
-        # df['delta_timestamp'] = (df['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(0)
-        # df['delta_percent_cust_a'] = df['percent_cust_a'].diff().fillna(0)
+        df = self.transform(geo_level=geo_level, time_interval=time_interval)
         
         # element wise metrics computation
-        self._data['duration_weight'] = 15
-        self._data['outage_freq_x_cust_a'] = self._data['customer_affected'] * self._data['outage_count']
-        self._data['cust_a_x_duration'] = self._data['customer_affected'] * self._data['duration_weight']
+        df['duration_weight'] = 15
+        df['outage_freq_x_cust_a'] = df['customer_affected'] * df['outage_count']
+        df['cust_a_x_duration'] = df['customer_affected'] * df['duration_weight']
         
-        #TODO: add support for 'daily' and 'monthly
-        key = [geo_level, 'EMC', 'year', 'month', 'day', 'hour']
-        grouped = self._data.groupby(key).agg({
+        # TODO: complet geo_level and time_interval support 
+        keys = ['EMC', 'year', 'month', 'day', 'hour', geo_level]
+        grouped = df.groupby(keys).agg({
             'customer_affected': 'mean',
             'customer_served': 'mean',
             'percent_customer_affected': 'mean',
@@ -118,54 +108,27 @@ class BasePipeline:
         
         #TODO: fill non outage hours with 0
         
-        self._data = grouped
+        return grouped
     
-    def output_data(self, path=None):
-        raise NotImplementedError
-    
-    def get_dataframe(self):
-        return self._data
-    
-    def _id_grouping(self, group):
-        start_time = group['timestamp'].iloc[0]
-        end_time = group['timestamp'].iloc[-1]
-        duration_diff = (end_time - start_time).total_seconds() / 60
+    def _agg_vars(self, group):
+        first_timestamp = group['timestamp'].iloc[0]
+        last_timestamp = group['timestamp'].iloc[-1]
+        duration_diff = (last_timestamp - first_timestamp).total_seconds() / 60
         duration_15 = 15 * len(group)
         group['duration_weight'] = (group['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(15)
         cust_affected_x_duration = (group['customer_affected'] * group['duration_weight']).sum()
         cust_a_mean = cust_affected_x_duration / group['duration_weight'].sum()
         
         return pd.Series({
-            'latitude': group['lat'].unique(),
-            'longitude': group['lng'].unique(),
-            'zipcode': group['zipcode'].unique(),
-            'start_time': start_time,
-            'end_time': end_time,
+            'first_timestamp': first_timestamp,
+            'last_timestamp': last_timestamp,
             'duration_diff': duration_diff,
             'duration_15': duration_15,
             'customer_affected_mean': cust_a_mean,
             'cust_affected_x_duration': cust_affected_x_duration
         })
     
-    def _timegap_seperation(self, group):
-        start_time = group['timestamp'].iloc[0]
-        end_time = group['timestamp'].iloc[-1]
-        duration_diff = (end_time - start_time).total_seconds() / 60
-        duration_15 = 15 * len(group)
-        cust_a_mean = group['customer_affected'].mean()
-
-        return pd.Series({
-            'latitude': group['lat'].unique(),
-            'longitude': group['lng'].unique(),
-            'zipcode': group['zipcode'].unique(),
-            'start_time': start_time,
-            'end_time': end_time,
-            'duration_diff': duration_diff,
-            'duration_15': duration_15,
-            'customer_affected_mean': cust_a_mean,
-            'cust_affected_x_duration' : cust_a_mean * (duration_15 + duration_diff) / 2
-        })
-    
+    # TODO: remove 
     def _compute_metrics(self, group):
         """
         Generic method to compute standardized metrics, used for being apply in DataFrame.groupby method, 
@@ -190,7 +153,13 @@ class BasePipeline:
             'total_customer_outage_time_max': total_customer_outage_time_max,
             'total_customer_outage_time_mean': total_customer_outage_time_mean
         })
-        
+    
+    def save(self, path=None):
+        raise NotImplementedError
+    
+    def get_dataframe(self):
+        return self._data
+    
     def _add_metadata(self):
         """
         #TODO: add state, provider variables

@@ -10,59 +10,77 @@ from arcgis.geometry import Geometry
 from arcgis.gis import GIS
 from dateutil import tz
 from datetime import datetime
+from datetime import timedelta
 from base_pipeline import BasePipeline
     
 class GA1TX8(BasePipeline):
-    def transform(self, geo_level):
-        try:
-            # Convert timestamps
-            eastern = tz.gettz('US/Eastern')
-            utc = tz.gettz('UTC')
-            self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
-            self._data['outageStartTime'] = pd.to_datetime(self._data['outageStartTime'], utc=True).dt.tz_convert(eastern)
-            self._data['end_time'] = self._data.groupby('outageRecID')['timestamp'].transform('max')
-            
-            # extract lat and long
-            self._data['outagePoint'] = self._data['outagePoint'].apply(lambda x: json.loads(x.replace("'", '"')))
-            self._data[['lat', 'lng']] = self._data['outagePoint'].apply(lambda x: pd.Series([x['lat'], x['lng']]))
-            # TODO: add zipcode NaN checking
-            self._data = self._data.rename(columns={
-                'outageRecID':'outage_id',
-                'outageStartTime': 'start_time',
-                'customersOutNow':'customer_affected',
-                'zip':'zipcode'
-            })
-            
-            if geo_level != 'incident':
-                self._data['customer_served'] = 0
-                self._data['percent_customer_affected'] = 0
+    def transform(self, **kwargs):
+        identifiers = kwargs.get('identifiers')
+        method = kwargs.get('method')
+        geo_level = kwargs.get('geo_level')
+        time_interval = kwargs.get('time_interval')
+        df = kwargs.get('dataframe', self._data.copy())
+        
+        df = df.rename(columns={
+            'outageRecID':'outage_id',
+            'outageStartTime': 'start_time',
+            'customersOutNow':'customer_affected',
+            'zip':'zipcode'
+        })
+        
+        # Convert timestamps
+        eastern = tz.gettz('US/Eastern')
+        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True).dt.tz_convert(eastern)
+        df['start_time'] = pd.to_datetime(df['start_time'], utc=True).dt.tz_convert(eastern)
+        
+        # extract lat and long
+        df['outagePoint'] = df['outagePoint'].apply(lambda x: json.loads(x.replace("'", '"')))
+        df[['latitude', 'longitude']] = df['outagePoint'].apply(lambda x: pd.Series([x['lat'], x['lng']]))
+        # TODO: add zipcode NaN checking
+        
+        if identifiers:
+            if method == 'timegap_seperation': 
+                # subgroup by timegap rule, must derive subgroup step by step
+                df['gap'] = (df.groupby(identifiers)['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(0)
+                df['is_gap'] = (df.groupby(identifiers)['timestamp'].diff() > pd.Timedelta(minutes=20))
+                df['subgroup'] = df.groupby(identifiers)['is_gap'].cumsum()
+                identifiers.append('subgroup')
                 
-                # Aggregate count of unique outageRecID
-                count_df = self._data.groupby(['zipcode', 'year', 'month', 'day', 'hour'])['outage_id'].nunique().reset_index()
-                count_df.rename(columns={'outage_id': 'outage_count'}, inplace=True)
+            df['id'] = df[identifiers].apply(tuple, axis=1)
+        
+        # for zipcode level transformation 
+        if geo_level and time_interval:
+            # TODO: complet geo_level and time_interval support
+            keys = ['zipcode', 'year', 'month', 'day', 'hour'] 
+            df['customer_served'] = 0
+            df['percent_customer_affected'] = 0
+            
+            # Aggregate count of unique outage_id
+            count_df = df.groupby(keys)['outage_id'].nunique().reset_index()
+            count_df.rename(columns={'outage_id': 'outage_count'}, inplace=True)
 
-                # Merge aggregated DataFrame with the original DataFrame
-                self._data = pd.merge(self._data, count_df, on=['zipcode', 'year', 'month', 'day', 'hour'], how='left')
-                
-        except Exception as e:
-            print(f"An error occurred during transformation: {e}")
+            # Merge aggregated DataFrame with the original DataFrame
+            df = pd.merge(df, count_df, on=keys, how='left')
+        
+        return df
     
-    # TODO: override base class method by adding layout specific duration estimate, i.e. from different start_time, end_time candidate
-    def _id_grouping(self, group):
-        start_time = group['timestamp'].iloc[0]
-        end_time = group['timestamp'].iloc[-1]
-        duration_diff = (end_time - start_time).total_seconds() / 60
+    # TODO: refactor such that overriden method only include extra variables
+    def _agg_vars(self, group):
+        first_timestamp = group['timestamp'].iloc[0]
+        last_timestamp = group['timestamp'].iloc[-1]
+        duration_diff = (last_timestamp - first_timestamp).total_seconds() / 60
         duration_15 = 15 * len(group)
         group['duration_weight'] = (group['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(15)
         cust_affected_x_duration = (group['customer_affected'] * group['duration_weight']).sum()
         cust_a_mean = cust_affected_x_duration / group['duration_weight'].sum()
         
         return pd.Series({
-            'latitude': group['lat'].unique(),
-            'longitude': group['lng'].unique(),
+            'latitude': group['latitude'].unique(),
+            'longitude': group['longitude'].unique(),
             'zipcode': group['zipcode'].unique(),
-            'start_time': start_time,
-            'end_time': end_time,
+            'start_time': group['start_time'].unique(),
+            'first_timestamp': first_timestamp,
+            'last_timestamp': last_timestamp,
             'duration_diff': duration_diff,
             'duration_15': duration_15,
             'customer_affected_mean': cust_a_mean,
@@ -176,14 +194,17 @@ class GA3TX16(BasePipeline):
             print(f"An error occurred during transformation: {e}")
     
 class GA4TX5(BasePipeline):
-        def transform(self, geo_level):
-            self._data = self._data.rename(columns={
+        def transform(self, **kwargs):
+            df = kwargs.get('dataframe', self._data.copy())
+            df = df.rename(columns={
                 'name':'zipcode',
                 'cust_a':'customer_affected',
                 'cust_s': 'customer_served',
                 'percent_cust_a':'percent_customer_affected',
                 'n_out':'outage_count'
             })
+            
+            return df
     
 class GA5(BasePipeline):
     def transform(self):
@@ -475,140 +496,80 @@ class GA11TX12(BasePipeline):
         })
     
 class CA1(BasePipeline):
-   def _load_data(self):
-       try:
-           dir_path = f"{self.base_file_path}/{self.config['state']}/layout_{self.config['layout']}/"
-           csv_files = glob.glob(os.path.join(dir_path, "*.csv"))
-           df_list = [pd.read_csv(file) for file in csv_files]
-           self._data = pd.concat(df_list, ignore_index=True)
-          
-        #    with open('zip_to_county_name.json', 'r') as json_file:
-        #        self.geomap['zip_to_county_name'] = json.load(json_file)
-        #    with open('zip_to_county_fips.json', 'r') as json_file:
-        #        self.geomap['zip_to_county_fips'] = json.load(json_file)
-       except Exception as e:
-           print(f"An error occurred during file loading: {e}")
+    def _load_data(self):
+        try:
+            dir_path = f"{self.base_file_path}/{self.config['state']}/layout_{self.config['layout']}/"
+            csv_files = glob.glob(os.path.join(dir_path, "*.csv"))
+            df_list = [pd.read_csv(file) for file in csv_files]
+            self._data = pd.concat(df_list, ignore_index=True)
+        except Exception as e:
+            print(f"An error occurred during file loading: {e}")
   
-   def transform(self):
-       try:
-           # TEMP FILTER
-           self._data = self._data[self._data['UtilityCompany'] != 'LAWP']
-           # self._data = self._data[(self._data['utility_provider'] != 'LAWP') & (self._data['OutageType'] != 'PLANNED')]
-          
-           # Convert timestamps
-           eastern = tz.gettz('US/Eastern')
-           pacific = tz.gettz('US/Pacific')
-           utc = tz.gettz('UTC')
-           self._data['StartDate'] = pd.to_datetime(self._data['StartDate'], utc=True).dt.tz_convert(pacific)
-           self._data['timestamp'] = pd.to_datetime(self._data['timestamp'], utc=True).dt.tz_convert(eastern)
-           self._data = self._data.sort_values(by='timestamp')
-          
-           # subgroup by 15 min rule, must derive subgroup step by step
-           self._data['gap'] = (self._data.groupby(['IncidentId', 'x', 'y'])['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(0)
-           self._data['is_gap'] = (self._data.groupby(['IncidentId', 'x', 'y'])['timestamp'].diff() > pd.Timedelta(minutes=20))
-           self._data['subgroup'] = self._data.groupby(['IncidentId', 'x', 'y'])['is_gap'].cumsum()
-          
-           # outage_id candidate
-           self._data['IncidentId+StartDate'] = self._data['IncidentId'].astype(str) + '_' + self._data['StartDate'].dt.strftime('%Y-%m-%d %H:%M:%S')
-           self._data['coord'] = list(zip(self._data['x'], self._data['y']))
-           self._data['IncidentId+Coord'] = self._data['IncidentId'].astype(str) + '_' + self._data['coord'].astype(str)
-           self._data['StartDate+Coord'] = self._data['StartDate'].dt.strftime('%Y-%m-%d %H:%M:%S') + '_' + self._data['coord'].astype(str)
-           self._data['IncidentId+StartDate+Coord'] = self._data['StartDate'].dt.strftime('%Y-%m-%d %H:%M:%S') + '_' + self._data['coord'].astype(str) + '_' + self._data['IncidentId'].astype(str)
-          
-           # TODO: get zipcode from lat and long
-           self._data['zipcode'] = "000000"
-          
-           self._data = self._data.rename(columns={
-               'x': 'lat',
-               'y': 'lng',
-               # id_candidate: 'outage_id',
-               # 'StartDate': 'start_time',
-               'ImpactedCustomers': 'customer_affected',
-               'UtilityCompany': 'utility_provider',
-               'County': 'county'
-           })
-       except Exception as e:
-           print(f"An error occurred during transformation: {e}")
-  
-   def standardize(self, method='identifier', outage_id='IncidentId+StartDate+Coord'):
-       '''
-       method: 'identifier' or 'timegap'
-       outage_id: id_candidate
-       '''
-       self._load_data()
-       self.transform()
-      
-       if method == 'identifier':
-           grouped = self._data.groupby(outage_id).apply(self._identifier_rule).reset_index().round(2)
-           self._data = pd.merge(grouped, self._data, on=[outage_id, 'timestamp'], how='inner')
-          
-           self._data['state'] = self.config['state']
-           self._data['is_planned'] = self._data['OutageType']
-           self._data = self._data[[
-               'utility_provider', 'state', 'county', 'zipcode',
-               'outage_id', 'start_time', 'end_time', 'is_planned', 'cause', 'lat', 'lng',
-               'duration', 'duration_max', 'duration_mean', 'customer_affected_mean', 'total_customer_outage_time', 'total_customer_outage_time_max', 'total_customer_outage_time_mean'
-           ]]
-       elif method == 'timegap':
-           self._data = self._data.groupby(['IncidentId', 'lat', 'lng', 'subgroup']).apply(self._timegap_rule).reset_index()
-              
-       return self._data
-  
-   def _identifier_rule(self, group):
-       duration = (group['end_time'] - group['start_time']).dt.total_seconds() / 60
-       duration_max = duration + 15
-       duration_mean = (duration + duration_max) / 2
-       customer_affected_mean = group['customer_affected'].mean()
-      
-       total_customer_outage_time = 15 * (group['customer_affected'].sum() - group['customer_affected'].iloc[0]) + (group['timestamp'].iloc[0] - group['start_time'].iloc[0]).total_seconds() / 60 * group['customer_affected'].iloc[0]
-       total_customer_outage_time_max = total_customer_outage_time + 15 * group['customer_affected'].iloc[-1]
-       total_customer_outage_time_mean = (total_customer_outage_time + total_customer_outage_time_max) / 2
-
-
-       return pd.Series({
-           'timestamp': group['end_time'].iloc[-1],
-           'duration': duration.iloc[-1],
-           'duration_max': duration_max.iloc[-1],
-           'duration_mean': duration_mean.iloc[-1],
-           'customer_affected_mean': customer_affected_mean,
-           'total_customer_outage_time': total_customer_outage_time,
-           'total_customer_outage_time_max': total_customer_outage_time_max,
-           'total_customer_outage_time_mean': total_customer_outage_time_mean
-       })
-  
-   def _timegap_rule(self, group):
-       county = group['county'].unique()
-       IncidentId = group['IncidentId'].unique()
-       x = group['lat'].unique()
-       y = group['lng'].unique()
-       OutageType = group['OutageType'].unique()
-       cause = group['Cause'].unique()
-       n_startdate = group['StartDate'].nunique()
-       n_OBJECTID = group['OBJECTID'].nunique()
-      
-       start_time = group['timestamp'].iloc[0]
-       end_time = group['timestamp'].iloc[-1]
-       duration_diff = (end_time - start_time).total_seconds() / 60
-       duration_15 = 15 * len(group)
-       duration_diff_minus_15 = duration_diff - duration_15
-       cust_a_mean = group['customer_affected'].mean()
-
-       return pd.Series({
-           'county': county,
-           'IncidenId': IncidentId,
-           'lat': x,
-           'lng':y,
-           'OutageType': OutageType,
-           'Cause': cause,
-           'start_time': start_time,
-           'end_time': end_time,
-           'duration_diff': duration_diff,
-           'duration_15': duration_15,
-           'duration_diff_minus_15': duration_diff_minus_15,
-           'cust_a_mean': cust_a_mean,
-           'n_StartDate': n_startdate,
-           'n_OBJECTID': n_OBJECTID
-       })
+    def transform(self, **kwargs):
+        identifiers = kwargs.get('identifiers')
+        method = kwargs.get('method')
+        geo_level = kwargs.get('geo_level')
+        time_interval = kwargs.get('time_interval')
+        df = kwargs.get('dataframe', self._data.copy())
+        
+        # standardize columns names
+        df = df.rename(columns={
+            'IncidentId': 'outage_id',
+            'StartDate': 'start_time',
+            'x': 'latitude',
+            'y': 'longitude',
+            'OutageType': 'is_planned',
+            'Cause': 'cause',
+            'ImpactedCustomers': 'customer_affected',
+            'UtilityCompany': 'utility_provider',
+            'County': 'county'
+        })
+        
+        # Convert timestamps
+        eastern = tz.gettz('US/Eastern')
+        pacific = tz.gettz('US/Pacific')
+        df['start_time'] = pd.to_datetime(df['start_time'], utc=True).dt.tz_convert(pacific)
+        df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True).dt.tz_convert(eastern)
+        df = df.sort_values(by='timestamp')
+        
+        if identifiers:
+            df['id'] = df[identifiers].apply(tuple, axis=1)
+            if method == 'timegap_seperation': 
+                # subgroup by timegap rule, must derive subgroup step by step
+                df['gap'] = (df.groupby(identifiers)['timestamp'].diff().dt.total_seconds() / 60).round(0).fillna(0)
+                df['is_gap'] = (df.groupby(identifiers)['timestamp'].diff() > pd.Timedelta(minutes=20))
+                df['subgroup'] = df.groupby(identifiers)['is_gap'].cumsum()
+        
+        if geo_level and time_interval:
+            # Extract year, month, day, hour from 'timestamp'
+            df['year'] = df['timestamp'].dt.year
+            df['month'] = df['timestamp'].dt.month
+            df['day'] = df['timestamp'].dt.day
+            df['hour'] = df['timestamp'].dt.hour
+                
+        # TODO: get zipcode from lat and long
+        df['zipcode'] = "000000"
+        
+        return df
+    
+    def to_incident_level(self, **kwargs):
+        """
+        apply timegap_seperation rule to LAWP;
+        apply id_grouping rule to SCE, PGE, SMUD, SDGE
+        """
+        lawp = self._data.query('UtilityCompany == "LAWP"')
+        others = self._data.query('UtilityCompany in ["SCE", "SDGE", "PGE", "SMUD"]')
+        
+        # hardcoded ids for ca
+        trans_lawp = self.transform(dataframe=lawp, identifiers=['utility_provider', 'outage_id', 'latitude', 'longitude'], method='timegap_seperation')
+        std_lawp = trans_lawp.groupby(['utility_provider', 'outage_id', 'latitude', 'longitude']).apply(self._agg_vars).reset_index().round(2)
+        
+        trans_others = self.transform(dataframe=others, identifiers=['utility_provider', 'outage_id', 'latitude', 'longitude', 'start_time'], method='id_grouping')
+        std_others = trans_others.groupby(['utility_provider', 'outage_id', 'latitude', 'longitude', 'start_time']).apply(self._agg_vars).reset_index().round(2)
+        
+        std_ca = pd.concat([std_lawp, std_others]).sort_values(by = 'first_timestamp')
+        
+        return std_ca
 
 class CA2(BasePipeline):
     def standardize(self, outage_data):

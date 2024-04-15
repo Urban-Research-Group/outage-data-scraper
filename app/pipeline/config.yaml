@@ -75,6 +75,10 @@ providers:
   #   state: ga
   #   layout: 3
   #   type: o
+  - name: Georgia Power
+    state: ga
+    layout: 4
+    type: z
   # - name: Bluebonnet Electric Coop, Inc.
   #   state: tx
   #   layout: 8
@@ -167,7 +171,7 @@ providers:
   #   state: tx
   #   layout: 12
   #   type: o
-  - 'name': 'Colquitt EMC'
-    'state': 'ga'
-    'layout': 5
-    'type': 'o'
+  - name: Colquitt EMC
+    state: ga
+    layout: 5
+    type: o
