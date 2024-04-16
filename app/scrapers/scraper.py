@@ -5,6 +5,9 @@ from .il_scraper import ILScraper
 from .ny_scraper import NYScraper
 from .tn_scraper import TNScraper
 
+from .la_scraper import LAScraper
+from .ms_scraper import MSScraper
+
 
 class Scraper:
     def __new__(cls, state, layout_id, url, emc):
@@ -20,5 +23,9 @@ class Scraper:
             return NYScraper(layout_id, url, emc)
         elif state == "tn":
             return TNScraper(layout_id, url, emc)
+        elif state == "ms":
+            return MSScraper(layout_id, url, emc)
+        elif state == "LA":
+            return LAScraper(layout_id, url, emc)
         else:
             raise "Invalid input state"

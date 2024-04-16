@@ -91,7 +91,7 @@ class Scraper2(BaseScraper):
         # get javascript rendered source page
         self.driver.get(self.url)
         # Sleeps for 5 seconds
-        time.sleep(20)
+        time.sleep(30)
 
         page_source = {}
         try:

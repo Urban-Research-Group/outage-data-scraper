@@ -1,10 +1,9 @@
 {
     "layout": 3,
     "emc": {
-        "Coastal Electric Cooperation": "https://oms.coastalemc.com/OMSWebMap/",
         "Irwin EMC": "http://map.irwinemc.com/omswebmap/",
         "Middle Georgia EMC": "https://outagemap.mgemc.com/OMSWebMap/",
-        "Planters EMC": "http://outage.plantersemc.com:8080/omswebmap/",
+        "Coastal Electric Cooperation": "https://oms.coastalemc.com/OMSWebMap/",
         "Upson EMC": "https://www.upsonemc.com/OMSWebMap/"
     },
     "bucket": "data",
