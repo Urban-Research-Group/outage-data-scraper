@@ -1,0 +1,8 @@
+{
+    "layout": 7,
+    "emc": {
+        "Coast EPA": "https://cache.sienatech.com/apex/siena_ords/webmaps/data/COAST/OUTAGE"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}
