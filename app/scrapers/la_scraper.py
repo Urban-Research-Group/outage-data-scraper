@@ -19,6 +19,14 @@ from seleniumwire import webdriver
 
 from .util import is_aws_env, make_request, timenow
 
+from .ga_scraper import (
+    Scraper9 as GA_Scraper9,
+)
+
+from .tx_scraper import (
+    Scraper1 as TX_Scraper1,
+    Scraper4 as TX_Scraper4,
+)
 # TODO: update for security
 import ssl
 
@@ -27,6 +35,11 @@ ssl._create_default_https_context = ssl._create_unverified_context
 
 class LAScraper:
     def __new__(cls, layout_id, url, emc):
-        pass
-        # obj.__init__(url, emc)
-        # return obj
+        if layout_id == 2:
+            obj = super().__new__(GA_Scraper9)
+        elif layout_id == 5:
+            obj = super().__new__(TX_Scraper4)
+        elif layout_id == 7:
+            obj = super().__new__(TX_Scraper1)
+        obj.__init__(url, emc)
+        return obj

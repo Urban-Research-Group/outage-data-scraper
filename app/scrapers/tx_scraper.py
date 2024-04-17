@@ -1,5 +1,6 @@
 import logging
 import json
+import xmltodict
 import pandas as pd
 import time
 
@@ -83,15 +84,27 @@ class Scraper4(BaseScraper):
 
         for key, val in data.items():
             df = pd.DataFrame(val)
+            df = df[df["customersAffected"] != 0]
             df["lastUpdatedTime"] = df["lastUpdatedTime"].apply(
                 pd.to_datetime, unit="ms"
             )
             df["timestamp"] = timenow()
             df["EMC"] = self.emc
             data.update({key: df})
-
         return data
+    
+    def fetch(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        raw_data = {}
 
+        # TODO: simplify
+        body_zip, response = make_request(self.url + "zip")
+        parsed_data_zip = json.loads(body_zip.decode('utf-8'))
+        raw_data["per_zip"] = parsed_data_zip
+        body_county, response = make_request(self.url + "county")
+        parsed_data_county = json.loads(body_county.decode('utf-8'))
+        raw_data["per_county"] = parsed_data_county
+        return raw_data
 
 class Scraper5(BaseScraper):
     def __init__(self, url, emc):
@@ -260,6 +273,7 @@ class Scraper7(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
+     
         try:
             self.wait_for_request(
                 lambda request: "loadLatLongOuterOutage" in request.url
