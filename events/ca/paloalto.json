@@ -1,8 +1,8 @@
 {
-        "layout": "paloalto",
-        "emc": {
-            "City of Palo Alto": "https://utccoutage.cityofpaloalto.org/maps/OutageWebMap/"
-        },
-        "bucket": "data",
-        "folder": "ca"
-    }
+    "layout": "paloalto",
+    "emc": {
+        "City of Palo Alto": "https://utccoutage.cityofpaloalto.org/"
+    },
+    "bucket": "data",
+    "folder": "ca"
+}
