@@ -534,14 +534,17 @@ class Scraper7(BaseScraper):
 
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                response = sw_decode(
-                    request.response.body,
-                    request.response.headers.get("Content-Encoding", "identity"),
-                )
+                print(request.url)
+                try:
+                    response = sw_decode(
+                        request.response.body,
+                        request.response.headers.get("Content-Encoding", "identity"),
+                    )
+                except:
+                    print("Error url:", request.url)
                 data = response.decode("utf8")
                 if "isHighTraffic" in data:
                     raw_data["per_outage"] = json.loads(data)
-
         return raw_data
 
 

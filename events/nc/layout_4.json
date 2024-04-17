@@ -1,0 +1,9 @@
+{
+    "layout": 4,
+    "emc": {
+        "Haywood EMC": "https://www.outageentry.com/Outages/outage.php?Client=HAYWOOD&serviceIndex=1&openingPage=",
+        "New Bern Electric Dept": "https://www.outageentry.com/Outages/outage.php?Client=NEW_BERN"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}

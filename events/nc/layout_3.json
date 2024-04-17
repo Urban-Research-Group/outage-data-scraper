@@ -1,0 +1,9 @@
+{
+    "layout": 3,
+    "emc": {
+        "Cape Hatteras Electric Cooperative": "https://outages.chec.coop/OMSWebMap/",
+        "Tri-County EMC": "https://outage.tcemc.com/omswebmap/"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}

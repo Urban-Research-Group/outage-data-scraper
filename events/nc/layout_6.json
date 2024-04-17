@@ -1,0 +1,8 @@
+{
+    "layout": 6,
+    "emc": {
+        "Duke Energy Carolinas, LLC": "https://outagemaps.duke-energy.com/#/current-outages/ncsc"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}
