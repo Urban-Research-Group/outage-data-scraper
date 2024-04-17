@@ -69,9 +69,7 @@ class BaseScraper:
                 raise TimeoutError("Request not found within timeout period.")
             time.sleep(0.5)  # Short sleep to avoid an overly busy loop
 
-    def get_page_source(self, url=None, find_type=None, findkeyword=None, timeout=10):
 
-<<<<<<< HEAD
     def wait_for_request(self, condition, timeout=10):
         """
         Waits for a specific request to be made that matches the given condition.
@@ -90,8 +88,6 @@ class BaseScraper:
     
     def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout = 10):
 
-=======
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
         url = url if url else self.url
         self.driver.get(url)
 

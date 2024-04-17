@@ -26,10 +26,6 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import TimeoutException
-<<<<<<< HEAD
-=======
-
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
 
 class Scraper1(BaseScraper):
     def __init__(self, url, emc):
@@ -43,28 +39,14 @@ class Scraper1(BaseScraper):
         for s in suffix:
             url = self.url + s
             print(f"fetching {self.emc} outages from {url}")
-<<<<<<< HEAD
             html = self.get_page_source(url = url, find_type = "css", findkeyword = ".report-table.tree")
-=======
-            html = self.get_page_source(
-                url=url, find_type="css", findkeyword=".report-table.tree"
-            )
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
             # parse table
             soup = BeautifulSoup(html, "lxml")
             table = soup.select_one(".report-table.tree")
             rows = table.select("tr")
-<<<<<<< HEAD
             
             # Change from appending to a list to list comprehension will speed the list operation about 50%.
             raw_data = [[cell.text.strip() for cell in row.find_all('td')] for row in rows[2:]]
-=======
-
-            # Change from appending to a list to list comprehension will speed the list operation about 50%.
-            raw_data = [
-                [cell.text.strip() for cell in row.find_all("td")] for row in rows[2:]
-            ]
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
 
             loc = "COUNTY" if s == "?report=report-panel-county" else "ZIP"
             header = ["VIEW", loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
@@ -122,31 +104,18 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if val:
                 df = pd.DataFrame(val["areas"])
-<<<<<<< HEAD
                 df['cust_a'] = df['cust_a'].map(lambda x: x['val'])
                 df['percent_cust_a'] = df['percent_cust_a'].map(lambda x: x['val'])
-=======
-                df["cust_a"] = df["cust_a"].map(lambda x: x["val"])
-                df["percent_cust_a"] = df["percent_cust_a"].map(lambda x: x["val"])
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
 
                 # Filter rows in a more efficient manner
                 df = df.query("cust_a != 0 or n_out != 0")
 
                 df = df.copy()  # Make a copy to avoid SettingWithCopyWarning
-<<<<<<< HEAD
                 df['timestamp'] = pd.Timestamp.now()
                 df['EMC'] = self.emc
 
                 # Now, since df is explicitly copied, this operation should not cause warnings
                 df.drop(columns=['gotoMap'], inplace=True)
-=======
-                df["timestamp"] = timenow()
-                df["EMC"] = self.emc
-
-                # Now, since df is explicitly copied, this operation should not cause warnings
-                df.drop(columns=["gotoMap"], inplace=True)
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
                 data.update({key: df})
             else:
                 print(
@@ -186,7 +155,6 @@ class Scraper5(BaseScraper):
 
         else:
             self.driver.get(self.url)
-<<<<<<< HEAD
             iframe_tag = self.driver.find_elent(By.ID, "sc5_iframe")
             source_page = iframe_tag.get_attribute("src")
             print("Redirect to", source_page)
@@ -195,18 +163,6 @@ class Scraper5(BaseScraper):
                                                find_type="css",
                                                findkeyword="a.row.report-link.hyperlink-primary")
             
-=======
-            iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
-            source_page = iframe_tag.get_attribute("src")
-            print("Redirect to", source_page)
-            self.url = "https://kubra.io/"
-            page_source = self.get_page_source(
-                url=source_page,
-                find_type="css",
-                findkeyword="a.row.report-link.hyperlink-primary",
-            )
-
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
         soup = BeautifulSoup(page_source, "lxml")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
@@ -219,11 +175,7 @@ class Scraper5(BaseScraper):
         for k, v in links.items():
             new_url = self.url + v[1:]
             self.driver.get(new_url)
-<<<<<<< HEAD
             
-=======
-
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
             # Use the dynamic wait method instead of time.sleep(5)
             hash_part = v.split("/")[-1]
             try:
@@ -278,28 +230,6 @@ class Scraper6(BaseScraper):
                     data["per_outage"] = json.loads(data_str[start:end])
 
         for key, val in data.items():
-<<<<<<< HEAD
-=======
-
-            df = pd.DataFrame([x["attributes"] for x in val["features"]])
-            # Convert date columns directly without apply()
-            df["BEGINTIME"] = pd.to_datetime(df["BEGINTIME"], unit="ms")
-            df["ESTIMATEDTIMERESTORATION"] = pd.to_datetime(
-                df["ESTIMATEDTIMERESTORATION"], unit="ms"
-            )
-
-            # For geometry, assuming each geometry is a dictionary with 'x' and 'y' keys
-            # Extract 'x' and 'y' directly into the DataFrame without creating a separate DataFrame first
-            df["x"] = [x["geometry"]["x"] for x in val["features"]]
-            df["y"] = [x["geometry"]["y"] for x in val["features"]]
-            # Set a single timestamp for the entire column
-            current_timestamp = timenow()
-            df["timestamp"] = current_timestamp
-
-            df["EMC"] = self.emc  # Assign EMC value directly
-            # df.dropna(inplace=True)
-            data.update({key: df})
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
 
             df = pd.DataFrame([x["attributes"] for x in val["features"]])
             # Convert date columns directly without apply()
@@ -330,11 +260,6 @@ class Scraper7(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
-<<<<<<< HEAD
-        
-=======
-
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
         try:
             self.wait_for_request(
                 lambda request: "loadLatLongOuterOutage" in request.url
@@ -354,11 +279,7 @@ class Scraper7(BaseScraper):
 
         for key, val in data.items():
             df = pd.DataFrame(json.loads(val["d"])["Table"])
-<<<<<<< HEAD
             current_timestamp = pd.Timestamp.now()  # Call once and use for all rows
-=======
-            current_timestamp = timenow()  # Call once and use for all rows
->>>>>>> 6bb75324bafa3ed4b7279ae1c5189e0359c42208
             df["timestamp"] = current_timestamp
             df["EMC"] = self.emc
             df = df.dropna()
