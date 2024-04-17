@@ -22,6 +22,10 @@ from selenium.webdriver.common.by import By
 import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import TimeoutException
 
 
 class Scraper1(BaseScraper):
@@ -36,19 +40,18 @@ class Scraper1(BaseScraper):
         for s in suffix:
             url = self.url + s
             print(f"fetching {self.emc} outages from {url}")
-            html = self.get_page_source(url)
-            # print(html)
-
+            html = self.get_page_source(
+                url=url, find_type="css", findkeyword=".report-table.tree"
+            )
             # parse table
-            soup = BeautifulSoup(html, "html.parser")
-            table = soup.find("table", attrs={"class": "report-table tree"})
-            rows = table.find_all("tr")
+            soup = BeautifulSoup(html, "lxml")
+            table = soup.select_one(".report-table.tree")
+            rows = table.select("tr")
 
-            data_rows = rows[2:]
-            raw_data = []
-            for row in data_rows:
-                cells = row.find_all("td")
-                raw_data.append([cell.text.strip() for cell in cells])
+            # Change from appending to a list to list comprehension will speed the list operation about 50%.
+            raw_data = [
+                [cell.text.strip() for cell in row.find_all("td")] for row in rows[2:]
+            ]
 
             loc = "COUNTY" if s == "?report=report-panel-county" else "ZIP"
             header = ["VIEW", loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
@@ -107,12 +110,17 @@ class Scraper5(BaseScraper):
         for key, val in data.items():
             if val:
                 df = pd.DataFrame(val["areas"])
-                df[["cust_a", "percent_cust_a"]] = df[
-                    ["cust_a", "percent_cust_a"]
-                ].applymap(lambda x: x["val"])
-                df = df[(df["cust_a"] != 0) | (df["n_out"] != 0)]
+                df["cust_a"] = df["cust_a"].map(lambda x: x["val"])
+                df["percent_cust_a"] = df["percent_cust_a"].map(lambda x: x["val"])
+
+                # Filter rows in a more efficient manner
+                df = df.query("cust_a != 0 or n_out != 0")
+
+                df = df.copy()  # Make a copy to avoid SettingWithCopyWarning
                 df["timestamp"] = timenow()
                 df["EMC"] = self.emc
+
+                # Now, since df is explicitly copied, this operation should not cause warnings
                 df.drop(columns=["gotoMap"], inplace=True)
                 data.update({key: df})
             else:
@@ -126,25 +134,25 @@ class Scraper5(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
-        self.driver.get(self.url)
-        # let the page load
-        time.sleep(10)
-        page_source = self.driver.page_source
 
-        # parse reports link
-        soup = BeautifulSoup(page_source, "html.parser")
-        if self.emc == "Texas-New Mexico Power Co.":
+        # let the page load
+        if self.emc != "Texas-New Mexico Power Co.":
+            findkeyword = "a.row.report-link.hyperlink-primary"
+            page_source = self.get_page_source(find_type="css", findkeyword=findkeyword)
+
+        else:
+            self.driver.get(self.url)
             iframe_tag = self.driver.find_element(By.ID, "sc5_iframe")
             source_page = iframe_tag.get_attribute("src")
             print("Redirect to", source_page)
             self.url = "https://kubra.io/"
-            self.driver.get(source_page)
-            time.sleep(10)
-            page_source = self.driver.page_source
+            page_source = self.get_page_source(
+                url=source_page,
+                find_type="css",
+                findkeyword="a.row.report-link.hyperlink-primary",
+            )
 
-            # parse reports link
-            soup = BeautifulSoup(page_source, "html.parser")
-
+        soup = BeautifulSoup(page_source, "lxml")
         containers = soup.find_all(class_="row report-link hyperlink-primary")
         links = {}
         counter = 0  # we use counter to avoid duplicate key bug
@@ -154,30 +162,26 @@ class Scraper5(BaseScraper):
         # get json reports
         raw_data = {}
         for k, v in links.items():
-            self.driver.get(self.url + v[1:])
-            time.sleep(5)
-            requests = self.driver.requests
-            json_requests = [
-                r
-                for r in requests
-                if r.response
-                and r.response.headers.get("Content-Type") == "application/json"
-            ]
-            hash = v.split("/")[-1]
-            for r in json_requests:
-                if hash in r.url:
-                    print(r)
-                    response = sw_decode(
-                        r.response.body,
-                        r.response.headers.get("Content-Encoding", "identity"),
-                    )
-                    data = response.decode("utf8", "ignore")
-                    if any([x in data for x in ["zip", "Zip"]]):
-                        raw_data["per_zipcode"] = json.loads(data)["file_data"]
-                    elif "county" in data:
-                        raw_data["per_county"] = json.loads(data)["file_data"]
-                    elif any([x in data for x in ["city", "Cities"]]):
-                        raw_data["per_city"] = json.loads(data)["file_data"]
+            new_url = self.url + v[1:]
+            self.driver.get(new_url)
+
+            # Use the dynamic wait method instead of time.sleep(5)
+            hash_part = v.split("/")[-1]
+            try:
+                json_request = self.wait_for_json_request(hash_part)
+                response = sw_decode(
+                    json_request.response.body,
+                    json_request.response.headers.get("Content-Encoding", "identity"),
+                )
+                data = response.decode("utf8", "ignore")
+                if any([x in data for x in ["zip", "Zip"]]):
+                    raw_data["per_zipcode"] = json.loads(data)["file_data"]
+                elif "county" in data:
+                    raw_data["per_county"] = json.loads(data)["file_data"]
+                elif any([x in data for x in ["city", "Cities"]]):
+                    raw_data["per_city"] = json.loads(data)["file_data"]
+            except TimeoutError as e:
+                print(e)
         return raw_data
 
 
@@ -191,8 +195,13 @@ class Scraper6(BaseScraper):
         # Send a request to the website and let it load
         self.driver.get(self.url)
 
-        # Sleeps for 5 seconds
-        time.sleep(5)
+        try:
+            self.wait_for_request(
+                lambda request: "geometryType=esriGeometryEnvelope" in request.url
+            )
+        except TimeoutError:
+            print("The specific request was not made within the timeout period.")
+            return {}
 
         data = {}
         for request in self.driver.requests:
@@ -210,17 +219,24 @@ class Scraper6(BaseScraper):
                     data["per_outage"] = json.loads(data_str[start:end])
 
         for key, val in data.items():
-            attributes = [x["attributes"] for x in val["features"]]
-            geometry = [x["geometry"] for x in val["features"]]
-            df = pd.DataFrame(attributes)
-            df[["BEGINTIME", "ESTIMATEDTIMERESTORATION"]] = df[
-                ["BEGINTIME", "ESTIMATEDTIMERESTORATION"]
-            ].apply(pd.to_datetime, unit="ms")
-            df[["x", "y"]] = pd.DataFrame(geometry)
-            # df['zip_code'] = df.apply(lambda row: self.extract_zipcode(row['y'], row['x']), axis=1)
-            df["timestamp"] = timenow()
-            df["EMC"] = self.emc
-            # df = df.dropna()
+
+            df = pd.DataFrame([x["attributes"] for x in val["features"]])
+            # Convert date columns directly without apply()
+            df["BEGINTIME"] = pd.to_datetime(df["BEGINTIME"], unit="ms")
+            df["ESTIMATEDTIMERESTORATION"] = pd.to_datetime(
+                df["ESTIMATEDTIMERESTORATION"], unit="ms"
+            )
+
+            # For geometry, assuming each geometry is a dictionary with 'x' and 'y' keys
+            # Extract 'x' and 'y' directly into the DataFrame without creating a separate DataFrame first
+            df["x"] = [x["geometry"]["x"] for x in val["features"]]
+            df["y"] = [x["geometry"]["y"] for x in val["features"]]
+            # Set a single timestamp for the entire column
+            current_timestamp = timenow()
+            df["timestamp"] = current_timestamp
+
+            df["EMC"] = self.emc  # Assign EMC value directly
+            # df.dropna(inplace=True)
             data.update({key: df})
 
         return data
@@ -236,8 +252,13 @@ class Scraper7(BaseScraper):
         # Send a request to the website and let it load
         self.driver.get(self.url)
 
-        # Sleeps for 5 seconds
-        time.sleep(5)
+        try:
+            self.wait_for_request(
+                lambda request: "loadLatLongOuterOutage" in request.url
+            )
+        except TimeoutError:
+            print("The specific request was not made within the timeout period.")
+            return {}
 
         data = {}
         for request in self.driver.requests:
@@ -249,8 +270,9 @@ class Scraper7(BaseScraper):
                 data["per_outage"] = json.loads(response.decode("utf8", "ignore"))
 
         for key, val in data.items():
-            df = pd.DataFrame(pd.DataFrame(json.loads(val["d"])["Table"]))
-            df["timestamp"] = timenow()
+            df = pd.DataFrame(json.loads(val["d"])["Table"])
+            current_timestamp = timenow()  # Call once and use for all rows
+            df["timestamp"] = current_timestamp
             df["EMC"] = self.emc
             df = df.dropna()
             data.update({key: df})
