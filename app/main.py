@@ -12,6 +12,7 @@ def handler(event, context=""):
     bucket = event["bucket"]
     state = event["folder"]
     success_cnt = 0
+    failures = []
 
     for emc, url in EMCs.items():
         try:
@@ -26,15 +27,24 @@ def handler(event, context=""):
                     save(df, bucket, path)
             success_cnt += 1
         except Exception as e:
-            print(e)
+            failure_reason = f"{state} Failed to scrape {emc}: {str(e)}"
+            print(failure_reason)
+            failures.append(failure_reason)
             continue
 
-    print(f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages")
+    if failures:
+        print("Failures:")
+        for failure in failures:
+            print(failure)
+
+    print(
+        f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages for {state}"
+    )
 
     return {
         "statusCode": 200,
         "body": json.dumps(
-            f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages"
+            f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages for {state}"
         ),
     }
 

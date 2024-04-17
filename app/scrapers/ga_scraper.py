@@ -18,7 +18,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from seleniumwire import webdriver
 
 
-from webdriver_manager.chrome import ChromeDriverManager  # for local test
+# from webdriver_manager.chrome import ChromeDriverManager  # for local test
 from .util import is_aws_env, make_request, timenow
 
 # TODO: update for security
@@ -31,7 +31,7 @@ class BaseScraper:
     def __init__(self, url, emc):
         self.url = url
         self.emc = emc
-        # self.driver = self.init_webdriver()
+        self.driver = None
         self.geo_locator = geopy.Nominatim(user_agent="1234")
 
     def fetch(self, url=None, header=None, data=None, method="GET", key="per_outage"):
@@ -52,7 +52,7 @@ class BaseScraper:
 
     def parse(self):
         pass
-    
+
     def wait_for_request(self, condition, timeout=10):
         """
         Waits for a specific request to be made that matches the given condition.
@@ -69,7 +69,7 @@ class BaseScraper:
                 raise TimeoutError("Request not found within timeout period.")
             time.sleep(0.5)  # Short sleep to avoid an overly busy loop
 
-    def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout = 10):
+    def get_page_source(self, url=None, find_type=None, findkeyword=None, timeout=10):
 
 <<<<<<< HEAD
     def wait_for_request(self, condition, timeout=10):
@@ -112,7 +112,6 @@ class BaseScraper:
             raise ValueError(f"Unsupported find_type: {find_type}")
         by_type = find_type_map[find_type]
 
-
         # let the page load
         try:
             # wait for the element to load
@@ -126,7 +125,6 @@ class BaseScraper:
             page_source = None  # Return None or appropriate content in case of failure
         return page_source
 
-
     def extract_zipcode(self, lat, lon):
         try:
             addr = self.geo_locator.reverse((lat, lon), timeout=10)
@@ -137,6 +135,34 @@ class BaseScraper:
         except Exception as e:
             print(e)
             return "unknown"
+
+    def wait_for_json_request(self, part_of_url, timeout=10):
+        """
+        Waits for a JSON request to be made that contains a specific part in its URL.
+        Args:
+            part_of_url: A substring of the URL to look for.
+            timeout: How long to wait for the request, in seconds.
+        """
+        start_time = time.time()
+
+        if self.driver == None:
+            self.driver = self.init_webdriver()
+
+        while True:
+            requests = [
+                r
+                for r in self.driver.requests
+                if part_of_url in r.url
+                and r.response
+                and "application/json" in r.response.headers.get("Content-Type", "")
+            ]
+            if requests:
+                return requests[0]  # Return the first matching request
+            elif time.time() - start_time > timeout:
+                raise TimeoutError(
+                    f"JSON request containing '{part_of_url}' not found within timeout."
+                )
+            time.sleep(0.5)  # Short sleep to avoid busy loop
 
     def init_webdriver(self):
         chrome_driver_path = (
@@ -167,7 +193,9 @@ class BaseScraper:
         chrome_options.add_argument("--log-level=0")
         chrome_options.add_argument("--v=99")
         chrome_options.add_argument("--blink-settings=imagesEnabled=false")
-        chrome_options.add_experimental_option("prefs", {"profile.managed_default_content_settings.images": 2})
+        chrome_options.add_experimental_option(
+            "prefs", {"profile.managed_default_content_settings.images": 2}
+        )
         chrome_options.add_argument("--single-process")
         chrome_options.add_argument("--data-path=/tmp/data-path")
         chrome_options.add_argument("--ignore-certificate-errors")
@@ -186,8 +214,8 @@ class BaseScraper:
             chrome_options.binary_location = "/opt/chrome/chrome"
 
         driver = webdriver.Chrome(
-            ChromeDriverManager().install(),  # for local test
-            # executable_path=chrome_driver_path,
+            # ChromeDriverManager().install(),  # for local test
+            executable_path=chrome_driver_path,
             chrome_options=chrome_options,
             seleniumwire_options=selenium_options,
             desired_capabilities=desired_capabilities,
@@ -200,10 +228,11 @@ class Scraper1(BaseScraper):
         super().__init__(url, emc)
         self.driver = self.init_webdriver()
 
-
     def parse(self):
         data = self.fetch()
-        timenow_value = timenow()  # Call once and reuse, assuming it returns a static time for the run.
+        timenow_value = (
+            timenow()
+        )  # Call once and reuse, assuming it returns a static time for the run.
 
         for key, val in data.items():
             if not val:
@@ -212,9 +241,14 @@ class Scraper1(BaseScraper):
 
             # Processing per_county data.
             if key == "per_county":
-                flattened_boundaries = [boundary for item in val for boundary in item["boundaries"]]
+                flattened_boundaries = [
+                    boundary for item in val for boundary in item["boundaries"]
+                ]
                 per_loc_df = pd.DataFrame(flattened_boundaries)
-                per_loc_df = per_loc_df[(per_loc_df["customersAffected"] != 0) | (per_loc_df["customersOutNow"] != 0)]
+                per_loc_df = per_loc_df[
+                    (per_loc_df["customersAffected"] != 0)
+                    | (per_loc_df["customersOutNow"] != 0)
+                ]
                 per_loc_df["timestamp"] = timenow_value
                 per_loc_df["EMC"] = self.emc
                 data[key] = per_loc_df
@@ -222,14 +256,16 @@ class Scraper1(BaseScraper):
             # Processing per_outage data.
             elif key == "per_outage":
                 per_outage_df = pd.DataFrame(val)
-                zips = [self.extract_zipcode(point["lat"], point["lng"]) for point in per_outage_df["outagePoint"]]
+                zips = [
+                    self.extract_zipcode(point["lat"], point["lng"])
+                    for point in per_outage_df["outagePoint"]
+                ]
                 per_outage_df["zip"] = zips
                 per_outage_df["timestamp"] = timenow_value
                 per_outage_df["EMC"] = self.emc
                 data[key] = per_outage_df
 
         return data
-
 
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
@@ -360,8 +396,9 @@ class Scraper4(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
         self.driver.get(self.url)
-        page_source = self.get_page_source(find_type="css", 
-                                           findkeyword="a.row.report-link.hyperlink-primary")
+        page_source = self.get_page_source(
+            find_type="css", findkeyword="a.row.report-link.hyperlink-primary"
+        )
         if not page_source:
             print("Failed to load the page source.")
             return {}
@@ -509,24 +546,26 @@ class Scraper7(BaseScraper):
         self.driver.get(self.url)
 
         try:
-            self.wait_for_request(
-                lambda request: "ShellOut" in request.url
-            )
+            self.wait_for_request(lambda request: "ShellOut" in request.url)
         except TimeoutError:
             print("The specific request was not made within the timeout period.")
             return {}
 
         raw_data = {}
+
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                response = sw_decode(
-                    request.response.body,
-                    request.response.headers.get("Content-Encoding", "identity"),
-                )
+                print(request.url)
+                try:
+                    response = sw_decode(
+                        request.response.body,
+                        request.response.headers.get("Content-Encoding", "identity"),
+                    )
+                except:
+                    print("Error url:", request.url)
                 data = response.decode("utf8")
                 if "isHighTraffic" in data:
                     raw_data["per_outage"] = json.loads(data)
-
         return raw_data
 
 
@@ -592,25 +631,27 @@ class Scraper9(BaseScraper):
         if self.emc != "Karnes Electric Coop, Inc.":
             if self.emc == "San Patricio Electric Coop, Inc.":
                 WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.CSS_SELECTOR, "div.mapwise-web-modal-header h5"))
+                    EC.presence_of_element_located(
+                        (By.CSS_SELECTOR, "div.mapwise-web-modal-header h5")
+                    )
                 )
             else:
                 WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.ID, 'OMS.Customers Summary'))
+                    EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
                 )
             button = self.driver.find_elements(
                 "xpath", '//*[@id="OMS.Customers Summary"]'
             )
             if button:
                 label = WebDriverWait(self.driver, 10).until(
-                    EC.element_to_be_clickable(
-                        (By.ID, "OMS.Customers Summary")
-                    )
+                    EC.element_to_be_clickable((By.ID, "OMS.Customers Summary"))
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
 
-        WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox")))
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox"))
+        )
         page_source = {}
         select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
         menu = Select(select_elements[0])
@@ -730,7 +771,7 @@ class Scraper11(BaseScraper):
             # Send a request to the website and let it load
             self.driver.get(self.url)
             # Sleeps for 5 seconds
-            time.sleep(5)   
+            time.sleep(5)
             for request in self.driver.requests:
                 if "ShellOut" in request.url:
                     response = sw_decode(
