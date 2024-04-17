@@ -4,7 +4,6 @@
         "Blue Ridge Energy": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/bremco/all/OUTAGES_DATA_TYPE=CUSTOMER,CREWS_DATA_TYPE",
         "Jones-Onslow EMC": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/joemc/all/OUTAGES_DATA_TYPE=CUSTOMER,CREWS_DATA_TYPE",
         "Lumbee River EMC": "https://apps.sienatech.com/apex5/siena_ords/webmaps/data/lremc/all/OUTAGES_DATA_TYPE=CUSTOMER,CREWS_DATA_TYPE"
-
     },
     "bucket": "data",
     "folder": "nc"

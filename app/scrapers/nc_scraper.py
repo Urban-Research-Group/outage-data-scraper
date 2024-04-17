@@ -1,4 +1,3 @@
-import datetime
 import time
 import pandas as pd
 from selenium import webdriver
@@ -6,8 +5,11 @@ import json
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime
 
-from app.scrapers.util import timenow
+from collections import defaultdict
+
+from .util import timenow
 from .ga_scraper import (
     BaseScraper,
     Scraper1 as GA_Scraper1,
@@ -25,6 +27,7 @@ class Scraper6(BaseScraper):
 
     def parse(self):
         data = self.fetch()
+
         for key, val in data.items():
             print(key)
             if val:
@@ -51,75 +54,99 @@ class Scraper6(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
+        # Initialize dictionary to hold table data
+        table_data = {
+            "Location": [],
+            "Number of Outages": [],
+            "Affected Customers": [],
+            "Percentage Affected": [],
+            "Last Updated": [],
+        }
+
         try:
-            span_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//span[@class='jurisdiction-selection-select-state__item-text' and text()='Duke Energy Carolinas']"))
+            span_element = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        "//span[@class='jurisdiction-selection-select-state__item-text' and text()='Duke Energy Carolinas']",
+                    )
+                )
             )
-    
+
             # Click on the span element
             span_element.click()
-            
-            print("Clicked on 'Duke Energy Carolinas' successfully!")
 
-            h3_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.CLASS_NAME, 'maps-panel-title'))
+            print("Clicked on 'Duke Energy Carolinas' successfully!")
+        except:
+            print("Skip clicking on 'Duke Energy Carolinas'")
+            pass  # we might have cached it
+
+        try:
+            h3_element = WebDriverWait(self.driver, 20).until(
+                EC.element_to_be_clickable((By.CLASS_NAME, "maps-panel-title"))
             )
-            
+
             # Click on the h3 element
             h3_element.click()
-            
+
             print("Clicked on 'Report & View Outages' successfully!")
 
             outage_summary_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//button[@aria-label='Outage Summary']"))
+                EC.element_to_be_clickable(
+                    (By.XPATH, "//button[@aria-label='Outage Summary']")
+                )
             )
-            
+
             # Click on the "OUTAGE SUMMARY" button
             outage_summary_button.click()
 
             print("summary clicked successfully!")
 
             outage_summary_table_span = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, "//span[@class='county-panel-outage-info-summary-btn-text ng-tns-c41-6' and text()='Outage Summary Table']"))
+                EC.element_to_be_clickable(
+                    (
+                        By.XPATH,
+                        "/html/body/app-root/outage-home/section/county-panel/section/div[2]/div[5]/button/span",
+                    )
+                )
             )
 
             # Click on the "Outage Summary Table" span element
             outage_summary_table_span.click()
-            
+
             print("Clicked on 'Outage Summary Table' successfully!")
 
             WebDriverWait(self.driver, 10).until(
-                EC.presence_of_element_located((By.CLASS_NAME, "outage-summary-table-content-row"))
+                EC.presence_of_element_located(
+                    (By.CLASS_NAME, "outage-summary-table-content-row")
+                )
             )
 
             # Find all table rows
-            table_rows = self.driver.find_elements(By.CLASS_NAME, "outage-summary-table-content-row")
-            
-            # Initialize dictionary to hold table data
-            table_data = {
-                'Location': [],
-                'Number of Outages': [],
-                'Affected Customers': [],
-                'Percentage Affected': [],
-                'Last Updated': []
-            }
-            
+            table_rows = self.driver.find_elements(
+                By.CLASS_NAME, "outage-summary-table-content-row"
+            )
+
             # Iterate over table rows
             for row in table_rows:
-                cells = row.find_elements(By.CLASS_NAME, "outage-summary-table-content-body-item")
-                table_data['Location'].append(cells[0].text)
-                table_data['Number of Outages'].append(cells[1].text)
-                table_data['Affected Customers'].append(cells[2].text)
-                table_data['Percentage Affected'].append(cells[3].text)
-                table_data['Last Updated'].append(cells[4].text)
-
+                cells = row.find_elements(
+                    By.CLASS_NAME, "outage-summary-table-content-body-item"
+                )
+                table_data["Location"].append(cells[0].text)
+                table_data["Number of Outages"].append(cells[1].text)
+                table_data["Affected Customers"].append(cells[2].text)
+                table_data["Percentage Affected"].append(cells[3].text)
+                table_data["Last Updated"].append(cells[4].text)
             print("Table data created successfully!")
         except Exception as e:
             print(f"Error: {e}")
             self.driver.close()
             self.driver.quit()
 
-        return table_data
+        raw_data = {}
+        raw_data["per_county"] = table_data
+        return raw_data
+
 
 class Scraper7(BaseScraper):
     def __init__(self, url, emc):
@@ -132,6 +159,7 @@ class Scraper7(BaseScraper):
             print(key)
             if val:
                 df = pd.DataFrame(val)
+                df = df[(df["cust_a"] != "0")]
                 df["timestamp"] = timenow()
                 df["EMC"] = self.emc
                 data.update({key: df})
@@ -145,7 +173,7 @@ class Scraper7(BaseScraper):
         self.driver.quit()
 
         return data
-    
+
     def fetch(self):
         print(f"Fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
@@ -153,68 +181,82 @@ class Scraper7(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
+        raw_data = {}
+
         try:
             menu_button = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.ID, 'btn-menu'))
+                EC.element_to_be_clickable((By.ID, "btn-menu"))
             )
-    
+
             # Click on the menu button
             menu_button.click()
 
             print("clicked menu!")
 
             summary_icon = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.ID, 'summary-icon'))
+                EC.element_to_be_clickable((By.ID, "summary-icon"))
             )
-            
+
             # Click on the summary icon
             summary_icon.click()
 
-
-
             # Click on the arrow to expand the menu
-            
+
             # Wait for the "Area / County" link to be clickable
             area_county_link = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.ID, 'view-summary-county-muni'))
+                EC.element_to_be_clickable((By.ID, "view-summary-county-muni"))
             )
-            
+
             # Click on the "Area / County" link
             area_county_link.click()
 
             print("clicked summary!")
 
             nc_element = WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, '//span[text()="North Carolina"]'))
+                EC.element_to_be_clickable(
+                    (By.XPATH, '//span[text()="North Carolina"]')
+                )
             )
-            
+
             # Click on the expand/collapse arrow for North Carolina
-            arrow_element = nc_element.find_element(By.XPATH, './preceding-sibling::span[@class="treegrid-expander treegrid-expander-collapsed"]')
+            arrow_element = nc_element.find_element(
+                By.XPATH,
+                './preceding-sibling::span[@class="treegrid-expander treegrid-expander-collapsed"]',
+            )
             arrow_element.click()
 
             print("clicked nc!")
 
             rows = WebDriverWait(self.driver, 10).until(
-                EC.presence_of_all_elements_located((By.CSS_SELECTOR, '.treegrid-parent-1.level2'))
+                EC.presence_of_all_elements_located(
+                    (By.CSS_SELECTOR, ".treegrid-parent-1.level2")
+                )
             )
-            
-            # Create a dictionary to store the data
-            data = {}
+
+            # a default dict with default value as empty list
+            data = defaultdict(list)
 
             # Loop through each row and extract the data
             for row in rows:
-                area_name = row.find_element(By.CSS_SELECTOR, '.area_nameCol span:nth-child(3)').text        
-                cust_a = row.find_element(By.CSS_SELECTOR, '.cust_aCol span').text
-                cust_s = row.find_element(By.CSS_SELECTOR, '.cust_sCol span').text
-                if (cust_a != '0'):
-                    data[area_name] = {'cust_a': cust_a, 'cust_s': cust_s}
-            
+                area_name = row.find_element(
+                    By.CSS_SELECTOR, ".area_nameCol span:nth-child(3)"
+                ).text
+                cust_a = row.find_element(By.CSS_SELECTOR, ".cust_aCol span").text
+                cust_s = row.find_element(By.CSS_SELECTOR, ".cust_sCol span").text
+                data["area_name"].append(area_name)
+                data["cust_a"].append(cust_a)
+                data["cust_s"].append(cust_s)
+
+            if data != {}:
+                print("Data extracted successfully!")
+                raw_data["per_county"] = data
+
         except Exception as e:
             print(f"Error: {e}")
             self.driver.close()
             self.driver.quit()
 
-        return data
+        return raw_data
 
 
 class NCScraper:
@@ -229,11 +271,11 @@ class NCScraper:
             obj = super().__new__(GA_Scraper7)
         elif layout_id == 5:
             obj = super().__new__(GA_Scraper6)
-        elif layout_id == 5:
-            obj = super().__new__(Scraper6)
         elif layout_id == 6:
+            obj = super().__new__(Scraper6)
+        elif layout_id == 7:
             obj = super().__new__(Scraper7)
         else:
-            raise "Invalid layout ID: Enter layout ID range from 1 to 2"
+            raise "Invalid layout ID: Enter layout ID range from 1 to 7"
         obj.__init__(url, emc)
         return obj
