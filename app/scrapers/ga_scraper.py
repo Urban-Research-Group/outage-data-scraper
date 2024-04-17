@@ -344,6 +344,10 @@ class Scraper4(BaseScraper):
                     elif "county" in data or "County" in data:
                         raw_data["per_county"] = json.loads(data)["file_data"]
                         print(f"got county data")
+                    elif "city" in data or "City" in data:
+                        raw_data["per_city"] = json.loads(data)["file_data"]
+                        print(f"got city data")
+
         return raw_data
 
 
@@ -367,6 +371,8 @@ class Scraper5(BaseScraper):
                 )
                 data.update({key: df})
             else:
+                if val == []:
+                    data.update({key: pd.DataFrame()})
                 print(
                     f"no outage of {self.emc} update found at",
                     datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),

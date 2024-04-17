@@ -1,8 +1,8 @@
 {
     "layout": 3,
     "emc": {
-        "Orlando Utilities Commission": "https://kubra.io/data/9cb9f77e-385e-4fa8-b727-7e084eb925cd/public/summary-1/data.json",
-        "Seminole/Sumter Electric Cooperative": "https://kubra.io/data/2f063399-ccbf-4262-9ed7-577e1d2713bc/public/summary-1/data.json"
+        "Orlando Utilities Commission": "https://outagemap.ouc.com/external/default.html",
+        "Seminole Electric Cooperative": "https://stormcenter.secoenergy.com"
     },
     "bucket": "data",
     "folder": "fl"
