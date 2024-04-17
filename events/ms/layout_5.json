@@ -1,0 +1,8 @@
+ {
+    "layout": 5,
+    "emc": {
+        "Southwest Mississippi EPA": "https://ebill.swepa.coop/woViewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}
