@@ -1,0 +1,12 @@
+{
+    "layout": 1,
+    "emc": {
+        "4-County EPA": "https://outages.4county.org:8181/",
+        "Magnolia Electric Power": "http://outage.mepcoop.com/",
+        "Singing River Electric": "https://outageviewer.singingriver.com/",
+        "Southern Pine Electric": "https://outages.southernpine.coop/",
+        "Tishomingo County EPA": "https://outages.tcepa.com:7576/"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}
