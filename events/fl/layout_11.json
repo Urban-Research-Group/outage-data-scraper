@@ -1,0 +1,8 @@
+{
+    "layout": 11,
+    "emc": {
+        "Sacramento Municipal Utility District": "https://usage.smud.org/omkml/api/communitylist/?_=1711940834565"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

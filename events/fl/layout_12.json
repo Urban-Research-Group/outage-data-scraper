@@ -1,0 +1,8 @@
+{
+    "layout": 12,
+    "emc": {
+        "Sumter EMC": "https://outage.sumteremc.com/omswebmap/"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

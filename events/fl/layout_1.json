@@ -1,0 +1,18 @@
+{
+    "layout": 1,
+    "emc": {
+        "Suwannee Valley Electric Cooperative": "https://outages.svec-coop.com/",
+        "Tri-County Electric Cooperative": "https://outage.tcec.com/",
+        "Okefenoke Rural Electric Membership": "https://oms.oremc.co:8443/",
+        "Keys Energy Services": "https://powerstatus.keysenergy.com/",
+        "Gulf Coast Electric Cooperative": "https://outagemap.gcec.com/",
+        "Grady EMC": "http://outage.gradyemc.com:7576/",
+        "Florida Keys Electric Cooperative": "http://12.237.166.68:91/",
+        "Escambia River Electric Cooperative": "http://12.21.156.105:5050/",
+        "Choctawhatchee Electric Cooperative": "https://outageview.chelco.com:8080/",
+        "Central Florida Electric Cooperative": "http://nsa.cfec.com:81/",
+        "New Smyrna Beach Utilities": "https://outages.nsbufl.com/"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}
