@@ -1,0 +1,9 @@
+{
+    "layout": 5,
+    "emc": {
+        "Laurens Electric Cooperative": "https://lec.maps.sienatech.com/"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

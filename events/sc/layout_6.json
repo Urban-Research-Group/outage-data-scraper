@@ -1,0 +1,11 @@
+{
+    "layout": 6,
+    "emc": {
+        "Lynches River Electric Cooperative": "https://outages.ecsc.org/outages/maps",
+        "Mid-Carolina Electric Cooperative": "https://mcecoop.maps.arcgis.com/apps/webappviewer/index.html?id=bcd794b1efa8472ea0de2a08723a88f9",
+        "Newberry Electric Cooperative": "https://outages.ecsc.org/outages/maps"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

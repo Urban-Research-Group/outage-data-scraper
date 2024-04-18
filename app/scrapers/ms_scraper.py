@@ -29,54 +29,60 @@ from .ga_scraper import (
     Scraper1 as GA_Scraper1,
     Scraper3 as GA_Scraper3
 )
-
-class MSScraper9(BaseScraper): # not finished
+class MSScraper3(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
+        self.driver = self.init_webdriver()
 
     def parse(self):
         data = self.fetch()
 
-        for key, val in data.items():
-            if not val:
-                data.update({key: pd.DataFrame()})
-            else:
-                if key == "per_county":
-                    per_loc_df = pd.DataFrame(val)
-                    per_loc_df = per_loc_df[per_loc_df["CustomersAffected"] != "0"]
-                    per_loc_df["timestamp"] = timenow()
-                    per_loc_df["EMC"] = self.emc
-                    per_loc_df.drop(columns=["Shape"], inplace=True)
-                    data.update({key: per_loc_df})
-                if key == "per_outage":
-                    per_outage_df = pd.DataFrame(val["MobileOutage"])
-                    per_outage_df["timestamp"] = timenow()
-                    # TODO: sometimes error? mapping later
-                    # zips = [self.extract_zipcode(x['X'], x['Y']) for x in [val['MobileOutage']]]
-                    # zips = [self.extract_zipcode(x['Y'], x['X']) for x in [val['MobileOutage']]]
-                    # per_outage_df['zip'] = zips
-                    per_outage_df["EMC"] = self.emc
-                    data.update({key: per_outage_df})
+        for level, pg in data.items():
+            df = self._parse(pg)
+            data.update({level: df})
+
+        self.driver.close()
+        self.driver.quit()
 
         return data
-    
-def fetch(self):
 
-    data = {}
-    data["currentOutages"] = self.driver.find_element(By.ID, "Outages").text
-    data["customersAffected"] = self.driver.find_element(By.ID, "Customers-Affected").text
-    data["stillOut"] = self.driver.find_element(By.ID, "Still-Out").text
-    return data
+
+
+    def fetch(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        self.driver.get(self.url)
+        time.sleep(10)
+
+        dictionary_return = {
+            "Number of Outages": [],
+            "Affected Customers": [],
+            "Still Out": [],
+
+        }
+
+        outage_elements = self.driver.find_elements(By.XPATH, "//div[contains(text(), 'Outages')]")
+        affected_customers_elements = self.driver.find_elements(By.XPATH, "//div[contains(text(), 'Customers Affected')]")
+        still_out_elements = self.driver.find_elements(By.XPATH, "//div[contains(text(), 'Still out')]")
+
+        dictionary_return = {
+            "Number of Outages": [element.text for element in outage_elements],
+            "Affected Customers": [element.text for element in affected_customers_elements],
+            "Still Out": [element.text for element in still_out_elements],
+        }
+
+        return dictionary_return
 
 
 
 class MSScraper:
     def __new__(cls, layout_id, url, emc):
-        if layout_id == 2:
+        if layout_id == 1:
             obj = super().__new__(GA_Scraper1)
-        elif layout_id == 6:
+        elif layout_id == 2:
             obj = super().__new__(GA_Scraper3)
-        elif layout_id == 9:
-            obj = super().__new__(MSScraper9)
+        elif layout_id == 3:
+            obj = super().__new__(MSScraper3)
+        else: 
+            raise "Invalid layout ID: Enter layout ID range from 1 to 3"
         obj.__init__(url, emc)
         return obj

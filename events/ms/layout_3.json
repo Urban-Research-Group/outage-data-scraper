@@ -1,0 +1,8 @@
+{
+    "layout": 3,
+    "emc": {
+        "Northcentral Electric Coop": "https://outages.northcentralelectric.com/outages"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}

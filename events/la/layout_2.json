@@ -1,0 +1,9 @@
+{
+    "layout": 1,
+    "emc": {
+        "Dixie Electric Membership Corporation": "https://demco.maps.sienatech.com/"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

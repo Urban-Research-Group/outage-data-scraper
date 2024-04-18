@@ -1,0 +1,8 @@
+{
+    "layout": 2,
+    "emc": {
+        "Coahoma EPA": "https://oms.coahomaepa.com:8080/OMSWebMap/OMSWebMap.htm?clientKey=undefined"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}

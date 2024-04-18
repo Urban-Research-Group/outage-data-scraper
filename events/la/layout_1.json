@@ -1,0 +1,9 @@
+{
+    "layout": 1,
+    "emc": {
+        "Beauregard Electric Cooperative": "http://www.becioutage.org/"
+        
+    },
+    "bucket": "data",
+    "folder": "sc"
+}
