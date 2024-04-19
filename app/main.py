@@ -5,12 +5,14 @@ import os
 from scrapers import Scraper
 from scrapers.util import save, timenow
 
+
 def handler(event, context=""):
-    layout_id = event['layout']
-    EMCs = event['emc']
-    bucket = event['bucket']
-    state = event['folder']
+    layout_id = event["layout"]
+    EMCs = event["emc"]
+    bucket = event["bucket"]
+    state = event["folder"]
     success_cnt = 0
+    failures = []
 
     for emc, url in EMCs.items():
         try:
@@ -18,20 +20,32 @@ def handler(event, context=""):
             data = sc.parse()
             for key, df in data.items():
                 if df.empty:
+
                     print(f"no {key} outages for {emc} as of {timenow()}")
                 else:
                     path = f"{state}/layout_{layout_id}/{key}_{emc}.csv"
                     save(df, bucket, path)
             success_cnt += 1
         except Exception as e:
-            print(e)
+            failure_reason = f"{state} Failed to scrape {emc}: {str(e)}"
+            print(failure_reason)
+            failures.append(failure_reason)
             continue
 
-    print(f'Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages')
+    if failures:
+        print("Failures:")
+        for failure in failures:
+            print(failure)
+
+    print(
+        f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages for {state}"
+    )
 
     return {
-        'statusCode': 200,
-        'body': json.dumps(f'Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages')
+        "statusCode": 200,
+        "body": json.dumps(
+            f"Successfully scraped {success_cnt} out of {len(EMCs)} EMC outages for {state}"
+        ),
     }
 
 
@@ -39,7 +53,7 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/ca/investor.json")
+    event_path = os.path.join(os.getcwd(), "events/ga/layout_11.json")
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)

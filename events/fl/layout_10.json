@@ -1,0 +1,8 @@
+{
+    "layout": 10,
+    "emc": {
+        "Talquin Electric Cooperative": "https://my.talquinelectric.com/outages/maps/data/outages.xml"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

@@ -1,0 +1,8 @@
+{
+    "layout": 7,
+    "emc": {
+        "Ocala Electric Utility": "https://utilisocial.io/datacapable/v1/map/events/Ocala?inProgress=true"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

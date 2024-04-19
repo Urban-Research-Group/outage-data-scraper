@@ -1,8 +1,8 @@
 {
-        "layout": 10,
-        "emc": {
-            "Snapping Shoals EMC": "https://apps.ssemc.com/apps/outagemap.aspx"
-        },
-        "bucket": "data",
-        "folder": "ga"
-    }
+    "layout": 10,
+    "emc": {
+        "Snapping Shoals EMC": "https://apps.ssemc.com/apps/outagemap.aspx"
+    },
+    "bucket": "data",
+    "folder": "ga"
+}
