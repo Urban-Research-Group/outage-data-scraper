@@ -12,7 +12,7 @@
         "Union Power Cooperative": "https://outage.union-power.com/",
         "Pee Dee Electric": "http://omv.pdemc.com/",
         "Central Electric": "https://outage.cemcpower.com/",
-        "Tideland EMC": "https://outagemap.tidelandemc.com"
+        "Tideland EMC": "https://outagemap.tidelandemc.com/"
     },
     "bucket": "data",
     "folder": "nc"

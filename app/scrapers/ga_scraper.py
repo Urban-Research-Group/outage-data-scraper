@@ -394,7 +394,7 @@ class Scraper4(BaseScraper):
             if "kubra" in self.url:
                 self.url = "https://kubra.io/"
             self.driver.get(self.url + v[1:])
-            time.sleep(2)
+            time.sleep(5)
             requests = self.driver.requests
 
             for r in requests:
@@ -529,7 +529,7 @@ class Scraper7(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
-
+        time.sleep(5)
         try:
             self.wait_for_request(lambda request: "ShellOut" in request.url)
         except TimeoutError:
@@ -541,6 +541,7 @@ class Scraper7(BaseScraper):
         for request in self.driver.requests:
             if "ShellOut" in request.url:
                 print(request.url)
+
                 try:
                     response = sw_decode(
                         request.response.body,
@@ -612,18 +613,14 @@ class Scraper9(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         self.driver.get(self.url)
-
-        if self.emc != "Karnes Electric Coop, Inc.":
-            if self.emc == "San Patricio Electric Coop, Inc.":
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located(
-                        (By.CSS_SELECTOR, "div.mapwise-web-modal-header h5")
-                    )
-                )
-            else:
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
-                )
+        if (
+            self.emc != "Karnes Electric Coop, Inc."
+            and self.emc != "BrightRidge"
+            and self.emc != "San Patricio Electric Coop, Inc."
+        ):
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
+            )
             button = self.driver.find_elements(
                 "xpath", '//*[@id="OMS.Customers Summary"]'
             )
@@ -633,12 +630,12 @@ class Scraper9(BaseScraper):
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
-
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox"))
         )
         page_source = {}
         select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
+        time.sleep(1)
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
