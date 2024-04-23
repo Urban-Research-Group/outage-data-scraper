@@ -16,7 +16,6 @@ from .ga_scraper import (
     Scraper9 as GA_Scraper9,
     Scraper4 as GA_Scraper4,
     Scraper11 as GA_Scraper11,
-    Scraper4 as GA_Scraper4,
     Scraper3 as GA_Scraper3,
     Scraper5 as GA_Scraper5,
 )
@@ -208,7 +207,7 @@ class Scraper5(BaseScraper):
         df_data = []
         for obj in data["per_outage"]:
             for outage in obj["hits"]["hits"]:
-                print(outage)
+                # print(outage)
                 d = {
                     "id": outage["_id"],
                     "customerCount": outage["_source"]["customerCount"],
@@ -231,7 +230,8 @@ class Scraper5(BaseScraper):
         self.driver.get(self.url)
 
         # Sleeps for 5 seconds
-        self.driver.implicitly_wait(5)
+        # self.driver.implicitly_wait(5)
+        time.sleep(5)
 
         raw_data = {}
 
@@ -239,7 +239,7 @@ class Scraper5(BaseScraper):
         raw_data["per_outage"] = []
         for r in requests:
             if "_outage" in r.url:
-                print(f"scraping data from {r.url}")
+                # print(f"scraping data from {r.url}")
                 response = sw_decode(
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
