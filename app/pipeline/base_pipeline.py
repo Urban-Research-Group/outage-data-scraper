@@ -14,8 +14,9 @@ class BasePipeline:
         self.base_file_path = base_file_path
         self.type_to_prefix = {'o': 'per_outage', 'c': 'per_county', 'z': 'per_zipcode'} 
         self._data = pd.DataFrame({})
+        self.geomap = {}
         self._load_data()
-        # self._load_geo_mapping()
+        self._load_geo_mapping()
         
     def _load_geo_mapping(self):
         try:
@@ -23,6 +24,8 @@ class BasePipeline:
                 self.geomap['zip_to_county_name'] = json.load(json_file)
             with open('zip_to_county_fips.json', 'r') as json_file:
                 self.geomap['zip_to_county_fips'] = json.load(json_file)
+            with open('zip_to_state_name.json', 'r') as json_file:
+                self.geomap['zip_to_state_name'] = json.load(json_file)
         except Exception as e:
             print(f"An error occurred during geo map loading: {e}") 
         

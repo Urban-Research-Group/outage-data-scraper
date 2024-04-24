@@ -1,11 +1,8 @@
 globals:
+  # local_base_file_path: /Users/uirja/OneDrive/Personal Files/CS Projects/outage-data-scraper/raw_data # for joshua
   LOCAL_FILE_BASE_PATH: /Users/xuanedx1/github/outage-data-scraper/data/s3
 
 providers:
-  # - name: investor_owned
-  #   state: ca
-  #   layout: investor
-  #   type: o
   # - name: Amicalola EMC
   #   state: ga
   #   layout: 1
@@ -57,6 +54,10 @@ providers:
   # - name: Washington EMC
   #   state: ga
   #   layout: 1
+  #   type: o
+  # - name: investor_owned
+  #   state: ca
+  #   layout: investor
   #   type: o
   # - name: Coastal Electric Cooperation
   #   state: ga
@@ -130,11 +131,47 @@ providers:
   #   state: tx
   #   layout: 8
   #   type: o
-  # - name: Comanche Electric Coop
-  #   state: tx
-  #   layout: 16
+  # - name: Blueridge Mountain EMC
+  #   state: ga 
+  #   layout: 2
   #   type: o
-  # - name: Southwestern Electric Coop, Inc.
-  #   state: tx
-  #   layout: 16
+  # - name: Tri-County EMC  # I ASSUMED "TRI-COUNTT" WAS A TYPO AND CHANGED IT TO TRI-COUNTY
+  #   state: ga
+  #   layout: 2
   #   type: o
+  # - name: United Coop Services, Inc.
+  #   state: tx
+  #   layout: 17
+  #   type: o
+  # - name: Walton EMC
+  #   state: ga
+  #   layout: 11
+  #   type: o
+  # - name: Tri-State EMC
+  #   state: ga
+  #   layout: 11
+  #   type: o
+  # - name: Oconee EMC
+  #   state: ga
+  #   layout: 11
+  #   type: o
+  # - name: Mitchell EMC
+  #   state: ga
+  #   layout: 11
+  #   type: o
+  # - name: Wise Electric Coop, Inc.
+  #   state: tx
+  #   layout: 12
+  #   type: o
+  # - name: Houston County Electric Coop, Inc.
+  #   state: tx
+  #   layout: 12
+  #   type: o
+  # - name: Cherokee County Electric Coop Association
+  #   state: tx
+  #   layout: 12
+  #   type: o
+  - name: Colquitt EMC
+    state: ga
+    layout: 5
+    type: o
