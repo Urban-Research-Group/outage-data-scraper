@@ -31,7 +31,7 @@ class Scraper:
             return NCScraper(layout_id, url, emc)
         elif state == "ms":
             return MSScraper(layout_id, url, emc)
-        elif state == "LA":
+        elif state == "la":
             return LAScraper(layout_id, url, emc)
         else:
             raise "Invalid input state"
