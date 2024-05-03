@@ -171,6 +171,7 @@ class BaseScraper:
         chrome_options.add_argument("--enable-logging")
         chrome_options.add_argument("--log-level=0")
         chrome_options.add_argument("--v=99")
+        chrome_options.add_argument("--blink-settings=imagesEnabled=false")
         chrome_options.add_experimental_option(
             "prefs", {"profile.managed_default_content_settings.images": 2}
         )

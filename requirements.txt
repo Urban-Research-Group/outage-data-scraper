@@ -9,3 +9,4 @@ selenium==4.9.1
 selenium-wire
 xmltodict
 webdriver-manager
+blinker==1.7.0
