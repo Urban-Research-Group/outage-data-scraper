@@ -650,7 +650,7 @@ class Scraper10(BaseScraper):
 
     def parse(self):
         data = self.fetch()
-        if data == []:
+        if data["per_county"] == []:
             df = pd.DataFrame()
             data = {"per_county": df}
             return data
@@ -687,6 +687,7 @@ class Scraper10(BaseScraper):
         raw_data = {}
         try:
             raw_data["per_county"] = requests.get(self.url).json()["features"]
+
         except Exception as e:
             print(e.text)
             print("No data!")
