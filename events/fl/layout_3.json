@@ -1,0 +1,9 @@
+{
+    "layout": 3,
+    "emc": {
+        "Orlando Utilities Commission": "https://outagemap.ouc.com/external/default.html",
+        "Seminole Electric Cooperative": "https://stormcenter.secoenergy.com"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

@@ -1,0 +1,8 @@
+{
+    "layout": 4,
+    "emc": {
+        "Florida Public Utilities Corporation": "https://www.outageentry.com/Outages/outage.php?Client=fpuc"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}
