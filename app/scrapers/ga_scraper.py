@@ -650,6 +650,10 @@ class Scraper10(BaseScraper):
 
     def parse(self):
         data = self.fetch()
+        if data == []:
+            df = pd.DataFrame()
+            data = {"per_county": df}
+            return data
         df = pd.DataFrame(data["per_county"])
 
         df.rename(columns={"attributes": "data"}, inplace=True)

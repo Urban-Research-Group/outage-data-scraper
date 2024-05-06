@@ -7,6 +7,8 @@ from scrapers.util import save, timenow
 
 import pandas as pd
 
+import argparse
+
 
 def handler(event, context=""):
     layout_id = event["layout"]
@@ -63,10 +65,17 @@ def handler(event, context=""):
 
 
 if __name__ == "__main__":
+
+    args = argparse.ArgumentParser()
+    args.add_argument("-s", "--state", type=str, required=True)
+    args.add_argument("-l", "--layout", type=int, required=True)
+    args = args.parse_args()
+    test_file = f"../events/{args.state}/layout_{args.layout}.json"
+
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/tn/test.json")
+    event_path = os.path.join(os.getcwd(), test_file)
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)
