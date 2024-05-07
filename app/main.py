@@ -68,7 +68,7 @@ if __name__ == "__main__":
 
     args = argparse.ArgumentParser()
     args.add_argument("-s", "--state", type=str, required=True)
-    args.add_argument("-l", "--layout", type=int, required=True)
+    args.add_argument("-l", "--layout", type=str, required=True)
     args = args.parse_args()
     test_file = f"../events/{args.state}/layout_{args.layout}.json"
 

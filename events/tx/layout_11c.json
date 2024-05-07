@@ -1,0 +1,14 @@
+{
+    "layout": 11,
+    "emc": {
+        "Hill Country Electric Coop, Inc.": "https://ebill.hilco.coop/maps/public/OutageWebMap/",
+        "Karnes Electric Coop, Inc.": "https://ebill.karnesec.org/maps/ExternalOutageMap/",
+        "Lamb County Electric Coop, Inc.": "https://ebill.lcec.coop/maps/external/OutageWebMap/",
+        "Lea County Electric Coop, Inc.": "https://ebill.lcecnet.com/maps/OutageWebMap/",
+        "Medina Electric Coop, Inc.": "https://ebill.medinaec.org/maps/OutageWebMap/",
+        "Rio Grande Electric Coop, Inc.": "https://ebill.rgec.com/woViewer/mapviewer.html?config=Outage+Web+Map",
+        "Rita Blanca Electric Coop, Inc.": "https://ebill.ritablancaelectric.com/maps/IvueConnect/"
+    },
+    "bucket": "data",
+    "folder": "tx"
+}

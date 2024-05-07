@@ -169,10 +169,16 @@ class Scraper2(BaseScraper):
     def fetch(self):
         print(f"Fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
-        self.driver.get(self.url)
+        page_source = self.get_page_source(
+            self.url,
+            By.XPATH,
+            "/html/body/app-root/app-euds-opco-branding/div/div/div/app-page-article/div/div[2]/div/div[2]/app-section/section/app-euds-card/div/app-iframe/iframe",
+            10,
+        )
+        # self.driver.get(self.url)
         # Sleeps for 5 seconds
-        time.sleep(5)
-        page_source = self.driver.page_source
+        # time.sleep(10)
+        # page_source = self.driver.page_source
         raw_data = {}
         try:
             # parse reports link
