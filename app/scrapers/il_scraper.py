@@ -254,30 +254,25 @@ class Scraper7(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            data_source = []
-            for request in self.driver.requests:
-                if (
-                    "CityOutageData" in request.url
-                    or "CountyInfo" in request.url
-                    or "GetAllMetroOutages" in request.url
-                ):
-                    data_source.append(request.url)
-            raw_data = {}
-            for url in data_source:
-                if "CityOutageData" in url:
-                    raw_data["per_city"] = requests.post(url).json()
-                    print(f"got city data")
-                elif "CountyInfo" in url:
-                    raw_data["per_county"] = requests.post(url).json()
-                    print(f"got county data")
-                elif "GetAllMetroOutages" in url:
-                    raw_data["per_metro"] = requests.post(url).json()
-                    print(f"got metro data")
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        data_source = []
+        for request in self.driver.requests:
+            if (
+                "CityOutageData" in request.url
+                or "CountyInfo" in request.url
+                or "GetAllMetroOutages" in request.url
+            ):
+                data_source.append(request.url)
+        raw_data = {}
+        for url in data_source:
+            if "CityOutageData" in url:
+                raw_data["per_city"] = requests.post(url).json()
+                print(f"got city data")
+            elif "CountyInfo" in url:
+                raw_data["per_county"] = requests.post(url).json()
+                print(f"got county data")
+            elif "GetAllMetroOutages" in url:
+                raw_data["per_metro"] = requests.post(url).json()
+                print(f"got metro data")
 
         return raw_data
 
@@ -315,26 +310,20 @@ class Scraper8(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            data_source = []
-            for request in self.driver.requests:
-                if "AreaSummary" in request.url:
-                    data_source.append(request.url)
-            raw_data = {}
-            for url in data_source:
-                if "AreaSummary" in url:
-                    tmp = requests.get(url).json()
-                    if tmp["zipCodeAreas"]:
-                        raw_data["per_zipcode"] = tmp["zipCodeAreas"]
-                    if tmp["countyAreas"]:
-                        raw_data["per_county"] = tmp["countyAreas"]
-                    if tmp["districtAreas"]:
-                        raw_data["per_district"] = tmp["districtAreas"]
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
-
+        data_source = []
+        for request in self.driver.requests:
+            if "AreaSummary" in request.url:
+                data_source.append(request.url)
+        raw_data = {}
+        for url in data_source:
+            if "AreaSummary" in url:
+                tmp = requests.get(url).json()
+                if tmp["zipCodeAreas"]:
+                    raw_data["per_zipcode"] = tmp["zipCodeAreas"]
+                if tmp["countyAreas"]:
+                    raw_data["per_county"] = tmp["countyAreas"]
+                if tmp["districtAreas"]:
+                    raw_data["per_district"] = tmp["districtAreas"]
         return raw_data
 
 
