@@ -75,17 +75,11 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
+    event_path = os.path.join(os.getcwd(), "../events/la/layout_6.json")
     event_path = os.path.join(os.getcwd(), test_file)
     with open(event_path) as f:
         test_event = json.loads(f.read())
     handler(test_event)
-
-    # single test here
-    # sc = Scraper(state='tx',
-    #              layout_id=11,
-    #              url="https://ebill.karnesec.org/maps/ExternalOutageMap/",
-    #              emc="dev")
-    # print(sc.parse())
 
     end = time.time()
     print(end - start)
