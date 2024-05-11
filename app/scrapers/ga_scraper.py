@@ -234,16 +234,23 @@ class Scraper1(BaseScraper):
 
             # Processing per_outage data.
             elif key == "per_outage":
+                start = time.time()
                 per_outage_df = pd.DataFrame(val)
-                zips = [
-                    self.extract_zipcode(point["lat"], point["lng"])
-                    for point in per_outage_df["outagePoint"]
-                ]
+
+                # For massive data, we will not extract zipcode for each point.
+                if len(per_outage_df["outagePoint"]) < 50:
+                    zips = [
+                        self.extract_zipcode(point["lat"], point["lng"])
+                        for point in per_outage_df["outagePoint"]
+                    ]
+                else:
+                    zips = ["Outage scale too large to extract zipcodes"] * len(
+                        per_outage_df["outagePoint"]
+                    )
                 per_outage_df["zip"] = zips
                 per_outage_df["timestamp"] = timenow_value
                 per_outage_df["EMC"] = self.emc
                 data[key] = per_outage_df
-
         return data
 
     def fetch(self):
