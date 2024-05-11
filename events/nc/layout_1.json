@@ -11,8 +11,7 @@
         "South River EMC": "https://outage.sremc.com/",
         "Union Power Cooperative": "https://outage.union-power.com/",
         "Pee Dee Electric": "http://omv.pdemc.com/",
-        "Central Electric": "https://outage.cemcpower.com/",
-        "Tideland EMC": "https://outagemap.tidelandemc.com"
+        "Central Electric": "https://outage.cemcpower.com/"
     },
     "bucket": "data",
     "folder": "nc"

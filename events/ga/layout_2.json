@@ -1,7 +1,7 @@
 {
     "layout": 2,
     "emc": {
-        "Tri-Countt EMC": "http://151.213.202.201:89/"
+        "Tri-Countt EMC": "http://216.147.85.113:89/"
     },
     "bucket": "data",
     "folder": "ga"

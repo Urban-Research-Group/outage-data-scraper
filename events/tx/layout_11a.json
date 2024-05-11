@@ -1,0 +1,14 @@
+{
+    "layout": 11,
+    "emc": {
+        "Bandera Electric Coop, Inc.": "https://smarthub.banderaelectric.com/maps/external/OutageWebMap/",
+        "Bartlett Electric Coop, Inc.": "https://ebill.bartlettec.coop/maps/External_Outage_Map/",
+        "Central Texas Electric Coop, Inc.": "https://ebill.ctec.coop/woViewer/mapviewer.html?config=Outage+Web+Map",
+        "Concho Valley Electric Coop, Inc.": "https://ebill.cvec.coop/maps/OutageWebMap/",
+        "CoServ Electric": "https://nrc4.coserv.com/maps/CoServOutageMap/",
+        "Deaf Smith Electric Coop, Inc.": "https://ebill.dsec.org/maps/public/OutageWebMap/",
+        "Grayson Collin Electric Coop, Inc.": "https://ebill.grayson-collin.coop/woViewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "tx"
+}
