@@ -638,7 +638,12 @@ class Scraper9(BaseScraper):
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
 
-        if self.emc == "Lee County Electric Cooperative":
+        if (
+            self.emc == "Lee County Electric Cooperative"
+            or self.emc == "EnergyUnited"
+            or self.emc == "Mecklenburg Electric Cooperative"
+            or self.emc == "Surry-Yadkin EMC"
+        ):
             time.sleep(5)
 
         WebDriverWait(self.driver, 10).until(
