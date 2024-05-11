@@ -238,7 +238,7 @@ class Scraper1(BaseScraper):
                 per_outage_df = pd.DataFrame(val)
 
                 # For massive data, we will not extract zipcode for each point.
-                if len(per_outage_df["outagePoint"]) < 50:
+                if len(per_outage_df["outagePoint"]) < 10:
                     zips = [
                         self.extract_zipcode(point["lat"], point["lng"])
                         for point in per_outage_df["outagePoint"]
@@ -637,6 +637,10 @@ class Scraper9(BaseScraper):
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
+
+        if self.emc == "Lee County Electric Cooperative":
+            time.sleep(5)
+
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox"))
         )
