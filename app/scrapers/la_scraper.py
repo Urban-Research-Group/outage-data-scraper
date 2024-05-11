@@ -24,9 +24,8 @@ import ssl
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
-from .ga_scraper import (
-    BaseScraper
-)
+from .ga_scraper import BaseScraper
+
 
 class Scraper3(BaseScraper):
     def __init__(self, url, emc):
@@ -40,7 +39,11 @@ class Scraper3(BaseScraper):
             del d["affectedAreas"]
 
         out = {}
-        out["per_outage"] = pd.DataFrame(data["per_outage"]["data"])
+
+        df = pd.DataFrame(data["per_outage"]["data"])
+        df["timestamp"] = timenow()
+        df["EMC"] = self.emc
+        out.update({"per_outage": df})
 
         return out
 
@@ -59,7 +62,8 @@ class Scraper3(BaseScraper):
                 raw_data["per_outage"] = json.loads(response.decode("utf-8"))
 
         return raw_data
-    
+
+
 class Scraper6(BaseScraper):
     def __init__(self, url, emc):
         super().__init__(url, emc)
@@ -69,8 +73,11 @@ class Scraper6(BaseScraper):
         data = self.fetch()
 
         out = {}
-        out["per_outage"] = pd.DataFrame(data["per_outage"])
 
+        df = pd.DataFrame(data["per_outage"])
+        df["timestamp"] = timenow()
+        df["EMC"] = self.emc
+        out.update({"per_outage": df})
         return out
 
     def fetch(self):
@@ -81,6 +88,7 @@ class Scraper6(BaseScraper):
             raw_data["per_outage"] = json.loads(response.read())
 
         return raw_data
+
 
 class LAScraper:
     def __new__(cls, layout_id, url, emc):

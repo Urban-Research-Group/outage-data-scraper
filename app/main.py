@@ -81,12 +81,5 @@ if __name__ == "__main__":
         test_event = json.loads(f.read())
     handler(test_event)
 
-    # single test here
-    """ sc = Scraper(state='la',
-                 layout_id=6,
-                 url="https://utilisocial.io/datacapable/v2/p/lus/map/events",
-                 emc="dev")
-    print(sc.parse()) """
-
     end = time.time()
     print(end - start)
