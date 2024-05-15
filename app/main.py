@@ -75,7 +75,6 @@ if __name__ == "__main__":
     start = time.time()
 
     # handler test here
-    event_path = os.path.join(os.getcwd(), "../events/la/layout_6.json")
     event_path = os.path.join(os.getcwd(), test_file)
     with open(event_path) as f:
         test_event = json.loads(f.read())

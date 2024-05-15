@@ -421,6 +421,9 @@ class Scraper4(BaseScraper):
                     elif "city" in data or "City" in data:
                         raw_data["per_city"] = json.loads(data)["file_data"]
                         print(f"got city data")
+                    elif "ctv" in data:
+                        raw_data["per_town"] = json.loads(data)["file_data"]
+                        print(f"got ctv data")
 
         return raw_data
 
@@ -655,6 +658,8 @@ class Scraper9(BaseScraper):
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
+            menu.select_by_index(idx)
+            time.sleep(3)
             page_source.update({f"per_{level}": self.driver.page_source})
         return page_source
 

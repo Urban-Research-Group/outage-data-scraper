@@ -1,0 +1,10 @@
+{
+    "layout": 2,
+    "emc": {
+        "Claiborne Electric Cooperative": "https://ebill.our.coop/maps/OutageWebMap/",
+        "Southwest Louisiana EMC": "https://www.slemcoebill.com/maps/OutageWebMap/",
+        "Washington St. Tammany Electric Cooperative": "https://ebill.wste.coop/woViewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "la"
+}

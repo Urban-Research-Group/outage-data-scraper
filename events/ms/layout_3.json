@@ -1,0 +1,8 @@
+{
+    "layout": 3,
+    "emc": {
+        "Tippah EPA": "https://webmap.tippahepa.com/OMSWebMap/"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}

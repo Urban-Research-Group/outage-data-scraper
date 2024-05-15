@@ -1,0 +1,8 @@
+{
+    "layout": 4,
+    "emc": {
+        "Mississippi Power": "https://outagemap.mississippipower.com/external/default.html"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}

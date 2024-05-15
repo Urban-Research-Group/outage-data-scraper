@@ -249,7 +249,7 @@ class Scraper5(BaseScraper):
         raw_data["per_outage"] = []
         for r in requests:
             if "_outage" in r.url:
-                print(f"scraping data from {r.url}")
+                # print(f"scraping data from {r.url}")
                 response = sw_decode(
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
