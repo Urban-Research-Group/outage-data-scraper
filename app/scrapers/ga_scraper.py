@@ -251,16 +251,23 @@ class Scraper1(BaseScraper):
 
             # Processing per_outage data.
             elif key == "per_outage":
+                start = time.time()
                 per_outage_df = pd.DataFrame(val)
-                zips = [
-                    self.extract_zipcode(point["lat"], point["lng"])
-                    for point in per_outage_df["outagePoint"]
-                ]
+
+                # For massive data, we will not extract zipcode for each point.
+                if len(per_outage_df["outagePoint"]) < 10:
+                    zips = [
+                        self.extract_zipcode(point["lat"], point["lng"])
+                        for point in per_outage_df["outagePoint"]
+                    ]
+                else:
+                    zips = ["Outage scale too large to extract zipcodes"] * len(
+                        per_outage_df["outagePoint"]
+                    )
                 per_outage_df["zip"] = zips
                 per_outage_df["timestamp"] = timenow_value
                 per_outage_df["EMC"] = self.emc
                 data[key] = per_outage_df
-
         return data
 
     def fetch(self):
@@ -647,6 +654,15 @@ class Scraper9(BaseScraper):
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
+
+        if (
+            self.emc == "Lee County Electric Cooperative"
+            or self.emc == "EnergyUnited"
+            or self.emc == "Mecklenburg Electric Cooperative"
+            or self.emc == "Surry-Yadkin EMC"
+        ):
+            time.sleep(5)
+
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox"))
         )
@@ -667,7 +683,7 @@ class Scraper10(BaseScraper):
 
     def parse(self):
         data = self.fetch()
-        if data == []:
+        if data["per_county"] == []:
             df = pd.DataFrame()
             data = {"per_county": df}
             return data
@@ -704,6 +720,7 @@ class Scraper10(BaseScraper):
         raw_data = {}
         try:
             raw_data["per_county"] = requests.get(self.url).json()["features"]
+
         except Exception as e:
             print(e.text)
             print("No data!")

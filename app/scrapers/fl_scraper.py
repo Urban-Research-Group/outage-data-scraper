@@ -30,6 +30,8 @@ class Scraper1(BaseScraper):
         data = self.fetch()
         per_county_df = pd.DataFrame(data["per_county"]["outages"])
         per_county_df = per_county_df[per_county_df["Customers Out"] != "0"]
+        per_county_df["timestamp"] = timenow()
+        per_county_df["EMC"] = self.emc
         data.update({"per_county": per_county_df})
 
         return data
@@ -73,9 +75,11 @@ class Scraper2(BaseScraper):
                 "total_customers_served",
                 "total_outages",
                 "total_customers_affected",
-                "timestamp",
+                "data_generated",
             ],
         )
+        per_city_df["timestamp"] = timenow()
+        per_city_df["EMC"] = self.emc
         data.update({"per_city": per_city_df})
         print(per_city_df)
 
@@ -131,6 +135,8 @@ class Scraper3(BaseScraper):
             ],
         )
         per_outage_df = per_outage_df[per_outage_df["peopleAffected"] != 0]
+        per_outage_df["timestamp"] = timenow()
+        per_outage_df["EMC"] = self.emc
         data.update({"per_outage": per_outage_df})
 
         return data
@@ -152,49 +158,51 @@ class Scraper3(BaseScraper):
         return raw_data
 
 
-class Scraper4(BaseScraper):
-    def __init__(self, url, emc):
-        super().__init__(url, emc)
-        self.driver = self.init_webdriver()
+# class Scraper4(BaseScraper):
+#     def __init__(self, url, emc):
+#         super().__init__(url, emc)
+#         self.driver = self.init_webdriver()
 
-    def parse(self):
-        data = self.fetch()
-        per_outage_df = pd.DataFrame.from_records(data["per_outage"]["data"])
-        data.update({"per_outage": per_outage_df})
+#     def parse(self):
+#         data = self.fetch()
+#         per_outage_df = pd.DataFrame.from_records(data["per_outage"]["data"])
 
-        return data
 
-    def fetch(self):
-        print(f"fetching {self.emc} outages from {self.url}")
-        # Send a request to the website and let it load
-        self.driver.get(self.url)
+#         data.update({"per_outage": per_outage_df})
 
-        # Sleeps for 5 seconds
-        # self.driver.implicitly_wait(10)
-        time.sleep(10)
+#         return data
 
-        raw_data = {}
+#     def fetch(self):
+#         print(f"fetching {self.emc} outages from {self.url}")
+#         # Send a request to the website and let it load
+#         self.driver.get(self.url)
 
-        requests = self.driver.requests
-        for r in requests:
-            if "outages?jurisdiction=DEF" in r.url:
-                print(f"scraping data from {r.url}")
-                response = sw_decode(
-                    r.response.body,
-                    r.response.headers.get("Content-Encoding", "identity"),
-                )
-                data = response.decode("utf8", "ignore")
-                raw_data["per_outage"] = json.loads(data)
-            elif "counties?jurisdiction=DEF" in r.url:
-                print(f"scraping data from {r.url}")
-                response = sw_decode(
-                    r.response.body,
-                    r.response.headers.get("Content-Encoding", "identity"),
-                )
-                data = response.decode("utf8", "ignore")
-                raw_data["per_county"] = json.loads(data)
+#         # Sleeps for 5 seconds
+#         # self.driver.implicitly_wait(10)
+#         time.sleep(10)
 
-        return raw_data
+#         raw_data = {}
+
+#         requests = self.driver.requests
+#         for r in requests:
+#             if "outages?jurisdiction=DEF" in r.url:
+#                 print(f"scraping data from {r.url}")
+#                 response = sw_decode(
+#                     r.response.body,
+#                     r.response.headers.get("Content-Encoding", "identity"),
+#                 )
+#                 data = response.decode("utf8", "ignore")
+#                 raw_data["per_outage"] = json.loads(data)
+#             elif "counties?jurisdiction=DEF" in r.url:
+#                 print(f"scraping data from {r.url}")
+#                 response = sw_decode(
+#                     r.response.body,
+#                     r.response.headers.get("Content-Encoding", "identity"),
+#                 )
+#                 data = response.decode("utf8", "ignore")
+#                 raw_data["per_county"] = json.loads(data)
+
+#         return raw_data
 
 
 class Scraper5(BaseScraper):
@@ -220,6 +228,8 @@ class Scraper5(BaseScraper):
                 }
                 df_data.append(d)
         per_outage_df = pd.DataFrame.from_records(df_data)
+        per_outage_df["timestamp"] = timenow()
+        per_outage_df["EMC"] = self.emc
         data.update({"per_outage": per_outage_df})
 
         return data
@@ -239,7 +249,7 @@ class Scraper5(BaseScraper):
         raw_data["per_outage"] = []
         for r in requests:
             if "_outage" in r.url:
-                # print(f"scraping data from {r.url}")
+                print(f"scraping data from {r.url}")
                 response = sw_decode(
                     r.response.body,
                     r.response.headers.get("Content-Encoding", "identity"),
@@ -258,6 +268,8 @@ class Scraper6(BaseScraper):
     def parse(self):
         data = self.fetch()
         per_outage_df = pd.DataFrame.from_records(data)
+        per_outage_df["timestamp"] = timenow()
+        per_outage_df["EMC"] = self.emc
         data.update({"per_outage": per_outage_df})
 
         return data
@@ -288,6 +300,8 @@ class Scraper7(BaseScraper):
     def parse(self):
         data = self.fetch()
         per_outage_df = pd.DataFrame.from_records(data["per_outage"]["returndata"])
+        per_outage_df["timestamp"] = timenow()
+        per_outage_df["EMC"] = self.emc
         data.update({"per_outage": per_outage_df})
 
         return data
@@ -316,6 +330,9 @@ class Scraper8(BaseScraper):
     def parse(self):
         data = self.fetch()
         per_outage_df = pd.DataFrame.from_records(data)
+        per_outage_df["timestamp"] = timenow()
+        per_outage_df["EMC"] = self.emc
+
         data.update({"per_outage": per_outage_df})
 
         return data

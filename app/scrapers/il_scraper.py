@@ -77,61 +77,56 @@ class Scraper1(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            page_source = self.driver.page_source
-            soup = BeautifulSoup(page_source, "html.parser")
-            iframe_tag = self.driver.find_element(By.ID, "stormcenter")
-            source_page = iframe_tag.get_attribute("src")
+        page_source = self.driver.page_source
+        soup = BeautifulSoup(page_source, "html.parser")
+        iframe_tag = self.driver.find_element(By.ID, "stormcenter")
+        source_page = iframe_tag.get_attribute("src")
 
-            self.driver.get(source_page)
-            time.sleep(5)
+        self.driver.get(source_page)
+        time.sleep(5)
 
-            county_button = self.driver.find_element(
-                By.XPATH, "/html/body/div[1]/div[8]/div/div[9]/a[1]"
-            )
+        county_button = self.driver.find_element(
+            By.XPATH, "/html/body/div[1]/div[8]/div/div[9]/a[1]"
+        )
 
-            data_source = []
+        data_source = []
 
-            county_button.click()
-            time.sleep(5)
-            for request in self.driver.requests:
-                if "report_county" in request.url:
-                    data_source.append(request.url)
-                    break
+        county_button.click()
+        time.sleep(5)
+        for request in self.driver.requests:
+            if "report_county" in request.url:
+                data_source.append(request.url)
+                break
 
-            # we have to do this again since click county button will refresh the page
-            self.driver.get(source_page)
-            time.sleep(5)
+        # we have to do this again since click county button will refresh the page
+        self.driver.get(source_page)
+        time.sleep(5)
 
-            zip_button = self.driver.find_element(
-                By.XPATH, "/html/body/div[1]/div[8]/div/div[9]/a[2]"
-            )
+        zip_button = self.driver.find_element(
+            By.XPATH, "/html/body/div[1]/div[8]/div/div[9]/a[2]"
+        )
 
-            zip_button.click()
-            time.sleep(5)
-            for request in self.driver.requests:
-                if "report_zip" in request.url:
-                    data_source.append(request.url)
-                    break
+        zip_button.click()
+        time.sleep(5)
+        for request in self.driver.requests:
+            if "report_zip" in request.url:
+                data_source.append(request.url)
+                break
 
-            raw_data = {}
-            for url in data_source:
-                if "report_county" in url:
-                    print(url)
-                    raw_data["per_county"] = requests.get(url).json()["file_data"][
-                        "areas"
-                    ][0]["areas"]
-                    print(f"got county data")
-                elif "report_zip" in url:
-                    print(url)
-                    raw_data["per_zipcode"] = requests.get(url).json()["file_data"][
-                        "areas"
-                    ][0]["areas"]
-                    print(f"got zip code data")
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        raw_data = {}
+        for url in data_source:
+            if "report_county" in url:
+                print(url)
+                raw_data["per_county"] = requests.get(url).json()["file_data"]["areas"][
+                    0
+                ]["areas"]
+                print(f"got county data")
+            elif "report_zip" in url:
+                print(url)
+                raw_data["per_zipcode"] = requests.get(url).json()["file_data"][
+                    "areas"
+                ][0]["areas"]
+                print(f"got zip code data")
 
         return raw_data
 
@@ -160,7 +155,6 @@ class Scraper2(BaseScraper):
                     f"no '{key}' outage of {self.emc} update found at",
                     datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
                 )
-
         self.driver.close()
         self.driver.quit()
 
@@ -174,60 +168,56 @@ class Scraper2(BaseScraper):
         time.sleep(5)
         page_source = self.driver.page_source
         raw_data = {}
-        try:
-            # parse reports link
-            iframe_tag = self.driver.find_element(
-                By.XPATH,
-                "/html/body/app-root/app-euds-opco-branding/div/div/div/app-page-article/div/div[2]/div/div[2]/app-section/section/app-euds-card/div/app-iframe/iframe",
-            )
-            source_page = iframe_tag.get_attribute("src")
-            print(f"Redirect to source_page: {source_page}")
 
-            self.driver.get(source_page)
+        # parse reports link
+        iframe_tag = self.driver.find_element(
+            By.XPATH,
+            "/html/body/app-root/app-euds-opco-branding/div/div/div/app-page-article/div/div[2]/div/div[2]/app-section/section/app-euds-card/div/app-iframe/iframe",
+        )
+        source_page = iframe_tag.get_attribute("src")
+        print(f"Redirect to source_page: {source_page}")
 
+        self.driver.get(source_page)
+
+        time.sleep(5)
+        page_source = self.driver.page_source
+
+        soup = BeautifulSoup(page_source, "html.parser")
+
+        containers = soup.find_all(class_="row report-link hyperlink-primary")
+        links = {}
+        for c in containers:
+            links.update({c.getText(): c.get("href")})
+
+        # get json reports
+        raw_data = {}
+        for k, v in links.items():
+            self.url = "https://kubra.io/"
+            self.driver.get(self.url + v[1:])
+            print(f"Fetching data from {self.url+v[1:]}")
             time.sleep(5)
-            page_source = self.driver.page_source
+            requests = self.driver.requests
+            visited = []  # somehow it we request multiple times
+            for r in requests:
+                if "report.json" in r.url and r.url not in visited:
+                    visited.append(r.url)
+                    print(f"Fetching report from {r.url}")
+                    response = sw_decode(
+                        r.response.body,
+                        r.response.headers.get("Content-Encoding", "identity"),
+                    )
+                    data = json.loads(response.decode("utf8", "ignore"))
 
-            soup = BeautifulSoup(page_source, "html.parser")
+                    if "county" in data["file_title"]:
+                        raw_data["per_county"] = data["file_data"]
+                        print(f"got county data")
+                    elif "ctv" in data["file_title"]:
+                        raw_data["per_city_town_village"] = data["file_data"]
+                        print(f"got city, town, and village data")
+                    elif "ward" in data["file_title"]:
+                        raw_data["per_chicago_ward"] = data["file_data"]
+                        print(f"got chicago ward data")
 
-            containers = soup.find_all(class_="row report-link hyperlink-primary")
-            links = {}
-            for c in containers:
-                links.update({c.getText(): c.get("href")})
-
-            # get json reports
-            raw_data = {}
-            for k, v in links.items():
-                self.url = "https://kubra.io/"
-                self.driver.get(self.url + v[1:])
-                print(f"Fetching data from {self.url+v[1:]}")
-                time.sleep(5)
-                requests = self.driver.requests
-                visited = []  # somehow it we request multiple times
-                for r in requests:
-                    if "report.json" in r.url and r.url not in visited:
-                        visited.append(r.url)
-                        print(f"Fetching report from {r.url}")
-                        response = sw_decode(
-                            r.response.body,
-                            r.response.headers.get("Content-Encoding", "identity"),
-                        )
-                        data = json.loads(response.decode("utf8", "ignore"))
-
-                        if "county" in data["file_title"]:
-                            raw_data["per_county"] = data["file_data"]
-                            print(f"got county data")
-                        elif "ctv" in data["file_title"]:
-                            raw_data["per_city_town_village"] = data["file_data"]
-                            print(f"got city, town, and village data")
-                        elif "ward" in data["file_title"]:
-                            raw_data["per_chicago_ward"] = data["file_data"]
-                            print(f"got chicago ward data")
-
-        except Exception as e:
-            print(e)
-            self.driver.close()
-            self.driver.quit()
         return raw_data
 
 
@@ -264,30 +254,25 @@ class Scraper7(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            data_source = []
-            for request in self.driver.requests:
-                if (
-                    "CityOutageData" in request.url
-                    or "CountyInfo" in request.url
-                    or "GetAllMetroOutages" in request.url
-                ):
-                    data_source.append(request.url)
-            raw_data = {}
-            for url in data_source:
-                if "CityOutageData" in url:
-                    raw_data["per_city"] = requests.post(url).json()
-                    print(f"got city data")
-                elif "CountyInfo" in url:
-                    raw_data["per_county"] = requests.post(url).json()
-                    print(f"got county data")
-                elif "GetAllMetroOutages" in url:
-                    raw_data["per_metro"] = requests.post(url).json()
-                    print(f"got metro data")
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        data_source = []
+        for request in self.driver.requests:
+            if (
+                "CityOutageData" in request.url
+                or "CountyInfo" in request.url
+                or "GetAllMetroOutages" in request.url
+            ):
+                data_source.append(request.url)
+        raw_data = {}
+        for url in data_source:
+            if "CityOutageData" in url:
+                raw_data["per_city"] = requests.post(url).json()
+                print(f"got city data")
+            elif "CountyInfo" in url:
+                raw_data["per_county"] = requests.post(url).json()
+                print(f"got county data")
+            elif "GetAllMetroOutages" in url:
+                raw_data["per_metro"] = requests.post(url).json()
+                print(f"got metro data")
 
         return raw_data
 
@@ -325,26 +310,20 @@ class Scraper8(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            data_source = []
-            for request in self.driver.requests:
-                if "AreaSummary" in request.url:
-                    data_source.append(request.url)
-            raw_data = {}
-            for url in data_source:
-                if "AreaSummary" in url:
-                    tmp = requests.get(url).json()
-                    if tmp["zipCodeAreas"]:
-                        raw_data["per_zipcode"] = tmp["zipCodeAreas"]
-                    if tmp["countyAreas"]:
-                        raw_data["per_county"] = tmp["countyAreas"]
-                    if tmp["districtAreas"]:
-                        raw_data["per_district"] = tmp["districtAreas"]
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
-
+        data_source = []
+        for request in self.driver.requests:
+            if "AreaSummary" in request.url:
+                data_source.append(request.url)
+        raw_data = {}
+        for url in data_source:
+            if "AreaSummary" in url:
+                tmp = requests.get(url).json()
+                if tmp["zipCodeAreas"]:
+                    raw_data["per_zipcode"] = tmp["zipCodeAreas"]
+                if tmp["countyAreas"]:
+                    raw_data["per_county"] = tmp["countyAreas"]
+                if tmp["districtAreas"]:
+                    raw_data["per_district"] = tmp["districtAreas"]
         return raw_data
 
 
