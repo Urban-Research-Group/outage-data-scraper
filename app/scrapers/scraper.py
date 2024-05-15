@@ -4,6 +4,8 @@ from .tx_scraper import TXScraper
 from .il_scraper import ILScraper
 from .ny_scraper import NYScraper
 from .tn_scraper import TNScraper
+from .fl_scraper import FLScraper
+from .nc_scraper import NCScraper
 
 from .la_scraper import LAScraper
 from .ms_scraper import MSScraper
@@ -23,9 +25,13 @@ class Scraper:
             return NYScraper(layout_id, url, emc)
         elif state == "tn":
             return TNScraper(layout_id, url, emc)
+        elif state == "fl":
+            return FLScraper(layout_id, url, emc)
+        elif state == "nc":
+            return NCScraper(layout_id, url, emc)
         elif state == "ms":
             return MSScraper(layout_id, url, emc)
-        elif state == "LA":
+        elif state == "la":
             return LAScraper(layout_id, url, emc)
         else:
             raise "Invalid input state"

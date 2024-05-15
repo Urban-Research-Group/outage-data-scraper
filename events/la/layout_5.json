@@ -1,0 +1,8 @@
+{
+    "layout": 5,
+    "emc": {
+        "Entergy": "https://entergy.datacapable.com/datacapable/v1/entergy/EntergyLouisiana/"
+    },
+    "bucket": "data",
+    "folder": "la"
+}

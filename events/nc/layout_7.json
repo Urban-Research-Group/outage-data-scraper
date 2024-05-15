@@ -1,0 +1,8 @@
+{
+    "layout": 7,
+    "emc": {
+        "Dominion Energy North Carolina": "https://outagemap.dominionenergy.com/external/default.html"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}

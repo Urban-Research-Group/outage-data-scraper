@@ -1,0 +1,18 @@
+{
+    "layout": 1,
+    "emc": {
+        "Albemarle EMC": "https://outages.aemc.coop/",
+        "Carteret-Craven Electric Cooperative": "http://outage.carteretcraven.coop/",
+        "Edgecombe-Martin County EMC": "http://74.122.17.102/",
+        "Halifax EMC": "https://outages.halifaxemc.com/",
+        "Piedmont Electric": "http://outageviewer.pemc.org:88/",
+        "Randolph EMC": "https://outages.randolphemc.com/",
+        "Rutherford EMC": "http://cvoutage.remc.com:8083/",
+        "South River EMC": "https://outage.sremc.com/",
+        "Union Power Cooperative": "https://outage.union-power.com/",
+        "Pee Dee Electric": "http://omv.pdemc.com/",
+        "Central Electric": "https://outage.cemcpower.com/"
+    },
+    "bucket": "data",
+    "folder": "nc"
+}

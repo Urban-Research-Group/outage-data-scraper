@@ -1,7 +1,7 @@
 {
         "layout": 4,
         "emc": {
-            "Entergy Texas, Inc.": "https://entergy.datacapable.com/datacapable/v1/entergy/EntergyTexas/zip"
+            "Entergy Texas, Inc.": "https://entergy.datacapable.com/datacapable/v1/entergy/EntergyTexas/"
         },
         "bucket": "data",
         "folder": "tx"

@@ -94,31 +94,23 @@ class Scraper2(BaseScraper):
         time.sleep(30)
 
         page_source = {}
-        try:
-            iframe_tag = self.driver.find_element(
-                By.XPATH,
-                "/html/body/div[2]/main/div/article/div[3]/div[1]/div/div/div/iframe",
-            )
-            self.driver.switch_to.frame(iframe_tag)
-            time.sleep(50)  # since this iframe is super slow
-            selector = self.driver.find_element(
-                By.XPATH,
-                "/html/body/div[2]/div/div[3]/div[2]/div/div/div[3]/font/select",
-            )
+        iframe_tag = self.driver.find_element(
+            By.XPATH,
+            "/html/body/div[2]/main/div/article/div[3]/div[1]/div/div/div/iframe",
+        )
+        self.driver.switch_to.frame(iframe_tag)
+        time.sleep(50)  # since this iframe is super slow
+        selector = self.driver.find_element(
+            By.XPATH,
+            "/html/body/div[2]/div/div[3]/div[2]/div/div/div[3]/font/select",
+        )
 
-            menu = Select(selector)
-            for idx, option in enumerate(menu.options):
-                level = option.text
-                menu.select_by_index(idx)
-                time.sleep(3)
-                page_source.update({f"per_{level}": self.driver.page_source})
-
-            return page_source
-
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        menu = Select(selector)
+        for idx, option in enumerate(menu.options):
+            level = option.text
+            menu.select_by_index(idx)
+            time.sleep(3)
+            page_source.update({f"per_{level}": self.driver.page_source})
 
         return page_source
 
@@ -174,19 +166,13 @@ class Scraper5(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            raw_data = {}
-            for request in self.driver.requests:
-                if "incidents" in request.url:
-                    data = requests.get(request.url).json()
-                    raw_data["per_district"] = data["district_metrics"]
-                    raw_data["per_outage"] = data["outage_points"]
-                    break
-
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        raw_data = {}
+        for request in self.driver.requests:
+            if "incidents" in request.url:
+                data = requests.get(request.url).json()
+                raw_data["per_district"] = data["district_metrics"]
+                raw_data["per_outage"] = data["outage_points"]
+                break
 
         return raw_data
 
@@ -236,18 +222,12 @@ class Scraper7(BaseScraper):
         # Sleeps for 5 seconds
         time.sleep(5)
 
-        try:
-            raw_data = {}
-            for request in self.driver.requests:
-                if "electric-outage-details" in request.url:
-                    data = requests.get(request.url).json()
-                    raw_data["per_outage"] = data["electricOutageDetails"]
-                    break
-
-        except Exception as e:
-            print(f"Error: {e}")
-            self.driver.close()
-            self.driver.quit()
+        raw_data = {}
+        for request in self.driver.requests:
+            if "electric-outage-details" in request.url:
+                data = requests.get(request.url).json()
+                raw_data["per_outage"] = data["electricOutageDetails"]
+                break
 
         return raw_data
 

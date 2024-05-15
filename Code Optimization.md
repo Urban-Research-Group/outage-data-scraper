@@ -1,12 +1,8 @@
 ## Code Optimization
 
+Based on one outage map **AEP Texas, Inc.**
 
-
-1. AEP Texas, Inc.
-
-​	Time(right now): 27.8976s
-
-Approch:
+Time (Original): 27.89s
 
 ### **Optimize Selenium WebDriver Use**
 
@@ -14,124 +10,90 @@ Approch:
 
    Loading images and CSS files can be time-consuming.
 
-   ![image-20240220191336816](/Users/xuanzhangliu/Library/Application Support/typora-user-images/image-20240220191336816.png)
+   ```python
+   chrome_options.add_argument("--blink-settings=imagesEnabled=false")
+   ```
 
-   **27.8 -> 27.0**
+   Outcome: **27.8 -> 27.0**
 
 2. **Page Load Strategy**
 
    Implement the "eager" page load strategy, instruct the browser to proceed with the script without waiting for all resources to finish loading
 
-   ![image-20240220191917817](/Users/xuanzhangliu/Library/Application Support/typora-user-images/image-20240220191917817.png)
+   ```python
+   desired_capabilities["pageLoadStrategy"] = "eager"
+   ```
+   
+   Outcome: **27.0 -> 25.5**
 
-​	**27.0 -> 25.5**
+3. **Adjust fixed timeouts:** 
 
-3. **Use Fast Selectors**
+   Use WebDriverWait to wait for a certain condition to be met before proceeding further in the script.
+
+   ```python
+   WebDriverWait(self.driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.mapwise-web-modal-header h5")))
+   ```
+
+   This line of code instructs Selenium to wait up to 10 seconds for an `h5` element within a `div` with the specified class to appear on the page.
+
+4. **Use Fast Selectors**
 
    Speed: find_element_by_id > find_element_by_css_selector > XPath
 
    Note: need to delve into each scraper, see the html and choose best way. 
 
-```python
-class Scraper1(BaseScraper):
-    def __init__(self, url, emc):
-        super().__init__(url, emc)
-        self.driver = self.init_webdriver()
-
-    def parse(self):
-        suffix = ["?report=report-panel-county", "?report=report-panel-zip"]
-
-        data = {}
-        for s in suffix:
-            url = self.url + s
-            print(f"fetching {self.emc} outages from {url}")
-            find_type = "class"
-            findkeyword = "report-table-tree"
-            html = self.get_page_source(url, find_type, findkeyword)
-            # print(html)
-
-            # parse table
-            soup = BeautifulSoup(html, "html.parser")
-            table = soup.find("table", attrs={find_type: findkeyword})
-            rows = table.find_all("tr")
-
-            data_rows = rows[2:]
-            raw_data = []
-            for row in data_rows:
-                cells = row.find_all("td")
-                raw_data.append([cell.text.strip() for cell in cells])
-
-            loc = "COUNTY" if s == "?report=report-panel-county" else "ZIP"
-            header = ["VIEW", loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
-            table_data = [dict(zip(header, row)) for row in raw_data]
-            df = pd.DataFrame(table_data)[
-                [loc, "CUSTOMER OUTAGES", "CUSTOMERS SERVED", "% AFFECTED"]
-            ]
-            df["timestamp"] = timenow()
-            df["EMC"] = self.emc
-            df = df[df["CUSTOMER OUTAGES"] != "0"]
-            key = "per_county" if loc == "COUNTY" else "per_zipcode"
-            data.update({key: df})
-
-        return data
-
-
-    def get_page_source(self, url=None, find_type = None, findkeyword = None, timeout=10):
-        """Get the page source of the url, waiting for a specific element type to be present."""
-        url = url if url else self.url
-        self.driver.get(url)
-        
-        # Map find_type to Selenium's By types
-        find_type_map = {
-            "class": By.CLASS_NAME,
-            "id": By.ID,
-            "tag": By.TAG_NAME,
-            "css": By.CSS_SELECTOR,
-            "xpath": By.XPATH,
-            "name": By.NAME,
-            "link_text": By.LINK_TEXT,
-            "partial_link_text": By.PARTIAL_LINK_TEXT,
-        }
-        
-        # Check if the provided find_type is supported
-        if find_type not in find_type_map:
-            raise ValueError(f"Unsupported find_type: {find_type}")
-        by_type = find_type_map[find_type]
-            # let the page load
-        try:
-            WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((by_type, findkeyword))
-            )
-        except TimeoutException:
-            print(f"Timed out waiting for page to load: {url}")
-            return ""  # Return empty string or handle as appropriate
-        
-        page_source = self.driver.page_source
-        return page_source
-```
-
 ### **Improve Network Performance**
 
-1. Adjust timeouts: 
+1. **Dynamic Request** 
 
-   Reduce the timeout parameter.
+   Iterates over all network requests recorded by the webdriver and filters those that meet the following criteria:
 
-   timeout: 5->1. Still working. And time reduced significantly.
+   - The URL contains the specified substring `part_of_url`.
+   - The request has a response (i.e., `r.response` is not None).
+   - The response's content type (Content-Type) includes `application/json`.
 
-   **25.5->9.8**
+   ```python
+       def wait_for_json_request(self, part_of_url, timeout=10):
+           """
+           Waits for a JSON request to be made that contains a specific part in its URL.
+           Args:
+               part_of_url: A substring of the URL to look for.
+               timeout: How long to wait for the request, in seconds.
+           """
+           start_time = time.time()
+   
+           if self.driver == None:
+               self.driver = self.init_webdriver()
+   
+           while True:
+               requests = [
+                   r
+                   for r in self.driver.requests
+                   if part_of_url in r.url
+                   and r.response
+                   and "application/json" in r.response.headers.get("Content-Type", "")
+               ]
+               if requests:
+                   return requests[0]  # Return the first matching request
+               elif time.time() - start_time > timeout:
+                   raise TimeoutError(
+                       f"JSON request containing '{part_of_url}' not found within timeout."
+                   )
+               time.sleep(0.5)  # Short sleep to avoid busy loop
+   ```
 
-   But not secure.
+​	This is a good idea, but needs to be incoporated into more scraper.
 
 2. **Concurrency**
 
-   Make parallel request. 
+   Make parallel request. Haven't tried.
 
 ### Parsing Logic
 
 1. **Efficient Beautiful soup**
 
    lxml is faster than html.parser
-   from https://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser
+   Source: https://www.crummy.com/software/BeautifulSoup/bs4/doc/#installing-a-parser
 
    ```python
    BeautifulSoup(markup, "lxml")
@@ -139,9 +101,9 @@ class Scraper1(BaseScraper):
 
 ### For loop 
 
-Change from appending to a list to list comprehension will speed the list operation about 50%.
+1. List->  list comprehension
 
-https://stackoverflow.com/questions/30245397/why-is-a-list-comprehension-so-much-faster-than-appending-to-a-list
+   Change from appending to a list to list comprehension will speed the list operation about 50%.
 
-**9.8->9.3**
+   Source: https://stackoverflow.com/questions/30245397/why-is-a-list-comprehension-so-much-faster-than-appending-to-a-list
 

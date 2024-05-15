@@ -1,0 +1,14 @@
+{
+    "layout": 11,
+    "emc": {
+        "Rusk County Electric Coop, Inc.": "https://ebill.rcelectric.org/woViewer/mapviewer.html?config=Outage+Web+Map",
+        "Sam Houston Electric Coop, Inc.": "https://outage.samhouston.net/maps/OutageWebMap/",
+        "San Patricio Electric Coop, Inc.": "https://ebill.sanpatricioelectric.org/mapviewer/mapviewer.html?config=Outage+Web+Map",
+        "Southwest Rural Electric Association, Inc.": "https://swre.ebill.coop/maps/ExternalOutageMap/",
+        "Swisher Electric Coop, Inc.": "https://ebill.swisherelectric.org/maps/OutageWebMap/",
+        "Upshur Rural Electric Coop Corp.": "https://ebill.urecc.coop/maps/OutageWebMap/",
+        "Wharton County Electric Coop, Inc.": "https://ebill.wcecnet.net/woViewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "tx"
+}

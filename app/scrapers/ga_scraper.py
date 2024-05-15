@@ -234,16 +234,23 @@ class Scraper1(BaseScraper):
 
             # Processing per_outage data.
             elif key == "per_outage":
+                start = time.time()
                 per_outage_df = pd.DataFrame(val)
-                zips = [
-                    self.extract_zipcode(point["lat"], point["lng"])
-                    for point in per_outage_df["outagePoint"]
-                ]
+
+                # For massive data, we will not extract zipcode for each point.
+                if len(per_outage_df["outagePoint"]) < 10:
+                    zips = [
+                        self.extract_zipcode(point["lat"], point["lng"])
+                        for point in per_outage_df["outagePoint"]
+                    ]
+                else:
+                    zips = ["Outage scale too large to extract zipcodes"] * len(
+                        per_outage_df["outagePoint"]
+                    )
                 per_outage_df["zip"] = zips
                 per_outage_df["timestamp"] = timenow_value
                 per_outage_df["EMC"] = self.emc
                 data[key] = per_outage_df
-
         return data
 
     def fetch(self):
@@ -394,7 +401,7 @@ class Scraper4(BaseScraper):
             if "kubra" in self.url:
                 self.url = "https://kubra.io/"
             self.driver.get(self.url + v[1:])
-            time.sleep(2)
+            time.sleep(5)
             requests = self.driver.requests
 
             for r in requests:
@@ -411,6 +418,13 @@ class Scraper4(BaseScraper):
                     elif "county" in data or "County" in data:
                         raw_data["per_county"] = json.loads(data)["file_data"]
                         print(f"got county data")
+                    elif "city" in data or "City" in data:
+                        raw_data["per_city"] = json.loads(data)["file_data"]
+                        print(f"got city data")
+                    elif "ctv" in data:
+                        raw_data["per_town"] = json.loads(data)["file_data"]
+                        print(f"got ctv data")
+
         return raw_data
 
 
@@ -428,12 +442,22 @@ class Scraper5(BaseScraper):
                     ["startTime", "lastUpdatedTime"]
                 ].apply(pd.to_datetime, unit="ms")
                 df["EMC"] = self.emc
-                df["zip_code"] = df.apply(
-                    lambda row: self.extract_zipcode(row["latitude"], row["longitude"]),
-                    axis=1,
-                )
+
+                # For massive data, we will not extract zipcode for each point.
+                if len(df["latitude"]) < 10:
+                    df["zip_code"] = df.apply(
+                        lambda row: self.extract_zipcode(
+                            row["latitude"], row["longitude"]
+                        ),
+                        axis=1,
+                    )
+                else:
+                    df["zip_code"] = "Outage scale too large to extract zipcodes"
+
                 data.update({key: df})
             else:
+                if val == []:
+                    data.update({key: pd.DataFrame()})
                 print(
                     f"no outage of {self.emc} update found at",
                     datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
@@ -498,12 +522,20 @@ class Scraper7(BaseScraper):
                             df["service_index_name"] = v["service_index_name"]
                             df["outages"] = v["outages"]
                             df["NumConsumers"] = v["stats"]["NumConsumers"]
-                            df["zip_code"] = df.apply(
-                                lambda row: self.extract_zipcode(
-                                    row["lat"], row["lon"]
-                                ),
-                                axis=1,
-                            )
+
+                            # For massive data, we will not extract zipcode for each point.
+                            if len(df["lat"]) < 10:
+                                df["zip_code"] = df.apply(
+                                    lambda row: self.extract_zipcode(
+                                        row["lat"], row["lon"]
+                                    ),
+                                    axis=1,
+                                )
+                            else:
+                                df["zip_code"] = (
+                                    "Outage scale too large to extract zipcodes"
+                                )
+
                             per_outage_df = df
 
                 per_outage_df["isHighTraffic"] = isHighTraffic
@@ -523,7 +555,7 @@ class Scraper7(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         # Send a request to the website and let it load
         self.driver.get(self.url)
-
+        time.sleep(5)
         try:
             self.wait_for_request(lambda request: "ShellOut" in request.url)
         except TimeoutError:
@@ -534,14 +566,18 @@ class Scraper7(BaseScraper):
 
         for request in self.driver.requests:
             if "ShellOut" in request.url:
-                response = sw_decode(
-                    request.response.body,
-                    request.response.headers.get("Content-Encoding", "identity"),
-                )
+                print(request.url)
+
+                try:
+                    response = sw_decode(
+                        request.response.body,
+                        request.response.headers.get("Content-Encoding", "identity"),
+                    )
+                except:
+                    print("Error url:", request.url)
                 data = response.decode("utf8")
                 if "isHighTraffic" in data:
                     raw_data["per_outage"] = json.loads(data)
-
         return raw_data
 
 
@@ -603,18 +639,14 @@ class Scraper9(BaseScraper):
     def fetch(self):
         print(f"fetching {self.emc} outages from {self.url}")
         self.driver.get(self.url)
-
-        if self.emc != "Karnes Electric Coop, Inc.":
-            if self.emc == "San Patricio Electric Coop, Inc.":
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located(
-                        (By.CSS_SELECTOR, "div.mapwise-web-modal-header h5")
-                    )
-                )
-            else:
-                WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
-                )
+        if (
+            self.emc != "Karnes Electric Coop, Inc."
+            and self.emc != "BrightRidge"
+            and self.emc != "San Patricio Electric Coop, Inc."
+        ):
+            WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
+            )
             button = self.driver.find_elements(
                 "xpath", '//*[@id="OMS.Customers Summary"]'
             )
@@ -625,14 +657,25 @@ class Scraper9(BaseScraper):
                 self.driver.execute_script("arguments[0].scrollIntoView();", label)
                 label.click()
 
+        if (
+            self.emc == "Lee County Electric Cooperative"
+            or self.emc == "EnergyUnited"
+            or self.emc == "Mecklenburg Electric Cooperative"
+            or self.emc == "Surry-Yadkin EMC"
+        ):
+            time.sleep(5)
+
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "gwt-ListBox"))
         )
         page_source = {}
         select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
+        time.sleep(1)
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
+            menu.select_by_index(idx)
+            time.sleep(3)
             page_source.update({f"per_{level}": self.driver.page_source})
         return page_source
 
@@ -644,6 +687,10 @@ class Scraper10(BaseScraper):
 
     def parse(self):
         data = self.fetch()
+        if data["per_county"] == []:
+            df = pd.DataFrame()
+            data = {"per_county": df}
+            return data
         df = pd.DataFrame(data["per_county"])
 
         df.rename(columns={"attributes": "data"}, inplace=True)
@@ -677,6 +724,7 @@ class Scraper10(BaseScraper):
         raw_data = {}
         try:
             raw_data["per_county"] = requests.get(self.url).json()["features"]
+
         except Exception as e:
             print(e.text)
             print("No data!")
@@ -720,12 +768,20 @@ class Scraper11(BaseScraper):
                                 df["service_index_name"] = v["service_index_name"]
                                 df["outages"] = v["outages"]
                                 df["NumConsumers"] = v["stats"]["NumConsumers"]
-                                df["zip_code"] = df.apply(
-                                    lambda row: self.extract_zipcode(
-                                        row["lat"], row["lon"]
-                                    ),
-                                    axis=1,
-                                )
+
+                                # For massive data, we will not extract zipcode for each point.
+                                if len(df["lat"]) < 10:
+                                    df["zip_code"] = df.apply(
+                                        lambda row: self.extract_zipcode(
+                                            row["lat"], row["lon"]
+                                        ),
+                                        axis=1,
+                                    )
+                                else:
+                                    df["zip_code"] = (
+                                        "Outage scale too large to extract zipcodes"
+                                    )
+
                                 per_outage_df = df
 
                     per_outage_df["isHighTraffic"] = isHighTraffic

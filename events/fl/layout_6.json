@@ -1,0 +1,9 @@
+{
+    "layout": 6,
+    "emc": {
+        "Florida Power and Light Company": "https://www.fplmaps.com/customer/outage/CountyOutages.json",
+        "Florida Power and Light Company Northwest": "https://www.fplmaps.com/northwest/feeds/CountyOutages.json"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

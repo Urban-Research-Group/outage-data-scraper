@@ -1,0 +1,8 @@
+{
+    "layout": 6,
+    "emc": {
+        "Lafayette Utilities System": "https://utilisocial.io/datacapable/v2/p/lus/map/events"
+    },
+    "bucket": "data",
+    "folder": "la"
+}
