@@ -1,0 +1,8 @@
+{
+    "layout": 3,
+    "emc": {
+        "Cleco Power": "https://cleco-prod.azure-api.net/outage/api/1/outage/alloutages/2/1"
+    },
+    "bucket": "data",
+    "folder": "la"
+}

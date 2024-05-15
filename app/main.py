@@ -80,12 +80,5 @@ if __name__ == "__main__":
         test_event = json.loads(f.read())
     handler(test_event)
 
-    # single test here
-    # sc = Scraper(state='tx',
-    #              layout_id=11,
-    #              url="https://ebill.karnesec.org/maps/ExternalOutageMap/",
-    #              emc="dev")
-    # print(sc.parse())
-
     end = time.time()
     print(end - start)
