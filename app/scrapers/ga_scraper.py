@@ -442,10 +442,18 @@ class Scraper5(BaseScraper):
                     ["startTime", "lastUpdatedTime"]
                 ].apply(pd.to_datetime, unit="ms")
                 df["EMC"] = self.emc
-                df["zip_code"] = df.apply(
-                    lambda row: self.extract_zipcode(row["latitude"], row["longitude"]),
-                    axis=1,
-                )
+
+                # For massive data, we will not extract zipcode for each point.
+                if len(df["latitude"]) < 10:
+                    df["zip_code"] = df.apply(
+                        lambda row: self.extract_zipcode(
+                            row["latitude"], row["longitude"]
+                        ),
+                        axis=1,
+                    )
+                else:
+                    df["zip_code"] = "Outage scale too large to extract zipcodes"
+
                 data.update({key: df})
             else:
                 if val == []:
@@ -514,12 +522,20 @@ class Scraper7(BaseScraper):
                             df["service_index_name"] = v["service_index_name"]
                             df["outages"] = v["outages"]
                             df["NumConsumers"] = v["stats"]["NumConsumers"]
-                            df["zip_code"] = df.apply(
-                                lambda row: self.extract_zipcode(
-                                    row["lat"], row["lon"]
-                                ),
-                                axis=1,
-                            )
+
+                            # For massive data, we will not extract zipcode for each point.
+                            if len(df["lat"]) < 10:
+                                df["zip_code"] = df.apply(
+                                    lambda row: self.extract_zipcode(
+                                        row["lat"], row["lon"]
+                                    ),
+                                    axis=1,
+                                )
+                            else:
+                                df["zip_code"] = (
+                                    "Outage scale too large to extract zipcodes"
+                                )
+
                             per_outage_df = df
 
                 per_outage_df["isHighTraffic"] = isHighTraffic
@@ -752,12 +768,20 @@ class Scraper11(BaseScraper):
                                 df["service_index_name"] = v["service_index_name"]
                                 df["outages"] = v["outages"]
                                 df["NumConsumers"] = v["stats"]["NumConsumers"]
-                                df["zip_code"] = df.apply(
-                                    lambda row: self.extract_zipcode(
-                                        row["lat"], row["lon"]
-                                    ),
-                                    axis=1,
-                                )
+
+                                # For massive data, we will not extract zipcode for each point.
+                                if len(df["lat"]) < 10:
+                                    df["zip_code"] = df.apply(
+                                        lambda row: self.extract_zipcode(
+                                            row["lat"], row["lon"]
+                                        ),
+                                        axis=1,
+                                    )
+                                else:
+                                    df["zip_code"] = (
+                                        "Outage scale too large to extract zipcodes"
+                                    )
+
                                 per_outage_df = df
 
                     per_outage_df["isHighTraffic"] = isHighTraffic
