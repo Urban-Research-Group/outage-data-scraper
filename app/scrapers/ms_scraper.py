@@ -46,7 +46,18 @@ class Scraper7(BaseScraper):
         data = self.fetch()
         out = {}
         out["per_county"] = pd.DataFrame(data["per_county"])
-        out["per_outage"] = pd.DataFrame(data["per_outage"])
+        out["per_district"] = pd.DataFrame(data["per_district"])
+
+        out["per_county"] = out["per_county"][out["per_county"]["affected"] != 0]
+        out["per_district"] = out["per_district"][out["per_district"]["affected"] != 0]
+
+        # Add timestamp
+        out["per_county"]["timestamp"] = timenow()
+        out["per_district"]["timestamp"] = timenow()
+
+        # Add EMC
+        out["per_county"]["emc"] = self.emc
+        out["per_district"]["emc"] = self.emc
 
         return out
 
@@ -57,8 +68,7 @@ class Scraper7(BaseScraper):
         with urlopen(self.url) as response:
             data = json.loads(response.read())
             raw_data["per_county"] = data["reportData"]["reports"][0]["polygons"]
-            raw_data["per_outage"] = data["outageData"]["outages"]
-            # print(raw_data)
+            raw_data["per_district"] = data["reportData"]["reports"][1]["polygons"]
 
         return raw_data
 
@@ -72,6 +82,8 @@ class Scraper10(BaseScraper):
         data = self.fetch()
         out = {}
         out["per_emc"] = pd.DataFrame([data])
+        out["per_emc"]["timestamp"] = timenow()
+        out["per_emc"]["emc"] = self.emc
 
         return out
 
