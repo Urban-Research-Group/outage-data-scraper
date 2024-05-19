@@ -1,7 +1,6 @@
 {
     "layout": 2,
     "emc": {
-        "Alcorn County EPA": "https://outagemap.comed.com",
         "Central EPA": "https://www.outageentry.com/Outages/outage.php?Client=central_epa&serviceIndex=1&openingPage=",
         "Dixie EPA": "https://www.outageentry.com/Outages/outage.php?Client=DIXIE_EPA_MS&serviceIndex=1&openingPage=",
         "East Mississippi EPA": "https://www.outageentry.com/Outages/outage.php?Client=EMEPA&serviceIndex=1&openingPage=",

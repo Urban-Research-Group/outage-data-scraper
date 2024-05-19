@@ -1,7 +1,8 @@
 {
     "layout": 4,
     "emc": {
-        "Mississippi Power": "https://outagemap.mississippipower.com/external/default.html"
+        "Mississippi Power": "https://outagemap.mississippipower.com/external/default.html",
+        "Alcorn County EPA": "https://kubra.io/stormcenter/views/2e108172-d24f-4c2b-ad49-23a3b1589688"
     },
     "bucket": "data",
     "folder": "ms"

@@ -424,6 +424,9 @@ class Scraper4(BaseScraper):
                     elif "ctv" in data:
                         raw_data["per_town"] = json.loads(data)["file_data"]
                         print(f"got ctv data")
+                    elif "WARD" in data:
+                        raw_data["per_ward"] = json.loads(data)["file_data"]
+                        print(f"got ward data")
 
         return raw_data
 
@@ -670,7 +673,7 @@ class Scraper9(BaseScraper):
         )
         page_source = {}
         select_elements = self.driver.find_elements(By.CLASS_NAME, "gwt-ListBox")
-        time.sleep(1)
+        time.sleep(3)
         menu = Select(select_elements[0])
         for idx, option in enumerate(menu.options):
             level = option.text
