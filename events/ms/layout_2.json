@@ -1,0 +1,13 @@
+{
+    "layout": 2,
+    "emc": {
+        "Central EPA": "https://www.outageentry.com/Outages/outage.php?Client=central_epa&serviceIndex=1&openingPage=",
+        "Dixie EPA": "https://www.outageentry.com/Outages/outage.php?Client=DIXIE_EPA_MS&serviceIndex=1&openingPage=",
+        "East Mississippi EPA": "https://www.outageentry.com/Outages/outage.php?Client=EMEPA&serviceIndex=1&openingPage=",
+        "North East Mississippi EPA": "https://www.outageentry.com/Outages/outage.php?Client=NEMEPA",
+        "Pearl River Valley EPA": "https://www.outageentry.com/Outages/outage.php?Client=PRVEPA&serviceIndex=1&openingPage=",
+        "Tallahatchie Valley EPA": "https://www.outageentry.com/Outages/outage.php?Client=TALLAHATCHIE&serviceIndex=1&openingPage="
+    },
+    "bucket": "data",
+    "folder": "ms"
+}

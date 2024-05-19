@@ -1,0 +1,8 @@
+{
+    "layout": 10,
+    "emc": {
+        "Tombigbee EPA": "https://utilityservices.orbitmobiles.com/outage/AV8cVsEoLo"
+    },
+    "bucket": "data",
+    "folder": "ms"
+}
