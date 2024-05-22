@@ -1,7 +1,8 @@
 {
     "layout": 3,
     "emc": {
-        "Tippah EPA": "https://webmap.tippahepa.com/OMSWebMap/"
+        "Tippah EPA": "https://webmap.tippahepa.com/OMSWebMap/",
+        "Coahoma EPA": "https://oms.coahomaepa.com:8080/OMSWebMap/"
     },
     "bucket": "data",
     "folder": "ms"

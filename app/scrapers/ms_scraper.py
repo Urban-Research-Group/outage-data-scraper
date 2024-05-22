@@ -20,6 +20,7 @@ from seleniumwire import webdriver
 from .util import is_aws_env, make_request, timenow
 
 from .ga_scraper import (
+    Scraper1 as GA_Scraper1,
     Scraper3 as GA_Scraper3,
     Scraper4 as GA_Scraper4,
     Scraper9 as GA_Scraper9,
@@ -104,7 +105,9 @@ class Scraper10(BaseScraper):
 
 class MSScraper:
     def __new__(cls, layout_id, url, emc):
-        if layout_id == 2:
+        if layout_id == 1:
+            obj = super().__new__(GA_Scraper1)
+        elif layout_id == 2:
             obj = super().__new__(GA_Scraper11)
         elif layout_id == 3:
             obj = super().__new__(GA_Scraper3)
