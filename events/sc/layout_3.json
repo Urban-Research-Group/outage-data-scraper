@@ -1,0 +1,9 @@
+{
+    "layout": 3,
+    "emc": {
+        "Orangeburg Public Utilities": "https://www.outageentry.com/Outages/outage.php?Client=coorg",
+        "Rock Hill Utilities": "https://www.outageentry.com/Outages/outage.php?Client=ROCK"
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

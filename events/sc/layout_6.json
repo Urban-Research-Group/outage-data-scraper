@@ -1,0 +1,8 @@
+{
+    "layout": 6,
+    "emc": {
+        "Santee Cooper": "https://kubra.io/stormcenter/views/06395508-a927-49d0-82a9-4eae2c201c06"
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

@@ -6,7 +6,7 @@ from .ny_scraper import NYScraper
 from .tn_scraper import TNScraper
 from .fl_scraper import FLScraper
 from .nc_scraper import NCScraper
-
+from .sc_scraper import SCScraper
 from .la_scraper import LAScraper
 from .ms_scraper import MSScraper
 
@@ -33,5 +33,8 @@ class Scraper:
             return MSScraper(layout_id, url, emc)
         elif state == "la":
             return LAScraper(layout_id, url, emc)
+        elif state == "sc":
+            return SCScraper(layout_id, url, emc)
+
         else:
             raise "Invalid input state"

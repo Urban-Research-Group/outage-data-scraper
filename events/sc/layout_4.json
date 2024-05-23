@@ -1,0 +1,8 @@
+{
+    "layout": 4,
+    "emc": {
+        "Dominion Energy": "https://outagemap.dominionenergysc.com/"
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

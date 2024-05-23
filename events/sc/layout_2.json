@@ -1,0 +1,12 @@
+{
+    "layout": 2,
+    "emc": {
+        "Berkeley Electric Cooperative": "https://ebill.becsc.com/maps/external/OutageWebMap/",
+        "Coastal Electric Cooperative": "https://ebill.coastal.coop/woViewer/mapviewer.html?config=Outage+Web+Map",
+        "Easley Combined Utilities": "https://ebill.easleyutilities.com/woViewer/mapviewer.html?config=Outage+Web+Map",
+        "Pee Dee Electric Cooperative": "https://ebill.mpd.coop/maps/OutageWebMap/",
+        "Broad River Electric Cooperative": "https://hub.broadriverelectric.com/maps/OutageWebMap/"
+    },
+    "bucket": "data",
+    "folder": "sc"
+}

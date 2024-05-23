@@ -412,10 +412,10 @@ class Scraper4(BaseScraper):
                         r.response.headers.get("Content-Encoding", "identity"),
                     )
                     data = response.decode("utf8", "ignore")
-                    if any([x in data for x in ["zip", "Zip", "ZIP", "City"]]):
+                    if any([x in data for x in ["zip", "Zip", "ZIP"]]):
                         raw_data["per_zipcode"] = json.loads(data)["file_data"]
                         print(f"got zip code data")
-                    elif "county" in data or "County" in data:
+                    elif "county" in data or "County" in data or "COUNTY" in data:
                         raw_data["per_county"] = json.loads(data)["file_data"]
                         print(f"got county data")
                     elif "city" in data or "City" in data:
@@ -427,6 +427,9 @@ class Scraper4(BaseScraper):
                     elif "WARD" in data:
                         raw_data["per_ward"] = json.loads(data)["file_data"]
                         print(f"got ward data")
+                    elif "MEDIA" in data:
+                        raw_data["per_media"] = json.loads(data)["file_data"]
+                        print(f"got media data")
 
         return raw_data
 
@@ -643,9 +646,16 @@ class Scraper9(BaseScraper):
         print(f"fetching {self.emc} outages from {self.url}")
         self.driver.get(self.url)
         if (
-            self.emc != "Karnes Electric Coop, Inc."
-            and self.emc != "BrightRidge"
-            and self.emc != "San Patricio Electric Coop, Inc."
+            self.emc
+            not in [
+                "Karnes Electric Coop, Inc.",
+                "BrightRidge",
+                "San Patricio Electric Coop, Inc.",
+                "Berkeley Electric Cooperative",
+            ]
+            # self.emc != "Karnes Electric Coop, Inc."
+            # and self.emc != "BrightRidge"
+            # and self.emc != "San Patricio Electric Coop, Inc."
         ):
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.ID, "OMS.Customers Summary"))
