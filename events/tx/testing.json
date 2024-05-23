@@ -1,8 +1,0 @@
-{
-    "layout": 8,
-    "emc": {
-        "Bryan Texas Utilities": "http://outages.btutilities.com/"
-    },
-    "bucket": "data",
-    "folder": "tx"
-}
