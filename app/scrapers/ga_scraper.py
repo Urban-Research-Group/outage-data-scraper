@@ -403,7 +403,8 @@ class Scraper4(BaseScraper):
             self.driver.get(self.url + v[1:])
             time.sleep(5)
             requests = self.driver.requests
-
+            if self.emc == "Seminole Electric Cooperative":
+                time.sleep(5)
             for r in requests:
                 if "kubra.io/data" in r.url:
                     print(f"scraping data from {r.url}")
