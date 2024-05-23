@@ -1,0 +1,9 @@
+{
+    "layout": 2,
+    "emc": {
+        "Decatur Utilities": "https://nisc.decaturutilities.com/maps/OMSWebMap/",
+        "Opelika Power Services": "https://smarthub.opelikapower.com/woViewer/mapviewer.html?config=Outage+Web+Map"
+    },
+    "bucket": "data",
+    "folder": "al"
+}

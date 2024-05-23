@@ -1,0 +1,8 @@
+{
+    "layout": 4,
+    "emc": {
+        "PEA River Electric Coop": "http://oms.peariver.com/OMSWebMap/"
+    },
+    "bucket": "data",
+    "folder": "al"
+}

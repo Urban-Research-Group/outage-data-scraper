@@ -1,0 +1,8 @@
+{
+    "layout": 5,
+    "emc": {
+        "Clarksville Department of Electricity": "https://www.outageentry.com/Outages/outage.php?Client=CDE"
+    },
+    "bucket": "data",
+    "folder": "al"
+}

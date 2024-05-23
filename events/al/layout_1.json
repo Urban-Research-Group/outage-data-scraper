@@ -1,0 +1,23 @@
+{
+    "layout": 1,
+    "emc": {
+        "Baldwin EMC Coop": "https://oms.baldwinemc.com:82/",
+        "Central Alabama Electric Coop": "http://outage.caec.com/",
+        "Coosa Valley Electric Coop": "http://outage.coosavalleyec.com/",
+        "Covington Electric Coop": "https://outage.cov-elect.com/",
+        "Cullman Electric Coop": "https://outages.cullmanec.com/",
+        "Diverse Power": "http://outages.diversepower.com/",
+        "Dixie Electric Coop": "http://outagemap.dixie.coop/",
+        "Florence Electricity": "http://68.208.116.30:7576/",
+        "Marshall-DeKalb Electric Coop": "https://outage.mdec.coop/",
+        "Pioneer Electric Coop": "http://208.111.119.93/",
+        "Riviera Utilities": "https://outage.rivierautilities.com/",
+        "Singing River Electric": "https://outageviewer.singingriver.com/",
+        "South Alabama Electric Coop": "http://omsviewer.southaec.com/",
+        "Sylacauga City Electric": "http://outage.sylacauga.net/",
+        "Tallapoosa River Electric Coop": "https://trecoutages.com/",
+        "Tombigbee Electric Coop": "https://outage.tombigbee.org:7575/"
+    },
+    "bucket": "data",
+    "folder": "al"
+}

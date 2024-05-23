@@ -1,0 +1,8 @@
+{
+    "layout": 3,
+    "emc": {
+        "Alabama Power": "https://outagemap.alabamapower.com/"
+    },
+    "bucket": "data",
+    "folder": "al"
+}
