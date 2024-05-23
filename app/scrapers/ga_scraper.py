@@ -407,6 +407,7 @@ class Scraper4(BaseScraper):
             for r in requests:
                 if "kubra.io/data" in r.url:
                     print(f"scraping data from {r.url}")
+                    time.sleep(3)
                     response = sw_decode(
                         r.response.body,
                         r.response.headers.get("Content-Encoding", "identity"),
