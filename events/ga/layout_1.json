@@ -14,7 +14,8 @@
         "North Georgia EMC": "https://www2.ngemc.com/",
         "Excelsior EMC": "http://outage.excelsioremc.com:8181/",
         "Dalton Utility": "https://outageviewer.dutil.com/",
-        "Blueridge Mountain EMC": "http://outage.brmemc.com:8008/"
+        "Blueridge Mountain EMC": "http://outage.brmemc.com:8008/",
+        "Grady EMC": "https://outage.gradyemc.com:7576/"
     },
     "bucket": "data",
     "folder": "ga"

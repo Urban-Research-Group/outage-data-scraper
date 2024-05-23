@@ -16,6 +16,7 @@ from .ga_scraper import (
     Scraper6 as GA_Scraper6,
     Scraper9 as GA_Scraper9,
     Scraper11 as GA_Scraper11,
+    Scraper4 as GA_Scraper4,
 )
 from selenium.webdriver.common.by import By
 
@@ -395,8 +396,8 @@ class TXScraper:
             obj = super().__new__(GA_Scraper3)
         elif layout_id == 17:
             obj = super().__new__(GA_Scraper1)
-        elif layout_id == 18:
-            obj = super().__new__(Scraper18)
+        elif layout_id == 19:
+            obj = super().__new__(GA_Scraper4)
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 18"
 
