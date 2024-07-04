@@ -9,7 +9,7 @@
         "Okefenoke REMC": "https://oms.oremc.co:8443/",
         "Amicalola EMC": "https://outages.amicalolaemc.com:83/",
         "Satilla REMC": "https://ov.satillaemc.com/",
-        "Central Georgia EMC": "http://outage.cgemc.com:8181/",
+        "Central Georgia EMC": "https://outage.cgemc.com:8181/",
         "Flint EMC": "http://outage.flintemc.com:8283/",
         "North Georgia EMC": "https://www2.ngemc.com/",
         "Excelsior EMC": "http://outage.excelsioremc.com:8181/",
