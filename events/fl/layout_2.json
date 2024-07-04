@@ -1,11 +1,9 @@
 {
     "layout": 2,
     "emc": {
-        "Clay Electric Cooperative": "https://outagemap.clayelectric.com/maps/ExternalOutageMap/",
         "Glades Electric Cooperative": "https://gladesec.ebill.coop/maps/public/OutageWebMap/",
         "Lee County Electric Cooperative": "https://outagemap.lcec.net:35443/mapwise/maps/Outage%20Web%20Map/",
-        "Peace River Electric Cooperative": "https://members.preco.coop/maps/OutageWebMap/",
-        "Withlacoochee River Electric Cooperative": "https://om.wrec.net/maps/OutageWebMap/"
+        "Peace River Electric Cooperative": "https://members.preco.coop/maps/OutageWebMap/"
     },
     "bucket": "data",
     "folder": "fl"

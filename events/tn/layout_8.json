@@ -1,0 +1,8 @@
+{
+    "layout": 8,
+    "emc": {
+        "BrightRidge": "https://outagemap-data.cloud.coop/brightridge/Hosted_Outage_Map/summary.json"
+    },
+    "bucket": "data",
+    "folder": "tn"
+}

@@ -485,6 +485,39 @@ class Scraper9(BaseScraper):
         return raw_data
 
 
+class Scraper13(BaseScraper):
+    def __init__(self, url, emc):
+        super().__init__(url, emc)
+        self.driver = self.init_webdriver()
+
+    def parse(self):
+        data = self.fetch()
+        for key, val in data.items():
+            print(key)
+            if val:
+                df = pd.DataFrame(val)
+                df = df[(df["numberOut"] != 0)]
+                df["timestamp"] = timenow()
+                df["EMC"] = self.emc
+                data.update({key: df})
+            else:
+                print(
+                    f"no '{key}' outage of {self.emc} update found at",
+                    datetime.strftime(datetime.now(), "%m-%d-%Y %H:%M:%S"),
+                )
+        self.driver.close()
+        self.driver.quit()
+        return data
+
+    def fetch(self):
+        print(f"fetching {self.emc} outages from {self.url}")
+        raw_json = requests.get(self.url, verify=False).json()
+        raw_data = {}
+        for region_data in raw_json["regionDataSets"]:
+            raw_data["per_" + region_data["id"]] = region_data["regions"]
+        return raw_data
+
+
 class FLScraper:
     def __new__(cls, layout_id, url, emc):
         if layout_id == 1:
@@ -511,7 +544,9 @@ class FLScraper:
             obj = super().__new__(Scraper7)
         elif layout_id == 12:
             obj = super().__new__(GA_Scraper3)
+        elif layout_id == 13:
+            obj = super().__new__(Scraper13)
         else:
-            raise "Invalid layout ID: Enter layout ID range from 1 to 12"
+            raise "Invalid layout ID: Enter layout ID range from 1 to 13"
         obj.__init__(url, emc)
         return obj

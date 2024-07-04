@@ -1,0 +1,9 @@
+{
+    "layout": 13,
+    "emc": {
+        "Clay Electric Cooperative": "https://outagemap-data.cloud.coop/clayelectric/Hosted_Outage_Map/summary.json",
+        "Withlacoochee River Electric Cooperative": "https://outagemap-data.cloud.coop/withlacoochee/Hosted_Outage_Map/summary.json"
+    },
+    "bucket": "data",
+    "folder": "fl"
+}

@@ -26,6 +26,7 @@ from .ga_scraper import (
     Scraper9 as GA_Scraper9,
     Scraper11 as GA_Scraper11,
 )
+from .fl_scraper import Scraper13 as FL_Scraper13
 
 
 # TODO: update for security
@@ -90,16 +91,10 @@ class Scraper2(BaseScraper):
         print(f"Fetching {self.emc} outages from {self.url}")
         # get javascript rendered source page
         self.driver.get(self.url)
-        # Sleeps for 5 seconds
-        time.sleep(30)
+
+        time.sleep(10)
 
         page_source = {}
-        iframe_tag = self.driver.find_element(
-            By.XPATH,
-            "/html/body/div[2]/main/div/article/div[3]/div[1]/div/div/div/iframe",
-        )
-        self.driver.switch_to.frame(iframe_tag)
-        time.sleep(50)  # since this iframe is super slow
         selector = self.driver.find_element(
             By.XPATH,
             "/html/body/div[2]/div/div[3]/div[2]/div/div/div[3]/font/select",
@@ -248,6 +243,9 @@ class TNScraper:
             obj = super().__new__(GA_Scraper5)
         elif layout_id == 7:
             obj = super().__new__(Scraper7)
+        elif layout_id == 8:
+            obj = super().__new__(FL_Scraper13)
+
         else:
             raise "Invalid layout ID: Enter layout ID range from 1 to 3"
         obj.__init__(url, emc)

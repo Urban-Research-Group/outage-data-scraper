@@ -7,7 +7,6 @@
         "Erwin Utilities": "https://eu.ebill.coop/maps/OMS/",
         "Greeneville Light & Power System": "https://ebill.glps.net/maps/public/OutageWebMap/?from=article",
         "Harriman Utility Board": "https://ebill.hub-tn.com/mapviewer/mapviewer.html?config=Outage+Web+Map",
-        "BrightRidge": "https://css.brightridge.com/maps/external/OutageWebMap/",
         "Lawrenceburg Utility Systems": "https://ebill.lburgus.com/maps/Outage_Web_Map/"
     },
     "bucket": "data",
